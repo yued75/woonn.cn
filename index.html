@@ -3,6 +3,18 @@
 	<head>
 		<meta charset="utf-8" />
 		<title>蜗奶奶科技-Woonn.cn</title>
+		<script>
+			// 当页面加载时执行重定向
+			window.onload = function() {
+				// 检查当前URL是否包含404路径
+				if (window.location.pathname.includes('404')) {
+					// 如果已经是404页面，则不执行任何操作
+				} else {
+					// 否则，重定向到自定义的404页面
+					window.location.replace('/404/');
+				}
+			};
+		</script>
 		<link rel="stylesheet" href="css/bootstrap.min.css" />
 		<link rel="stylesheet" href="css/ionicons.min.css" />
 		<link rel="stylesheet" href="css/index.css" />
