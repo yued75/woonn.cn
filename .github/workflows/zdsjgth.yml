@@ -1,4 +1,4 @@
-name: Poll URL
+name: Auto URL
  
 on:
   # 每3小时执行一次工作流
