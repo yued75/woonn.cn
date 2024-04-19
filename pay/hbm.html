@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--<link rel="icon" href="../icon.png" />-->
+    <title>蜗奶奶（中国）</title>
+    <link href="//unpkg.com/layui@2.8.14/dist/css/layui.css" rel="stylesheet">
+    <script src="../js/autoload.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/AllStyle.css" />
+    <script src="../js/Alljs.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+</head>
+<body>
+    <div style="text-align:center">
+        <br /><br />
+        <h3><a class="btn" data-clipboard-action="copy" data-clipboard-target="#foo">点我复制    </a>数字[843131013]去支付宝搜索</h3>
+        <input id="foo" type="text" value="复制 843131013 ❤嗒開❤支付宝去搜索，实惠y`o u.慧，小伙伴们一起来领 ho ng.笣" style="position: absolute; top: -500px;" readonly="readonly">
+        <br />
+        <h4>或<a href="../pay/">    [点我直接打赏]</a></h4><br />
+        <img src="img/hbm.jpg" alt="Alternate Text" width="300" />
+    </div>
+    <div class="loading">
+        <div class="loader"></div>
+        <div class="loading-text">loading...</div>
+    </div>
+    <script>
+        // 创建剪贴板对象
+        var clipboard = new ClipboardJS('.btn');
+
+        // 复制成功时触发 success 事件
+        clipboard.on('success', function (e) {
+            console.log(e);
+            alert('复制成功');
+        });
+
+        // 复制失败时触发 error 事件
+        clipboard.on('error', function (e) {
+            console.log(e);
+        });
+    </script>
+</body>
+</html>

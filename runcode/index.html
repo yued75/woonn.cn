@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <!--<link rel="icon" href="../icon.png" />-->
+    <link href="css/index.css" rel="stylesheet" />
+    <script src="js/index.js"></script>
+    <title>在线运行HTML代码</title>
+    <script src="../js/autoload.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/AllStyle.css" />
+    <script src="../js/Alljs.js"></script>
+</head>
+<body>
+    <div id="container">
+        <h1>运行 HTML 代码</h1>
+        <span>请在下面输入 HTML 代码段</span>
+        <p>
+            <textarea id="code0" rows="20" cols="100" style="width:800px;height:400px;">
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>这里填写网站标题</title>
+
+    <meta name="keywords" content="这里填写关键词" />
+    <meta name="description" content="这里填写说明内容" />
+
+    <script language="JavaScript" type="text/javascript">
+        <!--    JS代码位置-- >
+    </script>
+
+    <style type="text/css">
+        <!-- CSS样式代码位置-- >
+    </style>
+
+</head>
+<body>
+    
+    这里填写HTML代码
+
+</body>
+</html>
+</textarea>
+        <p>
+            <input type="button" value="运行代码" onclick="runCode($('code0'))">&nbsp;
+            <input type="button" value="复制代码" onclick="copyCode($('code0'))">&nbsp;
+            <!--<input type="button" value="另存代码" onclick="saveCode($('code0'))">&nbsp;-->
+        <p>
+            <span>提示：请先完善上面代码，或将完整的HTML代码复制到上面输入框后再运行</span>
+    </div>
+    <div class="loading">
+        <div class="loader"></div>
+        <div class="loading-text">loading...</div>
+    </div>
+</body>
+</html>
