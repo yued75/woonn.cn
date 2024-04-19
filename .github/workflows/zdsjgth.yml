@@ -14,4 +14,4 @@ jobs:
     steps:
     - name: Poll URL
       run: |
-        curl http://hk.haokale.com/launch/goods?accountId=15284111236&passWord=Aiyu1314&amount=0.25&type=2&shopName=小乐5G号卡&zlSize=200&copyWritingType=2&copyWriting={}&openId=o94lx57vN14bY9fyhYNeSHnyccpg
+        curl http://hk.haokale.com/launch/goods?accountId=15284111236&passWord=Aiyu1314&amount=0.1&type=2&shopName=小乐5G号卡&zlSize=200&copyWritingType=2&copyWriting={}&openId=o94lx57vN14bY9fyhYNeSHnyccpg
