@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导航页</title>
+    <!-- 引入Font Awesome图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 引入Google字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* 全局样式 */
+        body {
+            background-color: #f9fafb;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        /* 搜索框区域 */
+        #search-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #search-input {
+            padding: 10px 16px;
+            width: 300px;
+            font-size: 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        #search-input:focus {
+            border-color: #6b7280;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
+        }
+
+        #search-button {
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #search-button:hover {
+            background-color: #4338ca;
+            transform: translateY(-1px);
+        }
+
+        #search-results {
+            margin-top: 16px;
+            text-align: left;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-result-item {
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            background-color: white;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .search-result-item:hover {
+            background-color: #f9fafb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 标签页区域 */
+        .tab-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 8px 16px;
+            margin: 0 8px;
+            cursor: pointer;
+            border: none;
+            background-color: white;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4f46e5;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-button:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-1px);
+        }
+
+        .tab-button.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .tab-button i {
+            margin-right: 6px;
+        }
+
+        /* 快捷按钮区域 */
+        .tab {
+            display: none;
+        }
+
+        .tab.active {
+            display: block;
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* 自动填充，最小160px宽度 */
+            gap: 12px;
+            max-width: 1200px; /* 增大容器最大宽度 */
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .quick-link {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .quick-link:hover {
+            background-color: #f9fafb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .quick-link img {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            object-fit: contain;
+        }
+
+        /* 响应式布局调整 */
+        @media (max-width: 768px) {
+            .quick-links {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quick-links {
+                grid-template-columns: 1fr; /* 手机端单列显示 */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>简洁导航页</h1>
+
+    <!-- 搜索框 -->
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="输入搜索内容...">
+        <button id="search-button">搜索</button>
+        <div id="search-results"></div>
+    </div>
+
+    <!-- 标签页按钮 -->
+    <div class="tab-buttons">
+        <button class="tab-button active" data-tab="tab1">
+            <i class="fas fa-home"></i> 常用
+        </button>
+        <button class="tab-button" data-tab="tab2">
+            <i class="fas fa-star"></i> 工具
+        </button>
+        <button class="tab-button" data-tab="tab3">
+            <i class="fas fa-globe"></i> 学习
+        </button>
+    </div>
+
+    <!-- 标签页内容 -->
+    <div id="tab1" class="tab active">
+        <div class="quick-links">
+            <a href="https://github.com" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                GitHub
+            </a>
+            <a href="https://www.google.com" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                Google
+            </a>
+            <a href="https://www.baidu.com" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                百度
+            </a>
+            <a href="https://www.bing.com" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                Bing
+            </a>
+            <a href="https://www.youtube.com" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                YouTube
+            </a>
+            <a href="https://www.twitter.com" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                Twitter
+            </a>
+            <a href="https://www.wikipedia.org" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                维基百科
+            </a>
+            <a href="https://www.coursera.org" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                Coursera
+            </a>
+        </div>
+    </div>
+
+    <div id="tab2" class="tab">
+        <div class="quick-links">
+            <a href="https://www.youtube.com" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                YouTube
+            </a>
+            <a href="https://www.twitter.com" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                Twitter
+            </a>
+        </div>
+    </div>
+
+    <div id="tab3" class="tab">
+        <div class="quick-links">
+            <a href="https://www.wikipedia.org" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                维基百科
+            </a>
+            <a href="https://www.coursera.org" class="quick-link" target="_blank">
+                <img class="favicon" alt="icon">
+                Coursera
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // 动态加载网站图标
+        function loadFavicons() {
+            document.querySelectorAll('.quick-link').forEach(link => {
+                const url = new URL(link.href);
+                const domain = url.hostname;
+                const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+                const img = link.querySelector('img');
+                img.src = faviconUrl;
+
+                // 添加加载失败时的处理
+                img.onerror = () => {
+                    img.style.display = 'none'; // 隐藏无法加载的图标
+                };
+            });
+        }
+
+        // 搜索功能
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const searchResults = document.getElementById('search-results');
+
+        function performSearch(query) {
+            const links = document.querySelectorAll('.quick-link');
+            searchResults.innerHTML = '';
+            if (query.trim() === '') {
+                return; // 如果搜索框为空，不显示任何结果
+            }
+
+            let found = false;
+            links.forEach(link => {
+                const linkText = link.textContent.toLowerCase();
+                if (linkText.includes(query.toLowerCase())) {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'search-result-item';
+                    resultItem.textContent = link.textContent.trim();
+                    resultItem.addEventListener('click', () => {
+                        window.open(link.href, '_blank');
+                    });
+                    searchResults.appendChild(resultItem);
+                    found = true;
+                }
+            });
+
+            if (!found) {
+                searchResults.innerHTML = '<div>没有找到相关结果</div>';
+            }
+        }
+
+        searchButton.addEventListener('click', () => {
+            performSearch(searchInput.value);
+        });
+
+        searchInput.addEventListener('input', () => {
+            performSearch(searchInput.value);
+        });
+
+        // 标签页功能
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabs = document.querySelectorAll('.tab');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabs.forEach(tab => tab.classList.remove('active'));
+
+                button.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // 页面加载完成后执行
+        window.addEventListener('DOMContentLoaded', loadFavicons);
+    </script>
+</body>
+</html>
