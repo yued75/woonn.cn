@@ -109,8 +109,6 @@
     let countdownInterval;
     let totalSeconds;
     let remainingSeconds;
-	let min = 3;
-	let max = 20;
     
     // 点击按钮事件处理
     controlBtn.addEventListener('click', toggleGame);
@@ -147,7 +145,7 @@
       });
       
       // 随机生成倒计时时间（5-20秒之间）
-      totalSeconds = Math.floor(Math.random() * (max - min + 1)) + min;
+      totalSeconds = Math.floor(Math.random() * 16) + 5;
       remainingSeconds = totalSeconds;
       
       // 显示初始倒计时
@@ -163,10 +161,27 @@
         
         // 倒计时结束
         if (remainingSeconds <= 0) {
-          resetGame();
+          endGame();
         }
       }, 1000);
       
+      isPlaying = true;
+    }
+    
+    // 结束游戏
+    function endGame() {
+      // 停止音乐
+      gameMusic.pause();
+      
+      // 清除倒计时
+      clearInterval(countdownInterval);
+      
+      // 显示结束信息
+      countdownEl.textContent = "停！";
+      countdownEl.classList.remove('pulse-animation');
+      countdownEl.classList.add('text-primary');
+      
+      // 按钮保持重来状态
       isPlaying = true;
     }
     
@@ -184,7 +199,7 @@
       controlBtn.classList.add('bg-primary');
       
       // 重置倒计时显示
-      countdownEl.textContent = "停！";
+      countdownEl.textContent = "准备开始";
       countdownEl.classList.remove('pulse-animation', 'text-primary');
       
       // 隐藏装饰花朵
