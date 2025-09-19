@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>导航页</title>
-    <!-- 引入Font Awesome图标库 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- 引入Google字体 -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- 引入字节跳动静态资源公共库 -->
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 引入字节静态资源库字体 -->
+    <link href="https://cdn.staticfile.org/inter-ui/3.19.3/inter.min.css" rel="stylesheet">
     <style>
         /* 全局样式 */
         body {
@@ -213,35 +213,35 @@
     <div id="tab1" class="tab active">
         <div class="quick-links">
             <a href="https://github.com" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 GitHub
             </a>
             <a href="https://www.google.com" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 Google
             </a>
             <a href="https://www.baidu.com" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 百度
             </a>
             <a href="https://www.bing.com" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 Bing
             </a>
             <a href="https://www.youtube.com" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 YouTube
             </a>
             <a href="https://www.twitter.com" class="quick-link" target="_blank"> 
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 Twitter
             </a>
             <a href="https://www.wikipedia.org" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 维基百科
             </a>
             <a href="https://www.coursera.org" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 Coursera
             </a>
         </div>
@@ -250,11 +250,11 @@
     <div id="tab2" class="tab">
         <div class="quick-links">
             <a href="https://www.youtube.com" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 YouTube
             </a>
             <a href="https://www.twitter.com" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 Twitter
             </a>
         </div>
@@ -263,11 +263,11 @@
     <div id="tab3" class="tab">
         <div class="quick-links">
             <a href="https://www.wikipedia.org" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 维基百科
             </a>
             <a href="https://www.coursera.org" class="quick-link" target="_blank"> 
-                <img class="favicon" alt="icon">
+                <img class="favicon" alt="icon" src="favicon.ico">
                 Coursera
             </a>
         </div>
@@ -276,7 +276,7 @@
     <div id="tab4" class="tab">
         <div class="quick-links">
             <a href="games/jgch.html" class="quick-link" target="_blank">
-                <img class="favicon" alt="icon">  
+                <img class="favicon" alt="icon" src="favicon.ico">  
                 击鼓传花
             </a> 
         </div> 
@@ -285,22 +285,47 @@
     <script>
         // 动态加载网站图标
         function loadFavicons() {
-            document.querySelectorAll('.quick-link').forEach(link => {
-                const url = new URL(link.href);
-                const domain = url.hostname;
-                const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-                const img = link.querySelector('img');
-                img.src = faviconUrl;
-
-                // 添加加载失败时的处理
-                img.onerror = () => {
-                    //img.style.display = 'none'; // 隐藏无法加载的图标
-					const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+			document.querySelectorAll('.quick-link').forEach(link => {
+				try {
+					// 获取已有的图片元素
 					const img = link.querySelector('img');
-					img.src = faviconUrl;
-                };
-            });
-        }
+					if (!img) {
+						console.warn('未找到图片元素，跳过处理:', link);
+						return;
+					}
+					// 保存初始的本地图标（始终作为加载过程中的显示内容）
+					const originalSrc = img.src;
+					// 解析链接获取域名
+					const url = new URL(link.href);
+					const domain = url.hostname;
+					// 1. 预加载网站自身图标（用临时对象，不影响当前显示）
+					const selfIcon = new Image();
+					selfIcon.src = `https://${domain}/favicon.ico`;
+					// 自身图标加载成功：替换显示
+					selfIcon.onload = function() {
+						img.src = selfIcon.src; // 仅在成功后才替换
+					};
+					// 自身图标加载失败：尝试谷歌图标
+					selfIcon.onerror = function() {
+						// 2. 预加载谷歌图标（用临时对象）
+						const googleIcon = new Image();
+						googleIcon.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+						// 谷歌图标加载成功：替换显示
+						googleIcon.onload = function() {
+							img.src = googleIcon.src; // 仅在成功后才替换
+						};
+						// 谷歌图标也失败：保持初始本地图标（不做任何操作）
+						googleIcon.onerror = function() {
+							console.warn(`所有图标加载失败，保持本地图标: ${domain}`);
+							// 无需修改src，因为始终没被替换过
+						};
+					};
+				} catch (err) {
+					console.warn(`处理链接时出错: ${link.href}`, err);
+					// 出错时保持原本地图标
+				}
+			});
+		}
 
         // 搜索功能
         const searchInput = document.getElementById('search-input');
