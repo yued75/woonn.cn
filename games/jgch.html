@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>击鼓传花</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#e63946',
+            secondary: '#457b9d',
+            accent: '#f1faee',
+            dark: '#1d3557',
+            light: '#f1faee'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .btn-bounce {
+        transition: transform 0.2s ease;
+      }
+      .btn-bounce:hover {
+        transform: translateY(-3px);
+      }
+      .btn-bounce:active {
+        transform: translateY(1px);
+      }
+      .pulse-animation {
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-accent to-light flex flex-col items-center justify-center p-4 font-sans text-dark overflow-hidden">
+  <!-- 页面容器 -->
+  <div class="max-w-md w-full mx-auto flex flex-col items-center justify-center space-y-8">
+    
+    <!-- 标题 -->
+    <div class="text-center">
+      <h1 class="text-[clamp(2rem,5vw,3rem)] font-bold text-primary text-shadow mb-2">击鼓传花</h1>
+      <p class="text-secondary text-[clamp(1rem,2vw,1.25rem)]">点击开始，音乐停止时即为游戏结束</p>
+    </div>
+    
+    <!-- 倒计时显示 -->
+    <div id="countdown" class="text-[clamp(3rem,10vw,6rem)] font-bold text-dark opacity-80 transition-all duration-500">
+      准备开始
+    </div>
+    
+    <!-- 装饰性花朵元素 -->
+    <div class="absolute top-1/4 left-1/4 w-16 h-16 md:w-24 md:h-24 text-primary/20 opacity-0 transition-opacity duration-1000" id="flower1">
+      <i class="fa fa-pagelines text-[4rem] md:text-[6rem]"></i>
+    </div>
+    <div class="absolute bottom-1/4 right-1/4 w-16 h-16 md:w-24 md:h-24 text-secondary/20 opacity-0 transition-opacity duration-1000" id="flower2">
+      <i class="fa fa-pagelines text-[4rem] md:text-[6rem]"></i>
+    </div>
+    
+    <!-- 控制按钮 -->
+    <button id="controlBtn" class="btn-bounce bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-full text-[clamp(1.25rem,3vw,1.5rem)] shadow-lg hover:shadow-xl transition-all duration-300 w-full max-w-xs flex items-center justify-center space-x-2">
+      <i class="fa fa-play"></i>
+      <span>开始</span>
+    </button>
+    
+    <!-- 隐藏的音频元素 -->
+    <audio id="gameMusic" loop>
+      <!-- 使用击鼓相关的音乐 -->
+      <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+     您的浏览器不支持音频播放
+    </audio>
+  </div>
+
+  <script>
+    // 获取DOM元素
+    const controlBtn = document.getElementById('controlBtn');
+    const countdownEl = document.getElementById('countdown');
+    const gameMusic = document.getElementById('gameMusic');
+    const flower1 = document.getElementById('flower1');
+    const flower2 = document.getElementById('flower2');
+    
+    // 状态变量
+    let isPlaying = false;
+    let countdownInterval;
+    let totalSeconds;
+    let remainingSeconds;
+	let min = 3;
+	let max = 20;
+    
+    // 点击按钮事件处理
+    controlBtn.addEventListener('click', toggleGame);
+    
+    // 切换游戏状态（开始/重来）
+    function toggleGame() {
+      if (isPlaying) {
+        // 重置游戏
+        resetGame();
+      } else {
+        // 开始游戏
+        startGame();
+      }
+    }
+    
+    // 开始游戏
+    function startGame() {
+      // 更改按钮状态
+      controlBtn.innerHTML = '<i class="fa fa-refresh"></i><span>重来</span>';
+      controlBtn.classList.remove('bg-primary');
+      controlBtn.classList.add('bg-secondary');
+      
+      // 显示装饰花朵
+      flower1.style.opacity = '1';
+      flower2.style.opacity = '1';
+      
+      // 播放音乐
+      gameMusic.currentTime = 0;
+      gameMusic.play().catch(error => {
+        console.log("播放音乐需要用户交互:", error);
+        // 有些浏览器需要用户交互才能播放音频
+        alert("请点击确定以允许播放音乐");
+        gameMusic.play();
+      });
+      
+      // 随机生成倒计时时间（5-20秒之间）
+      totalSeconds = Math.floor(Math.random() * (max - min + 1)) + min;
+      remainingSeconds = totalSeconds;
+      
+      // 显示初始倒计时
+      updateCountdownDisplay();
+      
+      // 添加脉冲动画
+      countdownEl.classList.add('pulse-animation');
+      
+      // 开始倒计时
+      countdownInterval = setInterval(() => {
+        remainingSeconds--;
+        updateCountdownDisplay();
+        
+        // 倒计时结束
+        if (remainingSeconds <= 0) {
+          resetGame();
+        }
+      }, 1000);
+      
+      isPlaying = true;
+    }
+    
+    // 重置游戏
+    function resetGame() {
+      // 停止音乐
+      gameMusic.pause();
+      
+      // 清除倒计时
+      clearInterval(countdownInterval);
+      
+      // 重置按钮
+      controlBtn.innerHTML = '<i class="fa fa-play"></i><span>开始</span>';
+      controlBtn.classList.remove('bg-secondary');
+      controlBtn.classList.add('bg-primary');
+      
+      // 重置倒计时显示
+      countdownEl.textContent = "停！";
+      countdownEl.classList.remove('pulse-animation', 'text-primary');
+      
+      // 隐藏装饰花朵
+      flower1.style.opacity = '0';
+      flower2.style.opacity = '0';
+      
+      isPlaying = false;
+    }
+    
+    // 更新倒计时显示
+    function updateCountdownDisplay() {
+      countdownEl.textContent = remainingSeconds;
+      
+      // 根据剩余时间改变颜色
+      if (remainingSeconds <= 3) {
+        countdownEl.classList.add('text-primary');
+      } else {
+        countdownEl.classList.remove('text-primary');
+      }
+    }
+    
+    // 添加页面载入动画
+    window.addEventListener('load', () => {
+      document.body.classList.add('opacity-100');
+      document.body.classList.remove('opacity-0');
+    });
+  </script>
+</body>
+</html>
