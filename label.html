@@ -294,7 +294,10 @@
 
                 // 添加加载失败时的处理
                 img.onerror = () => {
-                    img.style.display = 'none'; // 隐藏无法加载的图标
+                    //img.style.display = 'none'; // 隐藏无法加载的图标
+					const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+					const img = link.querySelector('img');
+					img.src = faviconUrl;
                 };
             });
         }
