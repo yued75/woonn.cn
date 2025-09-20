@@ -859,14 +859,10 @@
             const word = player.isSpy ? gameData.spyWord : gameData.normalWord;
             const role = player.isSpy ? '你是卧底' : '你是平民';
 
-            // 如果是自定义词语，不显示图片
-            if (gameData.customWords) {
-                elements.modalWordDisplay.innerHTML = `<span>${word}</span>`;
-            } else {
-                const imageUrl = getWordImage(word);
-                elements.modalWordDisplay.innerHTML = `<img src="${imageUrl}" alt="${word}" class="word-image mx-auto"><span>${word}</span>`;
-            }
-
+            // 显示词和图片
+			const imageUrl = getWordImage(word);
+			elements.modalWordDisplay.innerHTML = `<img src="${imageUrl}" alt="${word}" class="word-image mx-auto"><span>${word}</span>`;
+            
             elements.viewWordModal.classList.remove('hidden');
 
             // 清空输入框
@@ -966,14 +962,10 @@
             elements.transitionScreen.classList.add('hidden');
             elements.wordScreen.classList.remove('hidden');
 
-            // 如果是自定义词语，不显示图片
-            if (gameData.customWords) {
-                elements.wordDisplay.innerHTML = `<span>${word}</span>`;
-            } else {
-                const imageUrl = getWordImage(word);
-                elements.wordDisplay.innerHTML = `<img src="${imageUrl}" alt="${word}" class="word-image"><span>${word}</span>`;
-            }
-
+            // 显示词语和图片
+			const imageUrl = getWordImage(word);
+			elements.wordDisplay.innerHTML = `<img src="${imageUrl}" alt="${word}" class="word-image"><span>${word}</span>`;
+            
             // 显示密码 - 新增
             elements.playerPassword.textContent = player.password;
 
