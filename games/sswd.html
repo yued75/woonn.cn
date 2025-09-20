@@ -7,7 +7,7 @@
     <!-- 使用国内资源库 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    
+
     <!-- Tailwind 配置 -->
     <script>
         tailwind.config = {
@@ -32,45 +32,57 @@
             }
         }
     </script>
-    
+
     <style type="text/tailwindcss">
         @layer utilities {
             .text-shadow {
                 text-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
+
             .card-hover {
                 @apply transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1;
             }
+
             .btn-primary {
                 @apply bg-primary text-white font-medium py-2 px-6 rounded-lg shadow-md hover:bg-primary/90 active:bg-primary/80 transition-all duration-200;
             }
+
             .btn-secondary {
                 @apply bg-secondary text-white font-medium py-2 px-6 rounded-lg shadow-md hover:bg-secondary/90 active:bg-secondary/80 transition-all duration-200;
             }
+
             .btn-accent {
                 @apply bg-accent text-white font-medium py-2 px-6 rounded-lg shadow-md hover:bg-accent/90 active:bg-accent/80 transition-all duration-200;
             }
+
             .btn-danger {
                 @apply bg-danger text-white font-medium py-2 px-6 rounded-lg shadow-md hover:bg-danger/90 active:bg-danger/80 transition-all duration-200;
             }
+
             .btn-small {
                 @apply py-1 px-3 text-sm;
             }
+
             .input-field {
                 @apply border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200;
             }
+
             .slide-in {
                 animation: slideIn 0.5s ease forwards;
             }
+
             .fade-in {
                 animation: fadeIn 0.5s ease forwards;
             }
+
             .pulse {
                 animation: pulse 2s infinite;
             }
+
             .section-transition {
                 @apply transition-all duration-300 ease-in-out;
             }
+
             .word-image {
                 width: 100px;
                 height: 100px;
@@ -79,21 +91,41 @@
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
         }
-        
+
         @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
-        
+
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
     </style>
 </head>
@@ -101,14 +133,11 @@
     <!-- 顶部导航 -->
     <header class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
+            <button class="flex items-center space-x-2" id="sswdlogo">
                 <i class="fa fa-user-secret text-primary text-2xl"></i>
                 <h1 class="text-[clamp(1.25rem,3vw,1.75rem)] font-bold text-primary">谁是卧底</h1>
-            </div>
+            </button>
             <div class="flex items-center space-x-3">
-                <button id="statsBtn" class="btn-primary btn-small">
-                    <i class="fa fa-trophy mr-1"></i> 积分排行
-                </button>
                 <button id="restartBtn" class="btn-primary btn-small">
                     <i class="fa fa-refresh mr-1"></i> 重玩
                 </button>
@@ -130,10 +159,10 @@
                     通过描述找出隐藏在其中的卧底，或者作为卧底成功隐藏自己！
                 </p>
             </div>
-            
+
             <div class="bg-white rounded-xl shadow-card p-5 md:p-8 mb-6 md:mb-8 section-transition">
                 <h3 class="text-xl font-semibold mb-5 md:mb-6 text-center">游戏设置</h3>
-                
+
                 <div class="space-y-5 md:space-y-6">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
                         <label for="playerCount" class="text-gray-700 font-medium">玩家人数</label>
@@ -141,34 +170,34 @@
                             <button id="decreaseBtn" class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg transition-colors">
                                 <i class="fa fa-minus"></i>
                             </button>
-                            <input type="number" id="playerCount" min="3" max="16" value="6" 
-                                class="input-field w-full md:w-20 text-center" readonly>
+                            <input type="number" id="playerCount" min="3" max="16" value="6"
+                                   class="input-field w-full md:w-20 text-center" readonly>
                             <button id="increaseBtn" class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg transition-colors">
                                 <i class="fa fa-plus"></i>
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
                         <label for="spyCount" class="text-gray-700 font-medium">卧底人数</label>
                         <div class="flex items-center gap-3 md:gap-4 w-full md:w-auto">
                             <button id="decreaseSpyBtn" class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg transition-colors">
                                 <i class="fa fa-minus"></i>
                             </button>
-                            <input type="number" id="spyCount" min="1" max="4" value="1" 
-                                class="input-field w-full md:w-20 text-center" readonly>
+                            <input type="number" id="spyCount" min="1" max="4" value="1"
+                                   class="input-field w-full md:w-20 text-center" readonly>
                             <button id="increaseSpyBtn" class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg transition-colors">
                                 <i class="fa fa-plus"></i>
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- 自定义昵称选项 -->
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="useCustomNames" class="h-5 w-5 text-primary rounded">
                         <label for="useCustomNames" class="text-gray-700">使用自定义昵称</label>
                     </div>
-                    
+
                     <!-- 玩家昵称输入区域 -->
                     <div id="playerNamesContainer" class="space-y-3 hidden">
                         <label class="block text-gray-700 font-medium">玩家昵称</label>
@@ -176,12 +205,12 @@
                             <!-- 玩家昵称输入框将动态生成 -->
                         </div>
                     </div>
-                    
+
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="useCustomWords" class="h-5 w-5 text-primary rounded">
                         <label for="useCustomWords" class="text-gray-700">使用自定义词语</label>
                     </div>
-                    
+
                     <div id="customWordsContainer" class="hidden space-y-3 md:space-y-4">
                         <div>
                             <label for="normalWord" class="block text-gray-700 font-medium mb-1">平民词</label>
@@ -194,7 +223,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- 开始游戏按钮 -->
             <div class="text-center mb-6 md:mb-8">
                 <button id="startGameBtn" class="btn-primary text-lg">
@@ -202,19 +231,43 @@
                 </button>
             </div>
         </section>
-        
+
+        <!-- 过渡页面 - 新增 -->
+        <section id="transitionScreen" class="hidden fade-in">
+            <div class="text-center mb-6 md:mb-8">
+                <h2 class="text-2xl font-bold mb-2">玩家: <span id="transitionPlayerName" class="text-primary"></span></h2>
+                <p class="text-gray-600">请准备好查看你的词语</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center mb-6 md:mb-8">
+                <div class="text-4xl font-bold text-gray-300 mb-4">???</div>
+                <p class="text-gray-500">点击下方按钮查看你的词语</p>
+            </div>
+
+            <div class="flex justify-center">
+                <button id="viewWordBtn" class="btn-primary text-lg">
+                    查看词语 <i class="fa fa-eye ml-2"></i>
+                </button>
+            </div>
+        </section>
+
         <!-- 词语展示界面 -->
         <section id="wordScreen" class="hidden fade-in">
             <div class="text-center mb-6 md:mb-8">
                 <h2 class="text-2xl font-bold mb-2">当前玩家: <span id="currentPlayerName" class="text-primary"></span></h2>
-                <p class="text-gray-600">记住你的词语，不要让别人知道！</p>
+                <p class="text-gray-600">记住你的词语和密码，不要让别人知道！</p>
             </div>
-            
+
             <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center mb-6 md:mb-8 pulse">
                 <div id="wordDisplay" class="text-[clamp(2rem,5vw,3rem)] font-bold text-primary flex items-center justify-center gap-4 mb-4"></div>
-                <div id="roleDisplay" class="mt-3 md:mt-4 text-lg font-medium text-gray-600"></div>
+
+                <!-- 密码显示区域 - 新增 -->
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <p class="text-gray-700 mb-2">你的查看密码: <span id="playerPassword" class="font-bold text-accent text-xl"></span></p>
+                    <p class="text-sm text-gray-500">在讨论和投票环节可以使用此密码查看自己的词语</p>
+                </div>
             </div>
-            
+
             <div class="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
                 <button id="nextPlayerBtn" class="btn-primary">
                     下一位玩家 <i class="fa fa-arrow-right ml-2"></i>
@@ -224,20 +277,30 @@
                 </button>
             </div>
         </section>
-        
+
         <!-- 讨论环节界面 -->
         <section id="discussionScreen" class="hidden fade-in">
             <div class="text-center mb-6 md:mb-8">
                 <h2 class="text-2xl font-bold mb-2">讨论环节</h2>
                 <p class="text-gray-600">轮流描述自己的词语，不要太明显哦！</p>
             </div>
-            
+
             <div class="bg-white rounded-xl shadow-card p-5 md:p-6 mb-6 md:mb-8">
                 <div class="flex justify-between items-center mb-3 md:mb-4">
                     <h3 class="font-semibold">当前轮次: <span id="roundNumber">1</span></h3>
                 </div>
-                
+
                 <div class="space-y-3 md:space-y-4">
+                    <!-- 密码查看区域 - 新增 -->
+                    <div class="bg-primary/5 p-3 md:p-4 rounded-lg border border-primary/20">
+                        <h4 class="font-medium mb-2 text-primary">查看我的词语</h4>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="discussionPasswordInput" placeholder="输入你的密码" class="input-field flex-1">
+                            <button id="viewWordDiscussionBtn" class="btn-small btn-primary">查看</button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">每位玩家只能查看一次自己的词语</p>
+                    </div>
+
                     <div class="bg-gray-50 p-3 md:p-4 rounded-lg">
                         <h4 class="font-medium mb-2">描述提示</h4>
                         <ul class="list-disc list-inside text-gray-600 space-y-1 text-sm md:text-base">
@@ -248,57 +311,67 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="flex justify-center">
                 <button id="endDiscussionBtn" class="btn-accent text-lg">
                     结束讨论 <i class="fa fa-check ml-2"></i>
                 </button>
             </div>
         </section>
-        
+
         <!-- 淘汰环节界面 -->
         <section id="eliminationScreen" class="hidden fade-in">
             <div class="text-center mb-6 md:mb-8">
                 <h2 class="text-2xl font-bold mb-2">淘汰环节</h2>
                 <p class="text-gray-600">通过讨论后，决定淘汰哪位玩家</p>
             </div>
-            
+
+            <!-- 密码查看区域 - 新增 -->
+            <div class="bg-primary/5 p-3 md:p-4 rounded-lg border border-primary/20 mb-4">
+                <h4 class="font-medium mb-2 text-primary">查看我的词语</h4>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="eliminationPasswordInput" placeholder="输入你的密码" class="input-field flex-1">
+                    <button id="viewWordEliminationBtn" class="btn-small btn-primary">查看</button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">每位玩家只能查看一次自己的词语</p>
+            </div>
+
             <div id="playersList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
                 <!-- 玩家列表将通过JS动态生成 -->
             </div>
-            
+
             <div class="flex justify-center">
                 <button id="confirmEliminationBtn" class="btn-danger text-lg" disabled>
                     确认淘汰 <i class="fa fa-check ml-2"></i>
                 </button>
             </div>
         </section>
-        
+
         <!-- 淘汰结果界面 -->
         <section id="eliminationResultScreen" class="hidden fade-in">
             <div class="text-center mb-6 md:mb-8">
                 <h2 class="text-2xl font-bold mb-2">淘汰结果</h2>
             </div>
-            
+
             <div class="bg-white rounded-xl shadow-card p-5 md:p-6 mb-6 md:mb-8 text-center">
                 <div id="eliminatedPlayer" class="text-xl font-bold mb-3 md:mb-4"></div>
                 <div id="eliminationMessage" class="text-gray-700"></div>
             </div>
-            
+
             <div class="flex justify-center">
                 <button id="continueGameBtn" class="btn-primary text-lg">
                     继续游戏 <i class="fa fa-refresh ml-2"></i>
                 </button>
             </div>
         </section>
-        
+
         <!-- 游戏结束界面 -->
         <section id="endScreen" class="hidden fade-in">
             <div class="text-center mb-6 md:mb-8">
                 <h2 class="text-2xl font-bold mb-2">游戏结束</h2>
                 <p class="text-gray-600" id="gameWinnerText"></p>
             </div>
-            
+
             <div class="bg-white rounded-xl shadow-card p-5 md:p-6 mb-6 md:mb-8">
                 <h3 class="text-xl font-semibold mb-3 md:mb-4 text-center">词语揭晓</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
@@ -311,14 +384,14 @@
                         <p id="revealSpyWord" class="text-xl font-bold text-danger flex items-center justify-center gap-4"></p>
                     </div>
                 </div>
-                
+
                 <div class="mt-5 md:mt-6">
                     <h4 class="font-semibold mb-2 md:mb-3">卧底玩家</h4>
                     <div id="revealSpies" class="flex flex-wrap gap-2 justify-center">
                         <!-- 卧底玩家将通过JS动态生成 -->
                     </div>
                 </div>
-                
+
                 <div class="mt-5 md:mt-6 pt-4 border-t border-gray-100">
                     <h4 class="font-semibold mb-2 md:mb-3">本局胜者</h4>
                     <div id="roundWinners" class="flex flex-wrap gap-2 justify-center">
@@ -326,7 +399,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
                 <button id="restartGameBtn" class="btn-primary">
                     再来一局 <i class="fa fa-repeat ml-2"></i>
@@ -337,7 +410,27 @@
             </div>
         </section>
     </main>
-    
+
+    <!-- 查看词语模态框 - 新增 -->
+    <div id="viewWordModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden fade-in">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto m-4">
+            <div class="p-5 md:p-6 text-center">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">你的词语</h3>
+                    <button id="closeViewWordBtn" class="text-gray-500 hover:text-gray-700 p-1">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+
+                <div id="modalWordDisplay" class="text-3xl font-bold text-primary my-6"></div>
+                
+                <button id="confirmViewWordBtn" class="btn-primary">
+                    我已记住 <i class="fa fa-check ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 帮助模态框 -->
     <div id="helpModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden fade-in">
         <div class="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto m-4">
@@ -348,13 +441,13 @@
                         <i class="fa fa-times"></i>
                     </button>
                 </div>
-                
+
                 <div class="space-y-3 md:space-y-4 text-gray-700 text-sm md:text-base">
                     <div>
                         <h4 class="font-semibold text-primary mb-1">基本规则</h4>
                         <p>游戏中玩家分为两种身份：平民和卧底。平民得到相同的词语，卧底得到不同但相关的词语。</p>
                     </div>
-                    
+
                     <div>
                         <h4 class="font-semibold text-primary mb-1">游戏流程</h4>
                         <ol class="list-decimal list-inside space-y-1">
@@ -364,7 +457,7 @@
                             <li>重复以上步骤，直到分出胜负</li>
                         </ol>
                     </div>
-                    
+
                     <div>
                         <h4 class="font-semibold text-primary mb-1">胜负判定</h4>
                         <ul class="list-disc list-inside space-y-1">
@@ -372,42 +465,11 @@
                             <li>如果场上平民数量与卧底数量相同，则卧底获胜</li>
                         </ul>
                     </div>
-                    
-                    <div>
-                        <h4 class="font-semibold text-primary mb-1">积分规则</h4>
-                        <p>每局游戏结束后，获胜方的每位玩家将获得1分，失败方的每位玩家将扣除1分，积分会自动累计并保存。</p>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- 积分榜模态框 -->
-    <div id="statsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden fade-in">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto m-4">
-            <div class="p-5 md:p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold flex items-center">
-                        <i class="fa fa-trophy mr-2 text-accent"></i> 玩家积分排行
-                    </h3>
-                    <button id="closeStatsBtn" class="text-gray-500 hover:text-gray-700 p-1">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
-                
-                <div id="playerStats" class="space-y-3">
-                    <!-- 玩家积分将动态生成 -->
-                </div>
-                
-                <div class="mt-5 pt-4 border-t border-gray-100 flex justify-end">
-                    <button id="resetStatsBtn" class="text-sm text-gray-500 hover:text-danger transition-colors flex items-center">
-                        <i class="fa fa-trash-o mr-1"></i> 重置所有积分
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
+
     <script>
         // 词语与对应图片的映射关系，使用更精准匹配的图片
         const wordImages = {
@@ -448,8 +510,8 @@
             '学校': 'sswdimg/学校.png',
             '医院': 'sswdimg/医院.png'
         };
-        
-        // 初始化游戏数据，确保积分默认为0
+
+        // 初始化游戏数据
         let gameData = {
             playerCount: 6,
             spyCount: 1,
@@ -462,8 +524,6 @@
             spyWord: '',
             customWords: false,
             useCustomNames: false,
-            // 玩家统计数据，确保默认是0分
-            playerStats: {},
             wordPairs: [
                 { normal: '奶茶', spy: '咖啡' },
                 { normal: '火锅', spy: '烧烤' },
@@ -485,35 +545,13 @@
                 { normal: '学校', spy: '医院' }
             ]
         };
-        
-        // 从本地存储加载数据，如果没有则保持默认
-        function loadGameData() {
-            const savedStats = localStorage.getItem('spyGamePlayerStats');
-            if (savedStats) {
-                try {
-                    const parsedStats = JSON.parse(savedStats);
-                    // 确保所有加载的玩家都有积分属性，默认为0
-                    Object.keys(parsedStats).forEach(name => {
-                        if (parsedStats[name] === undefined || parsedStats[name].points === undefined) {
-                            parsedStats[name] = { points: 0 };
-                        }
-                    });
-                    gameData.playerStats = parsedStats;
-                } catch (e) {
-                    console.error('Failed to parse saved stats:', e);
-                    gameData.playerStats = {}; // 解析失败时重置
-                }
-            } else {
-                gameData.playerStats = {};
-            }
-        }
-        
+
         // DOM元素
         const elements = {
             // 通用按钮
             restartBtn: document.getElementById('restartBtn'),
-            statsBtn: document.getElementById('statsBtn'),
-            
+            sswdlogo: document.getElementById('sswdlogo'),
+
             // 开始界面
             startScreen: document.getElementById('startScreen'),
             playerCount: document.getElementById('playerCount'),
@@ -530,31 +568,40 @@
             normalWord: document.getElementById('normalWord'),
             spyWord: document.getElementById('spyWord'),
             startGameBtn: document.getElementById('startGameBtn'),
-            
+
+            // 过渡界面 - 新增
+            transitionScreen: document.getElementById('transitionScreen'),
+            transitionPlayerName: document.getElementById('transitionPlayerName'),
+            viewWordBtn: document.getElementById('viewWordBtn'),
+
             // 词语展示界面
             wordScreen: document.getElementById('wordScreen'),
             wordDisplay: document.getElementById('wordDisplay'),
-            roleDisplay: document.getElementById('roleDisplay'),
+            playerPassword: document.getElementById('playerPassword'), // 新增
             nextPlayerBtn: document.getElementById('nextPlayerBtn'),
             eliminationBtn: document.getElementById('eliminationBtn'),
             currentPlayerName: document.getElementById('currentPlayerName'),
-            
+
             // 讨论界面
             discussionScreen: document.getElementById('discussionScreen'),
             roundNumber: document.getElementById('roundNumber'),
             endDiscussionBtn: document.getElementById('endDiscussionBtn'),
-            
+            discussionPasswordInput: document.getElementById('discussionPasswordInput'), // 新增
+            viewWordDiscussionBtn: document.getElementById('viewWordDiscussionBtn'), // 新增
+
             // 淘汰环节界面
             eliminationScreen: document.getElementById('eliminationScreen'),
             playersList: document.getElementById('playersList'),
             confirmEliminationBtn: document.getElementById('confirmEliminationBtn'),
-            
+            eliminationPasswordInput: document.getElementById('eliminationPasswordInput'), // 新增
+            viewWordEliminationBtn: document.getElementById('viewWordEliminationBtn'), // 新增
+
             // 淘汰结果界面
             eliminationResultScreen: document.getElementById('eliminationResultScreen'),
             eliminatedPlayer: document.getElementById('eliminatedPlayer'),
             eliminationMessage: document.getElementById('eliminationMessage'),
             continueGameBtn: document.getElementById('continueGameBtn'),
-            
+
             // 游戏结束界面
             endScreen: document.getElementById('endScreen'),
             gameWinnerText: document.getElementById('gameWinnerText'),
@@ -564,20 +611,20 @@
             roundWinners: document.getElementById('roundWinners'),
             restartGameBtn: document.getElementById('restartGameBtn'),
             backToStartBtn: document.getElementById('backToStartBtn'),
-            
+
+            // 查看词语模态框 - 新增
+            viewWordModal: document.getElementById('viewWordModal'),
+            modalWordDisplay: document.getElementById('modalWordDisplay'),
+            closeViewWordBtn: document.getElementById('closeViewWordBtn'),
+            confirmViewWordBtn: document.getElementById('confirmViewWordBtn'),
+
             // 帮助模态框
             helpBtn: document.getElementById('helpBtn'),
             helpModal: document.getElementById('helpModal'),
             closeHelpBtn: document.getElementById('closeHelpBtn'),
-            
-            // 积分榜模态框
-            statsModal: document.getElementById('statsModal'),
-            playerStats: document.getElementById('playerStats'),
-            closeStatsBtn: document.getElementById('closeStatsBtn'),
-            resetStatsBtn: document.getElementById('resetStatsBtn')
         };
-        
-        // 初始化事件监听，确保按钮功能正常
+
+        // 初始化事件监听
         function initEventListeners() {
             // 玩家数量调整
             elements.decreaseBtn.addEventListener('click', () => {
@@ -588,7 +635,7 @@
                     generateNameInputs();
                 }
             });
-            
+
             elements.increaseBtn.addEventListener('click', () => {
                 let count = parseInt(elements.playerCount.value);
                 if (count < 16) {
@@ -597,7 +644,7 @@
                     generateNameInputs();
                 }
             });
-            
+
             // 卧底数量调整
             elements.decreaseSpyBtn.addEventListener('click', () => {
                 let count = parseInt(elements.spyCount.value);
@@ -605,7 +652,7 @@
                     elements.spyCount.value = count - 1;
                 }
             });
-            
+
             elements.increaseSpyBtn.addEventListener('click', () => {
                 let count = parseInt(elements.spyCount.value);
                 let maxSpy = Math.min(4, Math.floor(parseInt(elements.playerCount.value) / 3));
@@ -613,7 +660,7 @@
                     elements.spyCount.value = count + 1;
                 }
             });
-            
+
             // 自定义词语切换
             elements.useCustomWords.addEventListener('change', () => {
                 if (elements.useCustomWords.checked) {
@@ -622,7 +669,7 @@
                     elements.customWordsContainer.classList.add('hidden');
                 }
             });
-            
+
             // 自定义昵称切换
             elements.useCustomNames.addEventListener('change', () => {
                 gameData.useCustomNames = elements.useCustomNames.checked;
@@ -633,224 +680,203 @@
                     elements.playerNamesContainer.classList.add('hidden');
                 }
             });
-            
-            // 积分榜模态框控制
-            elements.statsBtn.addEventListener('click', () => {
-                elements.statsModal.classList.remove('hidden');
-                updatePlayerStatsDisplay();
-            });
-            
-            elements.closeStatsBtn.addEventListener('click', () => {
-                elements.statsModal.classList.add('hidden');
-            });
-            
-            // 点击模态框外部关闭
-            elements.statsModal.addEventListener('click', (e) => {
-                if (e.target === elements.statsModal) {
-                    elements.statsModal.classList.add('hidden');
-                }
-            });
-            
-            // 重置战绩按钮 - 修复功能
-            elements.resetStatsBtn.addEventListener('click', () => {
-                if (confirm('确定要重置所有玩家的积分吗？此操作不可恢复。')) {
-                    gameData.playerStats = {}; // 清空所有积分
-                    localStorage.setItem('spyGamePlayerStats', JSON.stringify(gameData.playerStats));
-                    updatePlayerStatsDisplay(); // 立即更新显示
-                }
-            });
-            
+
             // 开始游戏
             elements.startGameBtn.addEventListener('click', startGame);
-            
+
+            // 过渡界面按钮 - 新增
+            elements.viewWordBtn.addEventListener('click', showCurrentPlayerWord);
+
             // 词语展示界面按钮
-            elements.nextPlayerBtn.addEventListener('click', showNextPlayerWord);
+            elements.nextPlayerBtn.addEventListener('click', showNextPlayerTransition);
             elements.eliminationBtn.addEventListener('click', goToElimination);
-            
+
             // 讨论界面按钮
             elements.endDiscussionBtn.addEventListener('click', goToElimination);
-            
+
+            // 讨论环节查看词语按钮 - 新增
+            elements.viewWordDiscussionBtn.addEventListener('click', () => {
+                const password = elements.discussionPasswordInput.value.trim();
+                showWordByPassword(password, 'discussion');
+            });
+
+            // 淘汰环节查看词语按钮 - 新增
+            elements.viewWordEliminationBtn.addEventListener('click', () => {
+                const password = elements.eliminationPasswordInput.value.trim();
+                showWordByPassword(password, 'elimination');
+            });
+
             // 淘汰环节按钮
             elements.confirmEliminationBtn.addEventListener('click', confirmElimination);
-            
+
             // 结果界面按钮
             elements.continueGameBtn.addEventListener('click', continueGame);
-            
+
             // 结束界面按钮
             elements.restartGameBtn.addEventListener('click', restartGame);
-            elements.backToStartBtn.addEventListener('click', backToStart);
-            
-            // 随时重玩按钮 - 修复功能
-            elements.restartBtn.addEventListener('click', () => {
-                if (confirm('确定要重新开始游戏吗？当前进度将会丢失。')) {
-                    backToStart(); // 返回到开始界面
-                }
+
+            //返回首页按钮
+            elements.backToStartBtn.addEventListener('click', () => {
+                backToStart(); // 返回到开始界面
             });
-            
+
+            // 随时重玩按钮
+            elements.restartBtn.addEventListener('click', () => {
+                backToStart(); // 返回到开始界面
+            });
+
+            // logo按钮
+            elements.sswdlogo.addEventListener('click', () => {
+                backToStart(); // 返回到开始界面
+            });
+
             // 帮助按钮
             elements.helpBtn.addEventListener('click', () => {
                 elements.helpModal.classList.remove('hidden');
             });
-            
+
             elements.closeHelpBtn.addEventListener('click', () => {
                 elements.helpModal.classList.add('hidden');
             });
-            
+
             // 点击模态框外部关闭
             elements.helpModal.addEventListener('click', (e) => {
                 if (e.target === elements.helpModal) {
                     elements.helpModal.classList.add('hidden');
                 }
             });
+
+            // 查看词语模态框按钮 - 新增
+            elements.closeViewWordBtn.addEventListener('click', () => {
+                elements.viewWordModal.classList.add('hidden');
+            });
+
+            elements.confirmViewWordBtn.addEventListener('click', () => {
+                elements.viewWordModal.classList.add('hidden');
+            });
+
+            // 点击模态框外部关闭
+            elements.viewWordModal.addEventListener('click', (e) => {
+                if (e.target === elements.viewWordModal) {
+                    elements.viewWordModal.classList.add('hidden');
+                }
+            });
         }
-        
+
         // 更新最大卧底数量
         function updateMaxSpyCount() {
             let playerCount = parseInt(elements.playerCount.value);
             let maxSpy = Math.min(4, Math.floor(playerCount / 3));
             let currentSpy = parseInt(elements.spyCount.value);
-            
+
             if (currentSpy > maxSpy) {
                 elements.spyCount.value = maxSpy;
             }
         }
-        
+
         // 生成玩家昵称输入框
         function generateNameInputs() {
             const count = parseInt(elements.playerCount.value);
             elements.nameInputs.innerHTML = '';
-            
+
             for (let i = 0; i < count; i++) {
                 const inputGroup = document.createElement('div');
                 inputGroup.className = 'flex flex-col';
-                
+
                 const label = document.createElement('label');
-                label.htmlFor = `playerName${i+1}`;
+                label.htmlFor = `playerName${i + 1}`;
                 label.className = 'text-gray-700 text-sm mb-1';
-                label.textContent = `玩家 ${i+1} 昵称`;
-                
+                label.textContent = `玩家 ${i + 1} 昵称`;
+
                 const input = document.createElement('input');
                 input.type = 'text';
-                input.id = `playerName${i+1}`;
+                input.id = `playerName${i + 1}`;
                 input.className = 'input-field';
-                input.placeholder = `输入玩家 ${i+1} 的昵称`;
-                
+                input.placeholder = `输入玩家 ${i + 1} 的昵称`;
+
                 // 如果有保存的昵称，自动填充
-                const savedName = localStorage.getItem(`spyGamePlayer${i+1}Name`);
+                const savedName = localStorage.getItem(`spyGamePlayer${i + 1}Name`);
                 if (savedName) {
                     input.value = savedName;
                 } else {
-                    input.value = `玩家 ${i+1}`;
+                    input.value = `玩家 ${i + 1}`;
                 }
-                
+
                 // 保存昵称到localStorage
                 input.addEventListener('change', () => {
-                    localStorage.setItem(`spyGamePlayer${i+1}Name`, input.value);
-                    updatePlayerStatsDisplay();
+                    localStorage.setItem(`spyGamePlayer${i + 1}Name`, input.value);
                 });
-                
+
                 inputGroup.appendChild(label);
                 inputGroup.appendChild(input);
                 elements.nameInputs.appendChild(inputGroup);
             }
         }
-        
+
         // 获取词语对应的图片
         function getWordImage(word) {
             // 检查是否有直接匹配的图片
             if (wordImages[word]) {
                 return wordImages[word];
             }
-            
+
             // 没有匹配时使用默认图片
             return '../favicon.ico';
         }
-        
-        // 更新玩家战绩显示，确保分数默认显示0
-        function updatePlayerStatsDisplay() {
-            elements.playerStats.innerHTML = '';
-            
-            // 收集所有玩家名称
-            let playerNames = [];
-            
-            if (gameData.useCustomNames) {
-                // 自定义昵称玩家
-                const count = parseInt(elements.playerCount.value);
-                for (let i = 0; i < count; i++) {
-                    const nameInput = document.getElementById(`playerName${i+1}`);
-                    const playerName = nameInput ? nameInput.value : `玩家 ${i+1}`;
-                    playerNames.push(playerName);
-                }
-            } else {
-                // 默认玩家
-                const count = parseInt(elements.playerCount.value);
-                for (let i = 0; i < count; i++) {
-                    playerNames.push(`玩家 ${i+1}`);
-                }
-            }
-            
-            // 添加所有游戏过的玩家
-            Object.keys(gameData.playerStats).forEach(name => {
-                if (!playerNames.includes(name)) {
-                    playerNames.push(name);
-                }
-            });
-            
-            // 确保所有玩家都有积分记录，默认为0
-            playerNames.forEach(name => {
-                if (!gameData.playerStats[name]) {
-                    gameData.playerStats[name] = {
-                        points: 0
-                    };
-                }
-            });
-            
-            // 按积分排序
-            playerNames.sort((a, b) => {
-                return (gameData.playerStats[b].points || 0) - (gameData.playerStats[a].points || 0);
-            });
-            
-            // 创建积分显示元素
-            playerNames.forEach((name, index) => {
-                const stats = gameData.playerStats[name] || { points: 0 };
-                const points = stats.points !== undefined ? stats.points : 0;
-                
-                const statElement = document.createElement('div');
-                statElement.className = `flex items-center justify-between p-3 rounded-lg ${index < 3 ? 'bg-primary/5' : 'bg-gray-50'}`;
-                
-                // 前三名添加奖牌图标
-                let rankIcon = '';
-                if (index === 0) {
-                    rankIcon = '<i class="fa fa-trophy text-yellow-500 mr-2"></i>';
-                } else if (index === 1) {
-                    rankIcon = '<i class="fa fa-trophy text-gray-400 mr-2"></i>';
-                } else if (index === 2) {
-                    rankIcon = '<i class="fa fa-trophy text-yellow-700 mr-2"></i>';
-                } else {
-                    rankIcon = `<span class="text-gray-500 w-6 inline-block text-center">${index+1}</span>`;
-                }
-                
-                // 根据积分正负设置不同颜色
-                const pointsColor = points >= 0 ? 'text-accent' : 'text-danger';
-                
-                statElement.innerHTML = `
-                    <div class="flex items-center">
-                        ${rankIcon}
-                        <span class="font-medium">${name}</span>
-                    </div>
-                    <div class="flex items-center bg-white px-3 py-1 rounded-full shadow-sm ${pointsColor}">
-                        <i class="fa fa-star mr-1"></i>
-                        <span class="font-bold">${points}</span>
-                    </div>
-                `;
-                
-                elements.playerStats.appendChild(statElement);
-            });
-            
-            // 保存统计数据到localStorage
-            localStorage.setItem('spyGamePlayerStats', JSON.stringify(gameData.playerStats));
+
+        // 生成唯一的3位数密码
+        function generateUniquePassword() {
+            let password;
+            const usedPasswords = gameData.players.map(p => p.password).filter(p => p);
+
+            do {
+                password = Math.floor(100 + Math.random() * 900).toString(); // 生成100-999之间的随机数
+            } while (usedPasswords.includes(password));
+
+            return password;
         }
-        
+
+        // 通过密码查看词语 - 新增
+        function showWordByPassword(password, context) {
+            // 找到匹配密码的玩家
+            const player = gameData.players.find(p => p.password === password);
+
+            if (!player) {
+                alert('密码错误，请重新输入');
+                return;
+            }
+
+            // 检查是否已经查看过
+            if (player.hasViewedWord) {
+                alert('你已经查看过自己的词语了');
+                return;
+            }
+
+            // 标记为已查看
+            player.hasViewedWord = true;
+
+            // 显示词语模态框
+            const word = player.isSpy ? gameData.spyWord : gameData.normalWord;
+            const role = player.isSpy ? '你是卧底' : '你是平民';
+
+            // 如果是自定义词语，不显示图片
+            if (gameData.customWords) {
+                elements.modalWordDisplay.innerHTML = `<span>${word}</span>`;
+            } else {
+                const imageUrl = getWordImage(word);
+                elements.modalWordDisplay.innerHTML = `<img src="${imageUrl}" alt="${word}" class="word-image mx-auto"><span>${word}</span>`;
+            }
+
+            elements.viewWordModal.classList.remove('hidden');
+
+            // 清空输入框
+            if (context === 'discussion') {
+                elements.discussionPasswordInput.value = '';
+            } else if (context === 'elimination') {
+                elements.eliminationPasswordInput.value = '';
+            }
+        }
+
         // 开始游戏
         function startGame() {
             // 收集游戏设置
@@ -860,21 +886,21 @@
             gameData.round = 1;
             gameData.eliminatedPlayers = [];
             gameData.selectedElimination = null;
-            
+
             // 收集玩家昵称
             const playerNames = [];
             if (gameData.useCustomNames) {
                 for (let i = 0; i < gameData.playerCount; i++) {
-                    const nameInput = document.getElementById(`playerName${i+1}`);
-                    playerNames.push(nameInput.value || `玩家 ${i+1}`);
+                    const nameInput = document.getElementById(`playerName${i + 1}`);
+                    playerNames.push(nameInput.value || `玩家 ${i + 1}`);
                 }
             } else {
                 // 使用默认昵称
                 for (let i = 0; i < gameData.playerCount; i++) {
-                    playerNames.push(`玩家 ${i+1}`);
+                    playerNames.push(`玩家 ${i + 1}`);
                 }
             }
-            
+
             // 处理词语
             gameData.customWords = elements.useCustomWords.checked;
             if (gameData.customWords && elements.normalWord.value && elements.spyWord.value) {
@@ -886,39 +912,34 @@
                 gameData.normalWord = gameData.wordPairs[randomIndex].normal;
                 gameData.spyWord = gameData.wordPairs[randomIndex].spy;
             }
-            
+
             // 初始化玩家
             initPlayers(playerNames);
-            
-            // 显示第一个玩家的词语
-            showCurrentPlayerWord();
-            
-            // 切换到词语展示界面
+
+            // 显示第一个玩家的过渡页面
+            showPlayerTransition();
+
+            // 切换到过渡界面
             elements.startScreen.classList.add('hidden');
-            elements.wordScreen.classList.remove('hidden');
+            elements.transitionScreen.classList.remove('hidden');
         }
-        
+
         // 初始化玩家
         function initPlayers(names) {
             gameData.players = [];
-            
+
             // 创建玩家数组
             for (let i = 0; i < gameData.playerCount; i++) {
                 gameData.players.push({
                     id: i + 1,
                     name: names[i],
                     isSpy: false,
-                    isEliminated: false
+                    isEliminated: false,
+                    password: generateUniquePassword(), // 新增：为每个玩家生成唯一密码
+                    hasViewedWord: false // 新增：标记是否已查看词语
                 });
-                
-                // 初始化玩家积分数据（如果不存在），确保默认是0
-                if (!gameData.playerStats[names[i]]) {
-                    gameData.playerStats[names[i]] = {
-                        points: 0
-                    };
-                }
             }
-            
+
             // 随机选择卧底
             let spiesAssigned = 0;
             while (spiesAssigned < gameData.spyCount) {
@@ -928,16 +949,23 @@
                     spiesAssigned++;
                 }
             }
-            
-            // 保存统计数据
-            localStorage.setItem('spyGamePlayerStats', JSON.stringify(gameData.playerStats));
         }
-        
+
+        // 显示玩家过渡页面 - 新增
+        function showPlayerTransition() {
+            const player = gameData.players[gameData.currentPlayer];
+            elements.transitionPlayerName.textContent = player.name;
+        }
+
         // 显示当前玩家的词语，包含实际物品图片
         function showCurrentPlayerWord() {
             const player = gameData.players[gameData.currentPlayer];
             const word = player.isSpy ? gameData.spyWord : gameData.normalWord;
-            
+
+            // 切换到词语展示界面
+            elements.transitionScreen.classList.add('hidden');
+            elements.wordScreen.classList.remove('hidden');
+
             // 如果是自定义词语，不显示图片
             if (gameData.customWords) {
                 elements.wordDisplay.innerHTML = `<span>${word}</span>`;
@@ -945,84 +973,92 @@
                 const imageUrl = getWordImage(word);
                 elements.wordDisplay.innerHTML = `<img src="${imageUrl}" alt="${word}" class="word-image"><span>${word}</span>`;
             }
-            
-            // 显示角色
-            elements.roleDisplay.textContent = player.isSpy ? '你是卧底' : '你是平民';
-            elements.roleDisplay.className = player.isSpy ? 
-                'mt-3 md:mt-4 text-lg font-medium text-danger' : 
-                'mt-3 md:mt-4 text-lg font-medium text-secondary';
-                
+
+            // 显示密码 - 新增
+            elements.playerPassword.textContent = player.password;
+
             elements.currentPlayerName.textContent = player.name;
         }
-        
-        // 显示下一个玩家的词语
-        function showNextPlayerWord() {
+
+        // 显示下一个玩家的过渡页面 - 修改
+        function showNextPlayerTransition() {
             gameData.currentPlayer++;
             if (gameData.currentPlayer < gameData.players.length) {
                 // 只显示未被淘汰的玩家
                 if (gameData.players[gameData.currentPlayer].isEliminated) {
-                    showNextPlayerWord();
+                    showNextPlayerTransition();
                 } else {
-                    showCurrentPlayerWord();
+                    // 显示过渡页面
+                    showPlayerTransition();
+                    elements.wordScreen.classList.add('hidden');
+                    elements.transitionScreen.classList.remove('hidden');
                 }
             } else {
                 // 所有玩家都已查看词语，进入讨论环节
                 goToDiscussion();
             }
         }
-        
+
         // 进入讨论环节
         function goToDiscussion() {
             elements.wordScreen.classList.add('hidden');
+            elements.transitionScreen.classList.add('hidden');
             elements.eliminationScreen.classList.add('hidden');
             elements.eliminationResultScreen.classList.add('hidden');
             elements.discussionScreen.classList.remove('hidden');
-            
+
             // 更新轮次显示
             elements.roundNumber.textContent = gameData.round;
+
+            // 清空密码输入框 - 新增
+            elements.discussionPasswordInput.value = '';
         }
-        
+
         // 进入淘汰环节
         function goToElimination() {
             elements.discussionScreen.classList.add('hidden');
             elements.wordScreen.classList.add('hidden');
+            elements.transitionScreen.classList.add('hidden');
             elements.eliminationResultScreen.classList.add('hidden');
             elements.eliminationScreen.classList.remove('hidden');
-            
+
             // 重置淘汰选择状态
             gameData.selectedElimination = null;
             elements.confirmEliminationBtn.disabled = true;
-            
+
+            // 清空密码输入框 - 新增
+            elements.eliminationPasswordInput.value = '';
+
             // 生成玩家列表
             renderPlayersList();
         }
-        
+
         // 渲染玩家列表（用于淘汰）
         function renderPlayersList() {
             elements.playersList.innerHTML = '';
-            
+
             gameData.players.forEach(player => {
                 if (!player.isEliminated) {
                     const playerElement = document.createElement('div');
                     playerElement.className = `bg-white rounded-lg shadow p-3 text-center card-hover cursor-pointer ${gameData.selectedElimination === player.id ? 'ring-2 ring-primary' : ''}`;
                     playerElement.innerHTML = `
-                        <div class="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-2 text-lg font-bold">
-                            ${player.id}
-                        </div>
-                        <p class="font-medium text-sm truncate">${player.name}</p>
-                    `;
-                    
+                                    <div class="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-2 text-lg font-bold">
+                                        ${player.id}
+                                    </div>
+                                    <p class="font-medium text-sm truncate">${player.name}</p>
+                                `;
+
                     playerElement.addEventListener('click', () => {
                         gameData.selectedElimination = player.id;
                         elements.confirmEliminationBtn.disabled = false;
                         renderPlayersList(); // 重新渲染以更新选中状态
                     });
-                    
+
                     elements.playersList.appendChild(playerElement);
                 }
             });
         }
-        
+
         // 确认淘汰
         function confirmElimination() {
             if (gameData.selectedElimination !== null) {
@@ -1030,10 +1066,10 @@
                 const eliminatedPlayer = gameData.players.find(p => p.id === gameData.selectedElimination);
                 eliminatedPlayer.isEliminated = true;
                 gameData.eliminatedPlayers.push(eliminatedPlayer);
-                
+
                 // 更新结果界面
                 elements.eliminatedPlayer.textContent = `${eliminatedPlayer.name} 被淘汰`;
-                
+
                 // 检查被淘汰的是不是卧底
                 if (eliminatedPlayer.isSpy) {
                     elements.eliminationMessage.textContent = '被淘汰的是卧底！';
@@ -1042,14 +1078,13 @@
                     elements.eliminationMessage.textContent = '被淘汰的是平民！';
                     elements.eliminationMessage.className = 'text-red-600 font-medium';
                 }
-                
+
                 // 检查游戏是否结束
                 const remainingSpies = gameData.players.filter(p => p.isSpy && !p.isEliminated).length;
                 const remainingPlayers = gameData.players.filter(p => !p.isEliminated).length;
-                
+
                 if (remainingSpies === 0 || remainingSpies >= remainingPlayers / 2) {
-                    // 游戏结束，计算获胜者并更新积分
-                    calculateWinnersAndUpdatePoints();
+                    // 游戏结束
                     showFinalResult();
                 } else {
                     // 游戏继续
@@ -1058,56 +1093,29 @@
                 }
             }
         }
-        
-        // 计算获胜者并更新积分
-        function calculateWinnersAndUpdatePoints() {
-            const remainingSpies = gameData.players.filter(p => p.isSpy && !p.isEliminated).length;
-            const remainingPlayers = gameData.players.filter(p => !p.isEliminated).length;
-            const isSpyWin = remainingSpies > 0 && remainingSpies >= remainingPlayers / 2;
-            
-            // 更新获胜玩家的积分（每局获胜得1分），失败玩家扣1分
-            gameData.players.forEach(player => {
-                if (!gameData.playerStats[player.name]) {
-                    gameData.playerStats[player.name] = { points: 0 };
-                }
-                
-                if (isSpyWin && player.isSpy && !player.isEliminated) {
-                    // 卧底获胜，加1分
-                    gameData.playerStats[player.name].points += 1;
-                } else if (!isSpyWin && !player.isSpy && !player.isEliminated) {
-                    // 平民获胜，加1分
-                    gameData.playerStats[player.name].points += 1;
-                } else {
-                    // 失败方，扣1分
-                    gameData.playerStats[player.name].points -= 1;
-                }
-            });
-            
-            // 保存统计数据
-            localStorage.setItem('spyGamePlayerStats', JSON.stringify(gameData.playerStats));
-        }
-        
+
         // 继续游戏
         function continueGame() {
             gameData.round++;
             gameData.currentPlayer = 0;
-            
+
             // 找到第一个未被淘汰的玩家
             while (gameData.currentPlayer < gameData.players.length && gameData.players[gameData.currentPlayer].isEliminated) {
                 gameData.currentPlayer++;
             }
-            
-            showCurrentPlayerWord();
+
+            // 显示过渡页面
+            showPlayerTransition();
             elements.eliminationResultScreen.classList.add('hidden');
-            elements.wordScreen.classList.remove('hidden');
+            elements.transitionScreen.classList.remove('hidden');
         }
-        
+
         // 显示最终结果
         function showFinalResult() {
             const remainingSpies = gameData.players.filter(p => p.isSpy && !p.isEliminated).length;
             const remainingPlayers = gameData.players.filter(p => !p.isEliminated).length;
             const isSpyWin = remainingSpies > 0 && remainingSpies >= remainingPlayers / 2;
-            
+
             // 确定获胜方
             if (isSpyWin) {
                 elements.gameWinnerText.textContent = '卧底获胜！恭喜！';
@@ -1116,7 +1124,7 @@
                 elements.gameWinnerText.textContent = '平民获胜！恭喜！';
                 elements.gameWinnerText.className = 'text-secondary font-bold';
             }
-            
+
             // 如果是自定义词语，不显示图片
             if (gameData.customWords) {
                 elements.revealNormalWord.innerHTML = `<span>${gameData.normalWord}</span>`;
@@ -1124,11 +1132,11 @@
             } else {
                 const normalImage = getWordImage(gameData.normalWord);
                 const spyImage = getWordImage(gameData.spyWord);
-                
+
                 elements.revealNormalWord.innerHTML = `<img src="${normalImage}" alt="${gameData.normalWord}" class="word-image"><span>${gameData.normalWord}</span>`;
                 elements.revealSpyWord.innerHTML = `<img src="${spyImage}" alt="${gameData.spyWord}" class="word-image"><span>${gameData.spyWord}</span>`;
             }
-            
+
             // 显示卧底玩家
             elements.revealSpies.innerHTML = '';
             gameData.players.forEach(player => {
@@ -1139,30 +1147,30 @@
                     elements.revealSpies.appendChild(spyElement);
                 }
             });
-            
+
             // 显示本局胜者
             elements.roundWinners.innerHTML = '';
             gameData.players.forEach(player => {
                 if (!player.isEliminated && ((isSpyWin && player.isSpy) || (!isSpyWin && !player.isSpy))) {
                     const winnerElement = document.createElement('div');
                     winnerElement.className = 'bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium';
-                    winnerElement.innerHTML = `${player.name} <span class="text-xs bg-white rounded-full px-1">+1分</span>`;
+                    winnerElement.textContent = player.name;
                     elements.roundWinners.appendChild(winnerElement);
                 }
             });
-            
+
             // 切换到结束界面
             elements.eliminationResultScreen.classList.add('hidden');
             elements.eliminationScreen.classList.add('hidden');
             elements.endScreen.classList.remove('hidden');
         }
-        
+
         // 重新开始游戏
         function restartGame() {
             elements.endScreen.classList.add('hidden');
             startGame();
         }
-        
+
         // 返回开始界面
         function backToStart() {
             // 隐藏所有游戏界面，显示开始界面
@@ -1171,22 +1179,22 @@
             elements.eliminationScreen.classList.add('hidden');
             elements.discussionScreen.classList.add('hidden');
             elements.wordScreen.classList.add('hidden');
+            elements.transitionScreen.classList.add('hidden');
             elements.startScreen.classList.remove('hidden');
-            
+
             // 重置自定义词语输入
             elements.useCustomWords.checked = false;
             elements.customWordsContainer.classList.add('hidden');
             elements.normalWord.value = '';
             elements.spyWord.value = '';
         }
-        
+
         // 初始化游戏
         function init() {
-            loadGameData(); // 加载游戏数据，确保积分正确初始化
             initEventListeners();
             generateNameInputs();
         }
-        
+
         // 启动游戏
         document.addEventListener('DOMContentLoaded', init);
     </script>
