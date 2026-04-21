@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>燃气管道防腐层PCM检测数据生成系统</title>
+    <style>
+		* { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: "宋体", SimSun, sans-serif; 
+        }
+        body { 
+            padding: 15px; 
+            background-color: #f5f9ff; 
+        }
+		.page-title { 
+            text-align: center; 
+            font-size: 18px; 
+            font-weight: bold;
+            color: #209cee; 
+            margin-bottom: 10px; 
+            padding-bottom: 5px; 
+            border-bottom: 2px solid #209cee; 
+        }
+		.container { 
+            display: flex; 
+            gap: 12px; 
+        }
+		.input-area { 
+            width: 280px;
+            background-color: #fff; 
+            padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            flex-shrink: 0; 
+        }
+		.preview-area { 
+            flex: 1; 
+            background-color: #fff; 
+            padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            overflow-x: auto; 
+        }
+        .input-group { 
+            margin-bottom: 6px; 
+        }
+        .input-group h3 { 
+            font-size: 14px; 
+            margin-bottom: 4px; 
+            color: #333; 
+            border-left: 3px solid #209cee; 
+            padding-left: 5px; 
+        }
+        .input-item { 
+            margin-bottom: 3px; 
+            display: flex; 
+            align-items: center; 
+        }
+        .input-item label { 
+            width: 90px; 
+            font-size: 12px; 
+            color: #555; 
+        }
+        .input-item input { 
+            flex: 1; 
+            padding: 3px 5px; 
+            border: 1px solid #ccc; 
+            border-radius: 3px; 
+            font-size: 12px; 
+            height: 26px; 
+        }
+        .special-point-group { 
+            display: flex; 
+            gap: 4px; 
+            margin-bottom: 4px; 
+            flex-direction: column; 
+        }
+        .special-point-group input {
+            padding: 4px; 
+            font-size: 12px; 
+            height: 50px; 
+            min-width: 100%; 
+            resize: vertical;
+            border: 1px solid #ccc; 
+            border-radius: 3px;
+        }
+        .special-point-tip { 
+            font-size: 11px; 
+            color: #666; 
+            margin-bottom: 2px; 
+        }
+        .preview-title { 
+            font-size: 14px; 
+            margin-bottom: 6px; 
+            font-weight: bold;
+        }
+        .preview-tip { 
+            font-size: 11px; 
+            color: #666; 
+            margin-bottom: 6px; 
+            padding: 4px; 
+            background-color: #f0f8ff; 
+            border-left: 2px solid #209cee; 
+        }
+        .data-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 12px; 
+            table-layout: fixed; 
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ccc;
+            padding: 3px 2px; 
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .data-table th { 
+            background-color: #e8f4fc; 
+            font-weight: bold;
+        }
+        .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 70px; }
+        .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 70px; }
+        .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 70px; }
+        .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 70px; }
+        .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 70px; }
+        .data-table th:nth-child(6), .data-table td:nth-child(6) { width: 70px; }
+        .data-table th:nth-child(7), .data-table td:nth-child(7) { width: 70px; }
+        .data-table th:nth-child(8), .data-table td:nth-child(8) { width: 70px; }
+        .data-table th:nth-child(9), .data-table td:nth-child(9) { width: 180px; }
+        .data-table th:nth-child(10),.data-table td:nth-child(10) { width: auto; min-width: 120px; }
+        .data-table td input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 12px;
+            padding: 1px;
+            height: 24px;
+        }
+        .data-table td:nth-child(10) input {
+            text-align: left;
+            padding-left: 3px;
+        }
+        .coord-input {
+            width: 100%;
+            height: 30px;
+            border: none;
+            background: transparent;
+            font-size: 12px;
+            resize: none;
+            padding: 2px;
+        }
+        .operate-area { 
+            display: flex; 
+            gap: 6px; 
+            justify-content: center;
+            padding: 8px 4px; 
+            margin-top: 8px; 
+            background: #fff; 
+            border: 1px solid #ccc; 
+            border-radius: 4px;
+            flex-wrap: wrap;
+        }
+        .operate-btn { 
+            padding: 5px 12px; 
+            background: #209cee; 
+            color: #fff; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 12px; 
+        }
+        .operate-btn:hover { 
+            background: #1987d9; 
+        }
+        .tip-box {
+            position: fixed; 
+            top: 12px; 
+            right: 12px; 
+            padding: 6px 12px;
+            background: #4cd964; 
+            color: #fff; 
+            border-radius: 4px;
+            font-size: 12px; 
+            display: none; 
+            z-index: 999;
+        }
+        .error-tip {
+            background-color: #ff3b30;
+        }
+        .context-menu {
+            position: absolute; 
+            width: 100px; 
+            background: #fff;
+            border: 1px solid #ccc; 
+            border-radius: 4px;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            display: none; 
+            z-index: 1000;
+        }
+        .context-menu-item { 
+            padding: 5px 8px; 
+            font-size: 12px; 
+            cursor: pointer; 
+        }
+        .context-menu-item:hover { 
+            background: #f0f8ff; 
+        }
+        .zero-data-row { background-color: #e8f8e8 !important; }
+        .last-data-row { background-color: #fff0e8 !important; }
+    </style>
+</head>
+<body>
+    <div id="authMask" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: none; flex-direction: column; 
+    justify-content: center; align-items: center; color: #fff; font-size: 18px;">
+        <div style="color: #ff4444; font-size: 24px; margin-bottom: 20px;">⚠️ 授权已过期</div>
+        <div>当前时间：<span id="showNowTime"></span></div>
+        <div>有效期限：<span id="showExpireTime"></span></div>
+        <div style="margin-top: 30px; font-size: 16px; color: #ccc;">请联系管理员更新授权</div>
+    </div>
+
+    <div class="page-title">燃气管道防腐层PCM检测数据生成系统</div>
+    <div class="container">
+        <div class="input-area">
+            <div class="input-group">
+                <h3>基础参数</h3>
+                <div class="input-item">
+                    <label>管段起点：</label>
+                    <input type="text" id="pipeStart" placeholder="例：2栋调压箱">
+                </div>
+                <div class="input-item">
+                    <label>管段终点：</label>
+                    <input type="text" id="pipeEnd" placeholder="例：市政阀井">
+                </div>
+                <div class="input-item">
+                    <label>地形地貌：</label>
+                    <input type="text" id="defaultTerrain" placeholder="例：绿化带">
+                </div>
+                <div class="input-item">
+                    <label>输出电流(mA)：</label>
+                    <input type="number" id="outputCurrent" placeholder="例：600" required>
+                </div>
+            </div>
+            <div class="input-group">
+                <h3>数据1范围</h3>
+                <div class="input-item">
+                    <label>最大值(mA)：</label>
+                    <input type="number" id="data1Max" placeholder="例：537">
+                </div>
+                <div class="input-item">
+                    <label>最小值(mA)：</label>
+                    <input type="number" id="data1Min" placeholder="例：62">
+                </div>
+            </div>
+            <div class="input-group">
+                <h3>埋深范围</h3>
+                <div class="input-item">
+                    <label>最深值(m)：</label>
+                    <input type="number" step="0.01" id="burialMax" placeholder="例：0.82">
+                </div>
+                <div class="input-item">
+                    <label>最浅值(m)：</label>
+                    <input type="number" step="0.01" id="burialMin" placeholder="例：0.68">
+                </div>
+            </div>
+            <div class="input-group">
+                <h3>检测距离</h3>
+                <div class="input-item">
+                    <label>总距离(m)：</label>
+                    <input type="number" id="totalDistance" placeholder="例：1627" required>
+                </div>
+            </div>
+            <div class="input-group">
+                <h3>指定衰减行</h3>
+                <div class="special-point-tip">多个参数用空格或逗号分割</div>
+                <div class="special-point-group">
+                    <input type="text" id="decayPoints" placeholder="例：60:10 表示60米处衰减10%">
+                </div>
+            </div>
+            <div class="input-group">
+                <h3>特殊点标记</h3>
+                <div class="special-point-tip">多个参数用空格或逗号分割</div>
+                <div class="special-point-group">
+                    <input type="text" id="specialPoints" placeholder="例：11:左弯,42:三通,108:阀井">
+                </div>
+            </div>
+            <div class="operate-area">
+                <button class="operate-btn" id="generateBtn">一键生成</button>
+                <button class="operate-btn" id="copyToExcelBtn">复制表格</button>
+                <button class="operate-btn" id="exportExcelBtn">导出Excel</button>
+            </div>
+        </div>
+
+        <div class="preview-area">
+            <div class="preview-title">检测数据预览</div>
+            <div class="preview-tip">序号不可编辑，其余均可编辑；右键可插入/删除行。</div>
+            <table class="data-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>距离(m)</th>
+                        <th>数据1(mA)</th>
+                        <th>地形地貌</th>
+                        <th>埋深(m)</th>
+                        <th>破损点编号</th>
+                        <th>db值</th>
+                        <th>破损分级</th>
+                        <th>坐标</th>
+                        <th>位置描述</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tip-box" id="tipBox"></div>
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" id="insertBefore">上方插入</div>
+        <div class="context-menu-item" id="insertAfter">下方插入</div>
+        <div class="context-menu-item" id="deleteRow">删除本行</div>
+    </div>
+
+<script>
+    const AUTH_EXPIRE_DATE = "2026-12-31 23:59:59";
+    function checkAuth() {
+        let now = new Date();
+        let expire = new Date(AUTH_EXPIRE_DATE);
+        document.getElementById("showNowTime").innerText = now.toLocaleString();
+        document.getElementById("showExpireTime").innerText = AUTH_EXPIRE_DATE;
+        if (now > expire) {
+            document.getElementById("authMask").style.display = "flex";
+            return false;
+        } else {
+            document.getElementById("authMask").style.display = "none";
+            return true;
+        }
+    }
+
+    !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).saveAs=e()}(this,(function(){"use strict";function n(e,n,r){if(!n)throw new Error("文件名不能为空");r=r||{};var o=e instanceof Blob;if("string"==typeof e&&/^data:/.test(e)){var i=atob(e.split(",")[1]),a=new Uint8Array(i.length);for(var s=0;s<i.length;s++)a[s]=i.charCodeAt(s);e=new Blob([a],{type:e.split(":")[1].split(";")[0]})}return (o?Promise.resolve(e):fetch(e).then(function(t){if(!t.ok)throw new Error(t.status);return t.blob()})).then(function(t){var l=document.createElement("a");l.href=URL.createObjectURL(t);l.download=n;l.style.display="none";document.body.appendChild(l);l.click();setTimeout(function(){document.body.removeChild(l);URL.revokeObjectURL(l.href);},100);})["catch"](function(e){console.error(e)});}return n;}));
+
+    window.XLSX = {
+        utils: {
+            decode_cell: ref => {var c=0,r=0,i=0;for(;i<ref.length;i++){var ch=ref.charCodeAt(i);if(ch>=65&&ch<=90)c=c*26+ch-65+1;else break}r=parseInt(ref.slice(i))-1;return{c:c-1,r:r};},
+            encode_cell: cell => {var col=cell.c,row=cell.r+1,s="";while(col>=0){s=String.fromCharCode(65+col%26)+s;col=Math.floor(col/26)-1}return s+row;},
+            decode_range: ref => {var p=ref.split(":");return{s:XLSX.utils.decode_cell(p[0]),e:XLSX.utils.decode_cell(p[1])};},
+            encode_range: r=>XLSX.utils.encode_cell(r.s)+":"+XLSX.utils.encode_cell(r.e),
+            table_to_sheet: (table)=>{var s={},r={s:{r:0,c:0},e:{r:0,c:0}};var tr=table.querySelectorAll("tr");for(var R=0;R<tr.length;R++){var td=tr[R].querySelectorAll("td,th");for(var C=0;C<td.length;C++){var v="";var inp=td[C].querySelector("input,textarea");if(inp)v=inp.value||""; else v=td[C].textContent||"";v=v.replace(/\r?\n/g,"");var cr=XLSX.utils.encode_cell({r:R,c:C});s[cr]={v:v,t:"s"};if(r.s.r>R)r.s.r=R;if(r.s.c>C)r.s.c=C;if(r.e.r<R)r.e.r=R;if(r.e.c<C)r.e.c=C;}}s["!ref"]=XLSX.utils.encode_range(r);return s;},
+            book_new: ()=>({SheetNames:[],Sheets:{}}),
+            book_append_sheet: (b,s,n)=>{b.SheetNames.push(n);b.Sheets[n]=s}
+        },
+        writeFile: (wb,fn)=>{var sn=wb.SheetNames[0],s=wb.Sheets[sn],r=XLSX.utils.decode_range(s["!ref"]);var c="";for(var R=r.s.r;R<=r.e.r;R++){var row=[];for(var C=r.s.c;C<=r.e.c;C++){var cr=XLSX.utils.encode_cell({r:R,c:C});var v=s[cr]?s[cr].v:"";row.push(v);}c+=row.join("\t")+"\r\n";}var blob=new Blob([c],{type:"application/vnd.ms-excel;charset=utf-8"});saveAs(blob,fn||"检测数据.xlsx");}
+    };
+</script>
+
+<script>
+    let currentRow = null;               
+    let zeroRowDistance = 0;            
+    let lastDataRowDistance = 0;        
+
+    window.onload = function(){
+        if (!checkAuth()) return;
+        document.getElementById("generateBtn").onclick = generateBaseData;
+        document.getElementById("copyToExcelBtn").onclick = copyToExcel;
+        document.getElementById("exportExcelBtn").onclick = exportToExcel;
+        bindContextMenu();
+        document.getElementById("insertBefore").onclick = ()=>{insertRow(currentRow,"before");document.getElementById("contextMenu").style.display="none";};
+        document.getElementById("insertAfter").onclick = ()=>{insertRow(currentRow,"after");document.getElementById("contextMenu").style.display="none";};
+        document.getElementById("deleteRow").onclick = deleteCurrentRow;
+    };
+
+    function getFileNameTime(){
+        const d = new Date();
+        return d.getFullYear().toString() + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0") + String(d.getHours()).padStart(2,"0") + String(d.getMinutes()).padStart(2,"0");
+    }
+
+    function getExportFileName(){
+        const pipeStart = document.getElementById("pipeStart").value.trim();
+        const pipeEnd = document.getElementById("pipeEnd").value.trim();
+        if(pipeStart && pipeEnd){return `${pipeStart}至${pipeEnd}检测数据.xlsx`;}
+        return `检测数据_${getFileNameTime()}.xlsx`;
+    }
+
+    function parseDecayPoints() {
+        const decayInput = document.getElementById("decayPoints").value.trim();
+        if (!decayInput) return [];
+        const decayPoints = [];
+        // 支持空格、中文逗号、英文逗号 分割多个衰减点
+        const items = decayInput.split(/[ ,，]+/);
+        items.forEach(item => {
+            // 支持中文冒号、英文冒号 分割距离和百分比
+            const [distanceStr, percentStr] = item.split(/[:：]/);
+            const distance = parseInt(distanceStr);
+            const percent = parseFloat(percentStr);
+            if (!isNaN(distance) && distance > 0 && !isNaN(percent) && percent > 0 && percent <= 100) {
+                const rate = (100 - percent) / 100;
+                decayPoints.push({ distance, rate });
+            }
+        });
+        decayPoints.sort((a, b) => a.distance - b.distance);
+        return decayPoints;
+    }
+
+    // 新增：解析特殊点（距离:标签）
+    function parseSpecialPoints() {
+        const specialInput = document.getElementById("specialPoints").value.trim();
+        if (!specialInput) return [];
+        const specialPoints = [];
+        // 支持空格、中文逗号、英文逗号 分割多个特殊点
+        const items = specialInput.split(/[ ,，]+/);
+        items.forEach(item => {
+            // 支持中文冒号、英文冒号 分割距离和标签
+            const [distanceStr, label] = item.split(/[:：]/);
+            const distance = parseInt(distanceStr);
+            if (!isNaN(distance) && distance > 0) {
+                specialPoints.push({ d: distance, l: label || "" });
+            }
+        });
+        specialPoints.sort((a, b) => a.d - b.d);
+        return specialPoints;
+    }
+
+    function generateBurialValue(min, max) {
+        const rand = Math.random();
+        if (rand < 0.08) return min.toFixed(2);
+        if (rand < 0.16) return max.toFixed(2);
+        const val = min + Math.random() * (max - min);
+        return val.toFixed(2);
+    }
+
+    function generateBaseData(){
+        const outputCurrent = parseInt(document.getElementById("outputCurrent").value);
+        const totalDistance = parseInt(document.getElementById("totalDistance").value);
+        const data1Max = parseInt(document.getElementById("data1Max").value)||null;
+        const data1Min = parseInt(document.getElementById("data1Min").value)||null;
+        const burialMax = parseFloat(document.getElementById("burialMax").value)||null;
+        const burialMin = parseFloat(document.getElementById("burialMin").value)||null;
+        const pipeStart = document.getElementById("pipeStart").value.trim();
+        const pipeEnd = document.getElementById("pipeEnd").value.trim();
+        const terrain = document.getElementById("defaultTerrain").value.trim()||"绿化带";
+
+        const errorTips = [];
+        if(!outputCurrent || isNaN(outputCurrent) || outputCurrent <= 0){errorTips.push("输出电流必填且大于0");}
+        if(!totalDistance || isNaN(totalDistance) || totalDistance <= 0){errorTips.push("总距离必填且大于0");}
+        if(data1Max !== null && data1Min !== null && data1Max < data1Min){errorTips.push("数据1最大值不能小于最小值");}
+        if(data1Max !== null && data1Max > outputCurrent){errorTips.push("数据1最大值不能大于输出电流");}
+        if(burialMax !== null && burialMin !== null && burialMax < burialMin){errorTips.push("埋深最深不能小于最浅");}
+        if(burialMin !== null && burialMin <= 0){errorTips.push("埋深最浅必须大于0");}
+        if(errorTips.length > 0){showTip(errorTips.join("<br/>"), true);return;}
+
+        let finalData1Max, finalData1Min;
+        if(data1Max !== null && data1Min !== null){
+            finalData1Max = data1Max;
+            finalData1Min = data1Min;
+        }else if(data1Max !== null && data1Min === null){
+            finalData1Max = data1Max;
+            finalData1Min = Math.round(data1Max * 0.1);
+        }else if(data1Max === null && data1Min !== null){
+            finalData1Max = Math.min(Math.round(data1Min * 10), outputCurrent);
+            finalData1Min = data1Min;
+        }else{
+            finalData1Max = Math.round(outputCurrent * 0.9);
+            finalData1Min = Math.round(outputCurrent * 0.1);
+        }
+
+        let finalBurialMax, finalBurialMin;
+        if(burialMax !== null && burialMin !== null){
+            finalBurialMax = burialMax;
+            finalBurialMin = burialMin;
+        }else if(burialMax !== null && burialMin === null){
+            finalBurialMax = burialMax;
+            finalBurialMin = parseFloat((burialMax * 0.8).toFixed(2));
+        }else if(burialMax === null && burialMin !== null){
+            finalBurialMax = parseFloat((burialMin * 1.2).toFixed(2));
+            finalBurialMin = burialMin;
+        }else{
+            if(terrain === "水泥地"){finalBurialMax=1.0;finalBurialMin=0.8;}
+            else if(terrain==="绿化带"){finalBurialMax=0.8;finalBurialMin=0.6;}
+            else{finalBurialMax=0.9;finalBurialMin=0.7;}
+        }
+
+        // 替换：解析合并后的特殊点
+        const specialPoints = parseSpecialPoints();
+        const decayPoints = parseDecayPoints();
+
+        let arr = [0];
+        let valid20Distances = [];
+        for(let i=20;i<totalDistance;i+=20){
+            arr.push(i);
+            valid20Distances.push(i);
+        }
+        // 提取特殊点的距离并加入数组
+        specialPoints.forEach(sp => {
+            if(!arr.includes(sp.d)) arr.push(sp.d);
+        });
+        if(!arr.includes(totalDistance))arr.push(totalDistance);
+        arr.sort((a,b)=>a-b);
+        zeroRowDistance = 0;
+        lastDataRowDistance = totalDistance;
+        
+        const tb = document.querySelector("#dataTable tbody");
+        tb.innerHTML = "";
+
+        let data1Values = {};
+        let prevVal = finalData1Max;
+        let decayMap = {};
+        decayPoints.forEach(p=>decayMap[p.distance]=p.rate);
+
+        valid20Distances.forEach((d,idx)=>{
+            let rate = decayMap[d];
+            let curr;
+
+            if (rate !== undefined) {
+                curr = Math.round(prevVal * rate);
+            } else {
+                let fluct = (Math.random() * 0.1) - 0.04;
+                curr = Math.round(prevVal * (0.96 + fluct));
+            }
+
+            curr = Math.max(curr, finalData1Min);
+            data1Values[d] = curr;
+            prevVal = curr;
+        });
+
+        if(valid20Distances.length>0){
+            let last = valid20Distances[valid20Distances.length-1];
+            data1Values[last] = finalData1Min;
+        }
+
+        arr.forEach((d,idx)=>{
+            const tr = document.createElement("tr");
+            const is20 = d%20===0;
+            const is0 = d===0;
+            const isLast = d===totalDistance;
+            const isValid20 = is20 && !is0 && !isLast;
+            const sp = specialPoints.find(x=>x.d===d);
+            let desc = sp?sp.l:"";
+            if(is0) desc = `检测起点-${pipeStart||desc}`;
+            if(isLast) desc = `检测终点-${pipeEnd||desc}`;
+
+            const td1 = document.createElement("td");
+            td1.textContent=idx+1;
+            tr.appendChild(td1);
+            
+            const td2 = document.createElement("td");
+            td2.innerHTML=`<input type="number" value="${d}">`;
+            tr.appendChild(td2);
+            
+            const td3 = document.createElement("td");
+            let v1 = isValid20 ? (data1Values[d]||"") : "";
+            td3.innerHTML=`<input type="text" value="${v1}">`;
+            tr.appendChild(td3);
+
+            const td4 = document.createElement("td");
+            let t = isValid20 ? terrain : "";
+            td4.innerHTML=`<input type="text" value="${t}">`;
+            tr.appendChild(td4);
+
+            const td5 = document.createElement("td");
+            let buri = isValid20 ? generateBurialValue(finalBurialMin,finalBurialMax) : "";
+            td5.innerHTML=`<input type="text" value="${buri}">`;
+            tr.appendChild(td5);
+
+            const td6 = document.createElement("td");td6.innerHTML=`<input type="text" value="">`;tr.appendChild(td6);
+            const td7 = document.createElement("td");td7.innerHTML=`<input type="text" value="">`;tr.appendChild(td7);
+            const td8 = document.createElement("td");td8.innerHTML=`<input type="text" value="">`;tr.appendChild(td8);
+            const td9 = document.createElement("td");td9.innerHTML=`<textarea class="coord-input"></textarea>`;tr.appendChild(td9);
+            const td10 = document.createElement("td");td10.innerHTML=`<input type="text" value="${desc}">`;tr.appendChild(td10);
+
+            if(is0) tr.classList.add("zero-data-row");
+            if(isLast) tr.classList.add("last-data-row");
+            tb.appendChild(tr);
+        });
+        showTip("生成完成！");
+    }
+
+    function bindContextMenu(){
+        const tableBody = document.querySelector("#dataTable tbody");
+        tableBody.addEventListener("contextmenu",e=>{
+            e.preventDefault();
+            const row = e.target.closest("tr");
+            if(row){ 
+                currentRow=row; 
+                const menu=document.getElementById("contextMenu");
+                menu.style.display="block";
+                menu.style.left=e.clientX+"px";
+                menu.style.top=e.clientY+"px";
+            }
+        });
+        document.addEventListener("click",()=>{document.getElementById("contextMenu").style.display="none";});
+    }
+
+    function insertRow(target,pos){
+        const newRow = document.createElement("tr");
+        const dis = getAutoDistance(target,pos);
+        newRow.innerHTML = `
+<td>0</td>
+<td><input type="number" value="${dis}"></td>
+<td><input type="text" value=""></td>
+<td><input type="text" value=""></td>
+<td><input type="text" value=""></td>
+<td><input type="text" value=""></td>
+<td><input type="text" value=""></td>
+<td><input type="text" value=""></td>
+<td><textarea class="coord-input"></textarea></td>
+<td><input type="text" value=""></td>`;
+        pos=="before"?target.before(newRow):target.after(newRow);
+        reorderSerialNumbers();
+        showTip("插入成功");
+    }
+
+    function getAutoDistance(tr,p){
+        const rows = Array.from(document.querySelectorAll("#dataTable tbody tr"));
+        const index = rows.indexOf(tr);
+        let pre = index>0?parseInt(rows[index-1].querySelector("td:nth-child(2) input").value)||0:0;
+        let nxt = index<rows.length-1?parseInt(rows[index+1].querySelector("td:nth-child(2) input").value)||0:0;
+        let cur = parseInt(tr.querySelector("td:nth-child(2) input").value)||0;
+        return p=="before"?(pre?Math.round((pre+cur)/2):cur-10):(nxt?Math.round((cur+nxt)/2):cur+10);
+    }
+
+    function reorderSerialNumbers(){
+        document.querySelectorAll("#dataTable tbody tr").forEach((row,index)=>{
+            row.querySelector("td:nth-child(1)").textContent = index+1;
+        });
+    }
+
+    function deleteCurrentRow(){
+        if(!currentRow || !confirm("确定删除？")) return;
+        currentRow.remove();
+        reorderSerialNumbers();
+        showTip("已删除");
+    }
+
+    function copyToExcel(){
+        const table = document.getElementById("dataTable");
+        const rows = table.querySelectorAll("tr");
+        let copyText = "";
+        rows.forEach(tr=>{
+            const cells = tr.querySelectorAll("td,th");
+            const rowData = [];
+            cells.forEach(cell=>{
+                let v="";
+                const inp=cell.querySelector("input,textarea");
+                if(inp)v=inp.value||"";
+                else v=cell.textContent||"";
+                v=v.replace(/\r?\n/g,"");
+                rowData.push(v);
+            });
+            copyText += rowData.join("\t")+"\r\n";
+        });
+        const t=document.createElement("textarea");
+        t.value=copyText;
+        t.style.position="fixed";
+        t.style.left="-9999px";
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand("copy");
+        document.body.removeChild(t);
+        showTip("已复制到剪贴板");
+    }
+
+    function exportToExcel(){
+        const ws=XLSX.utils.table_to_sheet(document.getElementById("dataTable"));
+        const wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,"检测数据");
+        XLSX.writeFile(wb,getExportFileName());
+        showTip("导出成功");
+    }
+
+    function showTip(msg,isError=false){
+        const b=document.getElementById("tipBox");
+        b.innerHTML=msg;
+        b.style.display="block";
+        isError?b.classList.add("error-tip"):b.classList.remove("error-tip");
+        setTimeout(()=>{b.style.display="none";},isError?8000:5000);
+    }
+</script>
+</body>
+</html>
