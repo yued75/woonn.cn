@@ -1,5 +1,0 @@
-{
-  "yued75": { "enabled": true, "expire": "2099-12-30 23:59:59" },
-  "dengyu": { "enabled": true, "expire": "2025-5-31 23:59:59" },
-  "user": { "enabled": false, "expire": "2024-01-01 00:00:00" }
-}
