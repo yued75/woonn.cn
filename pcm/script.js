@@ -23,7 +23,10 @@ window.XLSX = {
 // ==================== 登录验证模块 ====================
 async function checkUserAuth(username) {
     try {
-        const response = await fetch('https://woonn.cn/pcm/auth-config.json', { method: 'GET' });
+        // 添加时间戳参数，确保每次请求URL不同
+        const timestamp = new Date().getTime();
+        const url = `https://woonn.cn/pcm/auth-config.json?t=${timestamp}`;
+        const response = await fetch(url, { method: 'GET' });
         if (!response.ok) return { status: 'error', msg: '网络请求失败（' + response.status + '）' };
         const authData = await response.json();
         if (!authData[username]) return { status: 'error', msg: '未给该用户名授权，请核对' };
