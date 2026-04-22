@@ -2,7 +2,6 @@
 let currentRow = null;
 let zeroRowDistance = 0;
 let lastDataRowDistance = 0;
-let userAuthInfo = null;
 
 // ==================== 文件保存与XLSX轻量实现 ====================
 !function (t, e) { "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = "undefined" != typeof globalThis ? globalThis : t || self).saveAs = e() }(this, function () { "use strict"; function n(e, n, r) { if (!n) throw new Error("文件名不能为空"); r = r || {}; var o = e instanceof Blob; if ("string" == typeof e && /^data:/.test(e)) { var i = atob(e.split(",")[1]), a = new Uint8Array(i.length); for (var s = 0; s < i.length; s++)a[s] = i.charCodeAt(s); e = new Blob([a], { type: e.split(":")[1].split(";")[0] }) } return (o ? Promise.resolve(e) : fetch(e).then(function (t) { if (!t.ok) throw new Error(t.status); return t.blob() })).then(function (t) { var l = document.createElement("a"); l.href = URL.createObjectURL(t); l.download = n; l.style.display = "none"; document.body.appendChild(l); l.click(); setTimeout(function () { document.body.removeChild(l); URL.revokeObjectURL(l.href) }, 100) })["catch"](function (e) { console.error(e) }) } return n });
@@ -20,22 +19,57 @@ window.XLSX = {
     writeFile: (wb, fn) => { var sn = wb.SheetNames[0], s = wb.Sheets[sn], r = XLSX.utils.decode_range(s["!ref"]); var c = ""; for (var R = r.s.r; R <= r.e.r; R++) { var row = []; for (var C = r.s.c; C <= r.e.c; C++) { var cr = XLSX.utils.encode_cell({ r: R, c: C }); var v = s[cr] ? s[cr].v : ""; row.push(v) } c += row.join("\t") + "\r\n" } var blob = new Blob([c], { type: "application/vnd.ms-excel;charset=utf-8" }); saveAs(blob, fn || "检测数据.xlsx") }
 };
 
-// ==================== 登录验证模块 ====================
+// ==================== 获取服务器标准时间（使用 TimeAPI.io） ====================
+async function getServerTime1() {
+    try {
+        const res = await fetch('https://timeapi.io/api/timezone/zone?timeZone=UTC');
+        if (!res.ok) throw new Error('时间服务异常');
+        const data = await res.json();
+        // TimeAPI.io 返回的 currentLocalTime 字段即为 UTC 时间
+        return new Date(data.currentLocalTime);
+    } catch (error) {
+        console.warn('获取服务器时间失败:', error);
+        return null;   // 返回 null 表示获取失败
+    }
+}
+
+// ==================== 获取服务器标准时间（使用苏宁API，国内可用） ====================
+async function getServerTime() {
+    try {
+        const res = await fetch('http://quan.suning.com/getSysTime.do');
+        if (!res.ok) throw new Error('时间服务异常');
+        const data = await res.json();
+        // 苏宁返回的 sysTime2 字段即为北京时间字符串，格式如 "2026-04-22 12:16:31"
+        return new Date(data.sysTime2);
+    } catch (error) {
+        console.warn('获取服务器时间失败:', error);
+        return null;
+    }
+}
+
+// ==================== 登录验证模块（原代码基础上增加服务器时间对比） ====================
 async function checkUserAuth(username) {
     try {
-        // 添加时间戳参数，确保每次请求URL不同
+        // ---------- 新增：获取服务器时间（必须成功） ----------
+        const serverTime = await getServerTime();
+        if (!serverTime) {
+            return { status: 'error', msg: '授权查询请求失败' };
+        }
+
+        // ---------- 原有代码保持不变 ----------
         const timestamp = new Date().getTime();
         const url = `https://woonn.cn/pcm/auth-config.json?t=${timestamp}`;
         const response = await fetch(url, { method: 'GET' });
-        if (!response.ok) return { status: 'error', msg: '授权查询请求失败'};
+        if (!response.ok) return { status: 'error', msg: '网络请求失败' };
         const authData = await response.json();
         if (!authData[username]) return { status: 'error', msg: '未给该用户授权，请核对' };
         const userInfo = authData[username];
         if (!userInfo.enabled) return { status: 'error', msg: '该用户已被禁用' };
-        const now = new Date();
+
+        // ---------- 修改点：将 new Date() 替换为 serverTime ----------
         const expireTime = new Date(userInfo.expire);
-        if (now > expireTime) return { status: 'error', msg: '该用户授权已过期（有效期至：' + userInfo.expire + '）' };
-        userAuthInfo = userInfo;
+        //const expireTime = new Date(userInfo.expire + 'Z');获取的服务器当前时间的话，要这样写，强制将获取的过期时间用UTC展示
+        if (serverTime > expireTime) return { status: 'error', msg: '该用户授权已过期（有效期至：' + userInfo.expire + '）' };
         return { status: 'success', msg: '验证通过' };
     } catch (error) {
         return { status: 'error', msg: '系统网络服务异常,请与管理员联系' };
