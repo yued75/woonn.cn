@@ -4,431 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>燃气管道防腐层PCM检测数据生成系统</title>
-    <style>
-		* { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            font-family: "宋体", SimSun, sans-serif; 
-        }
-        body { 
-            padding: 15px; 
-            background-color: #f5f9ff; 
-        }
-		.page-title { 
-            text-align: center; 
-            font-size: 18px; 
-            font-weight: bold;
-            color: #209cee; 
-            margin-bottom: 10px; 
-            padding-bottom: 5px; 
-            border-bottom: 2px solid #209cee; 
-        }
-		.container { 
-            display: flex; 
-            gap: 12px; 
-        }
-		.input-area { 
-            width: 280px;
-            background-color: #fff; 
-            padding: 8px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            flex-shrink: 0; 
-        }
-		.preview-area { 
-            flex: 1; 
-            background-color: #fff; 
-            padding: 8px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            overflow-x: auto; 
-        }
-        .input-group { 
-            margin-bottom: 6px; 
-        }
-        .input-group h3 { 
-            font-size: 14px; 
-            margin-bottom: 4px; 
-            color: #333; 
-            border-left: 3px solid #209cee; 
-            padding-left: 5px; 
-        }
-        .input-item { 
-            margin-bottom: 3px; 
-            display: flex; 
-            align-items: center; 
-        }
-        .input-item label { 
-            width: 90px; 
-            font-size: 12px; 
-            color: #555; 
-        }
-        .input-item input { 
-            flex: 1; 
-            padding: 3px 5px; 
-            border: 1px solid #ccc; 
-            border-radius: 3px; 
-            font-size: 12px; 
-            height: 26px; 
-        }
-        .special-point-group { 
-            display: flex; 
-            gap: 4px; 
-            margin-bottom: 4px; 
-            flex-direction: column; 
-        }
-        .special-point-group input {
-            padding: 4px; 
-            font-size: 12px; 
-            height: 50px; 
-            min-width: 100%; 
-            resize: vertical;
-            border: 1px solid #ccc; 
-            border-radius: 3px;
-        }
-        .special-point-tip { 
-            font-size: 11px; 
-            color: #666; 
-            margin-bottom: 2px; 
-        }
-        .preview-title { 
-            font-size: 14px; 
-            margin-bottom: 6px; 
-            font-weight: bold;
-        }
-        .preview-tip { 
-            font-size: 11px; 
-            color: #666; 
-            margin-bottom: 6px; 
-            padding: 4px; 
-            background-color: #f0f8ff; 
-            border-left: 2px solid #209cee; 
-        }
-        .data-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 12px; 
-            table-layout: fixed; 
-        }
-        .data-table th, .data-table td {
-            border: 1px solid #ccc;
-            padding: 3px 2px; 
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-        .data-table th { 
-            background-color: #e8f4fc; 
-            font-weight: bold;
-        }
-        .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 70px; }
-        .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 70px; }
-        .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 70px; }
-        .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 70px; }
-        .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 70px; }
-        .data-table th:nth-child(6), .data-table td:nth-child(6) { width: 70px; }
-        .data-table th:nth-child(7), .data-table td:nth-child(7) { width: 70px; }
-        .data-table th:nth-child(8), .data-table td:nth-child(8) { width: 70px; }
-        .data-table th:nth-child(9), .data-table td:nth-child(9) { width: 180px; }
-        .data-table th:nth-child(10),.data-table td:nth-child(10) { width: auto; min-width: 120px; }
-        .data-table td input {
-            width: 100%;
-            border: none;
-            background: transparent;
-            text-align: center;
-            font-size: 12px;
-            padding: 1px;
-            height: 24px;
-        }
-        .data-table td:nth-child(10) input {
-            text-align: left;
-            padding-left: 3px;
-        }
-        .coord-input {
-            width: 100%;
-            height: 30px;
-            border: none;
-            background: transparent;
-            font-size: 12px;
-            resize: none;
-            padding: 2px;
-        }
-        .operate-area { 
-            display: flex; 
-            gap: 6px; 
-            justify-content: center;
-            padding: 8px 4px; 
-            margin-top: 8px; 
-            background: #fff; 
-            border: 1px solid #ccc; 
-            border-radius: 4px;
-            flex-wrap: wrap;
-        }
-        .operate-btn { 
-            padding: 5px 12px; 
-            background: #209cee; 
-            color: #fff; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 12px; 
-        }
-        .operate-btn:hover { 
-            background: #1987d9; 
-        }
-        .tip-box {
-            position: fixed; 
-            top: 12px; 
-            right: 12px; 
-            padding: 6px 12px;
-            background: #4cd964; 
-            color: #fff; 
-            border-radius: 4px;
-            font-size: 12px; 
-            display: none; 
-            z-index: 999;
-        }
-        .error-tip {
-            background-color: #ff3b30;
-        }
-        .context-menu {
-            position: absolute; 
-            width: 100px; 
-            background: #fff;
-            border: 1px solid #ccc; 
-            border-radius: 4px;
-            box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            display: none; 
-            z-index: 1000;
-        }
-        .context-menu-item { 
-            padding: 5px 8px; 
-            font-size: 12px; 
-            cursor: pointer; 
-        }
-        .context-menu-item:hover { 
-            background: #f0f8ff; 
-        }
-        .zero-data-row { background-color: #e8f8e8 !important; }
-        .last-data-row { background-color: #fff0e8 !important; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="authMask" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: none; flex-direction: column; 
-    justify-content: center; align-items: center; color: #fff; font-size: 18px;">
-        <div style="color: #ff4444; font-size: 24px; margin-bottom: 20px;">⚠️ 授权已过期</div></br>
-        <div>当前时间：<span id="showNowTime"></span></div>
-		</br>
-        <div>有效期限：<span id="showExpireTime"></span></div>
-        <div style="margin-top: 30px; font-size: 16px; color: #ccc;">请联系苗大师更新授权</div>
-    </div>
 
+<!-- ==================== 授权登录界面 ==================== -->
+<div id="loginPage">
+    <div class="login-card">
+        <div class="login-card-topbar"></div>
+        <div class="login-title">
+            <h2>燃气管道防腐层PCM检测数据生成系统</h2>
+        </div>
+        <div class="login-input-wrapper">
+            <input type="text" id="loginUsername" placeholder="请输入身份识别凭证完成验证，方可使用本系统功能">
+        </div>
+        <div id="loginTip"></div>
+        <button id="loginBtn">验证并进入系统</button>
+        <div class="login-footer">
+            本系统由蜗奶奶（中国）提供 | 如有任何问题请联系管理员
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 系统主内容 ==================== -->
+<div id="systemMain">
     <div class="page-title">燃气管道防腐层PCM检测数据生成系统</div>
     <div class="container">
+        <!-- 左侧输入区域 -->
         <div class="input-area">
-		<!-- 查看使用说明书 链接 -->
-<a href="javascript:void(0)" 
-   onclick="document.getElementById('manualMask').style.display='flex'" 
-   style="display:block; text-align:center; text-decoration:none; color:#1a73e8; font-size:13px; font-weight:500; cursor:pointer; margin:10px 0;">
-   查看使用说明书
-</a>
+            <a href="javascript:void(0)" onclick="document.getElementById('manualMask').style.display='flex'" class="manual-link">
+                查看使用说明书
+            </a>
 
-<!-- 全屏蒙版说明书（框架不变 + 你原版完整内容） -->
-<div id="manualMask" 
-     style="display:none; 
-            position:fixed; 
-            top:0; 
-            left:0; 
-            width:100%; 
-            height:100%; 
-            background:rgba(0,0,0,0.6); 
-            z-index:99999; 
-            margin:0;
-            padding:0;
-            overflow:auto;
-            justify-content:center;
-            align-items:flex-start;
-            box-sizing:border-box;">
-  <div style="width:1000px; 
-              background:#fff; 
-              border-radius:12px; 
-              padding:40px; 
-              margin:40px auto; 
-              position:relative;
-              font-family:Microsoft YaHei;">
-      
-    <!-- 关闭按钮 -->
-    <button onclick="document.getElementById('manualMask').style.display='none'"
-            style="position:absolute; top:20px; right:20px; width:32px; height:32px; border-radius:50%; background:#ff4d4f; color:#fff; border:none; font-size:16px; cursor:pointer;">×</button>
+            <!-- 说明书蒙版 -->
+            <div id="manualMask">
+                <div class="manual-content">
+                    <button onclick="document.getElementById('manualMask').style.display='none'" class="manual-close-btn">×</button>
+                    <div class="manual-title">燃气管道防腐层PCM检测数据生成系统使用说明书</div>
+                    <div style="margin-bottom:28px;">
+                        <div class="manual-section-title">一、系统介绍</div>
+                        <div class="manual-text">&nbsp;&nbsp;本系统专为燃气管道防腐层PCM检测设计，可根据基础参数自动生成标准化检测数据表格。支持自定义参数、特殊点标记、衰减规则，提供表格编辑、复制及Excel导出功能。</div>
+                    </div>
+                    <div style="margin-bottom:28px;">
+                        <div class="manual-section-title">二、核心数据逻辑</div>
+                        <ul class="manual-list">
+                            <li><strong>首个有效数据点</strong>：20米处的电流值严格等于您设置的“数据1最大值”（或随机默认值），确保起点可控。</li>
+                            <li><strong>迭代衰减机制</strong>：后续每个20米间隔点的电流值均基于“上一行有效数据”进行计算，贴合真实检测中的信号连续衰减特性。</li>
+                            <li><strong>自定义衰减点</strong>：在指定距离处，电流值 = 上一行有效值 × (1 - 衰减百分比)。</li>
+                            <li><strong>终点强制最小值</strong>：最后一个有效数据点强制等于“数据1最小值”。</li>
+                        </ul>
+                    </div>
+                    <div style="margin-bottom:28px;">
+                        <div class="manual-section-title">三、使用注意事项</div>
+                        <ul class="manual-list">
+                            <li>输出电流、总距离为必填项且需大于0。</li>
+                            <li>数据1最大值不能大于输出电流，埋深最浅值必须大于0。</li>
+                            <li>指定衰减格式：“距离:衰减百分比”，如“60:10”表示60米处电流衰减10%（即保留90%）。</li>
+                            <li>修改表格中某行电流值后，系统会自动基于该新值重新迭代计算后续所有行的电流。</li>
+                        </ul>
+                    </div>
+                    <div style="text-align:center; margin-top:30px;">
+                        <button onclick="document.getElementById('manualMask').style.display='none'" class="manual-confirm-btn">明白了</button>
+                    </div>
+                </div>
+            </div>
 
-    <div style="font-size:24px; font-weight:700; color:#1a73e8; text-align:center; margin-bottom:30px; padding-bottom:15px; border-bottom:2px solid #e8f0fe;">
-      燃气管道防腐层PCM检测数据生成系统使用说明书
-    </div>
-
-    <div style="margin-bottom:28px;">
-      <div style="font-size:18px; font-weight:600; color:#1a73e8; margin-bottom:12px; padding-left:12px; border-left:4px solid #1a73e8;">一、系统介绍</div>
-      <div style="font-size:15px; line-height:1.8; color:#333;">
-&nbsp;&nbsp;本燃气管道防腐层PCM检测数据生成系统是一款基于网页端开发的轻量化工具，专为燃气管道防腐层PCM检测工作设计，可根据用户输入的基础参数自动生成符合实际检测逻辑的标准化检测数据表格。系统支持自定义基础参数、特殊点标记、衰减规则设置，同时提供表格编辑、数据复制、Excel导出等功能，适用于燃气管道检测数据的快速生成、整理与归档工作。
-      </div>
-    </div>
-
-    <div style="margin-bottom:28px;">
-      <div style="font-size:18px; font-weight:600; color:#1a73e8; margin-bottom:12px; padding-left:12px; border-left:4px solid #1a73e8;">二、系统优点</div>
-      <ul style="font-size:15px; line-height:1.8; padding-left:22px; margin:0;">
-        <li>参数灵活配置：支持管段起点/终点、地形地貌、输出电流、数据范围、埋深范围、总距离等核心参数自定义，同时支持特殊点（如弯头、三通、阀井等）和衰减点精准标记。</li>
-        <li>数据逻辑贴合实际：电流数据按20米间隔自然衰减生成，支持自定义衰减比例，埋深值随机生成且贴合不同地形特征（绿化带/水泥地等），模拟真实检测数据特征。</li>
-        <li>便捷的表格编辑：支持右键插入/删除行、单元格直接编辑，修改某行电流值后自动更新后续行数据，保证数据衰减逻辑一致性。</li>
-        <li>高效的数据导出支持表格数据一键复制（仅复制数据行）、Excel文件导出，文件名可根据管段信息自动命名，提升数据整理效率。</li>
-        <li>轻量化免安装：基于纯网页技术开发，无需安装客户端，打开浏览器即可使用，兼容主流操作系统（Windows/macOS）和浏览器（Chrome/Edge/Firefox）。</li>
-      </ul>
-    </div>
-
-    <div style="margin-bottom:28px;">
-      <div style="font-size:18px; font-weight:600; color:#1a73e8; margin-bottom:12px; padding-left:12px; border-left:4px solid #1a73e8;">三、使用注意事项</div>
-      <div style="background:#fff5f5; padding:12px 16px; border-left:4px solid #ff4d4f; border-radius:8px; margin-bottom:15px;">
-        <span style="font-size:15px; color:#d32f2f; font-weight:500;">授权有效期：系统授权有效期至<span id="smsshowExpireTime"></span>，超出有效期后需联系苗大师更新授权方可使用。</span>
-      </div>
-
-      <div style="font-size:16px; font-weight:600; margin:15px 0;">3.1 参数输入规范</div>
-      <ul style="font-size:15px; line-height:1.8; padding-left:22px; margin:0;">
-        <li>输出电流、总距离为必填项，且必须输入大于0的数字，否则无法生成数据。</li>
-        <li>数据1最大值不可大于输出电流，埋深最浅值必须大于0，若输入冲突系统会自动修正并提示。</li>
-        <li>特殊点、衰减点输入需遵循格式要求（如：60:10 表示 60 米处衰减 上一行有效电流的10%；11: 左弯 表示 11 米处标记左弯），多个参数用空格或逗号分隔。</li>
-      </ul>
-
-      <div style="font-size:16px; font-weight:600; margin:15px 0;">3.2 数据编辑注意</div>
-      <ul style="font-size:15px; line-height:1.8; padding-left:22px; margin:0;">
-        <li>表格序号为系统自动生成，不可编辑；其余单元格均可直接点击输入框修改。</li>
-        <li>右键插入行时，系统会自动计算插入行的距离值（前后行平均值），可手动调整；删除行前请确认数据无需保留，删除后无法恢复。</li>
-        <li>修改 “数据 1（mA）” 列值时，系统会自动更新后续行电流值，确保衰减逻辑连贯，若输入非数字会提示并清空非法值。</li>
-      </ul>
-
-      <div style="font-size:16px; font-weight:600; margin:15px 0;">3.3 导出/复制说明</div>
-      <ul style="font-size:15px; line-height:1.8; padding-left:22px; margin:0;">
-        <li>复制功能仅复制表格数据行（不含表头），粘贴至 Excel 时可直接匹配单元格。</li>
-        <li>导出的Excel文件编码为UTF-8，兼容主流办公软件。</li>
-      </ul>
-    </div>
-
-    <div style="margin-bottom:28px;">
-      <div style="font-size:18px; font-weight:600; color:#1a73e8; margin-bottom:12px; padding-left:12px; border-left:4px solid #1a73e8;">四、使用方法</div>
-      
-      <div style="font-size:16px; font-weight:600; margin:15px 0;">4.1 基础参数设置</div>
-      <div style="font-size:15px; line-height:1.8; color:#333;">
-        
-      </div>
-		<ul style="font-size:15px; line-height:1.8; padding-left:22px; margin:0;">
-        <li>打开系统页面，首先确认授权未过期（页面无 “授权已过期” 弹窗即为正常）。</li>
-        <li>在左侧输入区域依次填写管段起点、管段终点、输出电流、总距离等参数。</li>
-      </ul>
-      <div style="font-size:16px; font-weight:600; margin:15px 0;">4.2 生成检测数据</div>	  
-	  所有必填参数填写完成后，点击左侧 “一键生成” 按钮，系统会自动在右侧 “检测数据预览” 区域生成表格数据：
-	  <ul style="font-size:15px; line-height:1.8; padding-left:22px; margin:0;">
-        <li>表格按 20 米间隔生成行，自动包含起点（0 米）、终点（总距离）、特殊点行；</li>
-		<li>表格按 20 米间隔生成行，自动包含起点（0 米）、终点（总距离）、特殊点行；</li>
-		<li>埋深值按设定范围随机生成，地形地貌自动填充至 20 米间隔行；</li>
-		<li>起点行标注 “检测起点 - 管段起点”，终点行标注 “检测终点 - 管段终点”，特殊点行标注自定义描述。</li>
-      </ul>
-      <div style="font-size:16px; font-weight:600; margin:15px 0;">4.3 表格编辑</div>
-	  <ul style="font-size:15px; line-height:1.8; padding-left:22px; margin:0;">
-        <li>单元格编辑：直接点击表格中可编辑单元格（除序号外）的输入框，修改内容后按回车或点击空白处确认。</li>
-        <li>行操作（右键菜单）：
-插入行：右键点击目标行，选择 “上方插入”/“下方插入”，系统自动计算插入行距离值，插入后序号自动重排；
-删除行：右键点击目标行，选择 “删除本行”，确认后删除，序号自动重排。</li>
-		<li>数据 1 值修改：修改某行 “数据 1（mA）” 值后，系统会自动重新计算后续行的电流值，保证衰减逻辑连贯。</li>
-      </ul>
-      
-      <div style="font-size:16px; font-weight:600; margin:15px 0;">4.4 数据导出与复制</div>
-	  <ul style="font-size:15px; line-height:1.8; padding-left:22px; margin:0;">
-        <li>复制表格：点击左侧 “复制表格” 按钮，系统将表格所有数据行（不含表头）复制到剪贴板，可直接粘贴至 Excel / 记事本等工具。</li>
-        <li>导出 Excel：点击左侧 “导出 Excel” 按钮，系统自动生成 Excel 文件并下载：
-文件名优先为 “管段起点至管段终点检测数据.xlsx”，未填写管段信息时为 “检测数据_时间戳.xlsx”；
-导出文件包含完整表格（表头 + 数据行），可直接用于办公整理。</li>
-      </ul>      
-    </div>
-
-    <div style="margin-bottom:28px;">
-      <div style="font-size:18px; font-weight:600; color:#1a73e8; margin-bottom:12px; padding-left:12px; border-left:4px solid #1a73e8;">五、常见问题</div>
-      <div style="font-size:15px; line-height:1.8; color:#333;">
-        <strong>Q：点击“一键生成”无反应？</strong><br>
-        检查必填参数（输出电流、总距离）是否填写且为大于 0 的数字，若参数冲突（如数据 1 最大值 < 最小值），页面右侧会提示错误信息，修正后重试。<br><br>
-        <strong>Q：复制/导出的数据为空？</strong><br>
-        需先点击 “一键生成” 生成数据表格，确保预览区域有数据行后再执行复制 / 导出操作。<br><br>
-        <strong>Q：插入行后距离值不合理？</strong><br>
-        可手动修改插入行的 “距离 (m)” 列值，修改后不影响其他行数据逻辑。<br><br>
-        <strong>Q：授权过期提示？</strong><br>
-        联系苗大师更新授权后刷新页面即可使用。
-      </div>
-    </div>
-
-    <div style="text-align:center; margin-top:30px;">
-      <button onclick="document.getElementById('manualMask').style.display='none'"
-              style="background:#1a73e8; color:#fff; border:none; padding:12px 36px; border-radius:8px; font-size:15px; cursor:pointer;">明白了</button>
-    </div>
-  </div>
-</div>
-            <div class="input-group">
+            <!-- 参数输入区 -->
+            <div class="input-group zcbj">
                 <h3>基础参数</h3>
-                <div class="input-item">
-                    <label>管段起点：</label>
-                    <input type="text" id="pipeStart" placeholder="例：2栋调压箱">
-                </div>
-                <div class="input-item">
-                    <label>管段终点：</label>
-                    <input type="text" id="pipeEnd" placeholder="例：市政阀井">
-                </div>
-                <div class="input-item">
-                    <label>地形地貌：</label>
-                    <input type="text" id="defaultTerrain" placeholder="例：绿化带（默认）">
-                </div>
-                <div class="input-item">
-                    <label>输出电流(mA)：</label>
-                    <input type="number" id="outputCurrent" placeholder="例：600" required>
-                </div>
+                <div class="input-item"><label>管段长度(m)：</label><input type="number" id="totalDistance" placeholder="例：1627" required></div>
+                <div class="input-item"><label>输出电流(mA)：</label><input type="number" id="outputCurrent" placeholder="例：600" required></div>
+                <div class="input-item"><label>管段起点：</label><input type="text" id="pipeStart" placeholder="例：2栋调压箱"></div>
+                <div class="input-item"><label>管段终点：</label><input type="text" id="pipeEnd" placeholder="例：市政阀井"></div>
+                <div class="input-item"><label>地形地貌：</label><input type="text" id="defaultTerrain" placeholder="例：绿化带（默认）"></div>
             </div>
-            <div class="input-group">
+            <div class="input-group zcbj">
                 <h3>数据1范围</h3>
-                <div class="input-item">
-                    <label>最大值(mA)：</label>
-                    <input type="number" id="data1Max" placeholder="默认输出电流的80-90%">
-                </div>
-                <div class="input-item">
-                    <label>最小值(mA)：</label>
-                    <input type="number" id="data1Min" placeholder="默认15-30">
-                </div>
+                <div class="input-item"><label>最大值(mA)：</label><input type="number" id="data1Max" placeholder="起点默认为输出电流的80-90%"></div>
+                <div class="input-item"><label>最小值(mA)：</label><input type="number" id="data1Min" placeholder="末端默认为15-30"></div>
+                <div class="input-item"><label>指定距离衰减：</label></div>
+                <div class="special-point-group"><textarea class="textareayangshi" id="decayPoints" placeholder="例：60:10 代表60米处衰减10%
+                                                           如需多个请用逗号或空格隔开"></textarea></div>
             </div>
-            <div class="input-group">
+            <div class="input-group zcbj">
                 <h3>埋深范围</h3>
-                <div class="input-item">
-                    <label>最深值(m)：</label>
-                    <input type="number" step="0.01" id="burialMax" placeholder="例：0.82">
-                </div>
-                <div class="input-item">
-                    <label>最浅值(m)：</label>
-                    <input type="number" step="0.01" id="burialMin" placeholder="例：0.68">
-                </div>
-            </div>
-            <div class="input-group">
-                <h3>检测距离</h3>
-                <div class="input-item">
-                    <label>总距离(m)：</label>
-                    <input type="number" id="totalDistance" placeholder="例：1627" required>
-                </div>
-            </div>
-            <div class="input-group">
-                <h3>指定衰减行</h3>
-                <div class="special-point-tip">多个参数用空格或逗号分割</div>
-                <div class="special-point-group">
-                    <input type="text" id="decayPoints" placeholder="例：60:10 表示60米处衰减10%">
-                </div>
+                <div class="input-item"><label>最深值(m)：</label><input type="number" step="0.01" id="burialMax" placeholder="例：0.82"></div>
+                <div class="input-item"><label>最浅值(m)：</label><input type="number" step="0.01" id="burialMin" placeholder="例：0.68"></div>
             </div>
             <div class="input-group">
                 <h3>特殊点标记</h3>
-                <div class="special-point-tip">多个参数用空格或逗号分割</div>
-                <div class="special-point-group">
-                    <input type="text" id="specialPoints" placeholder="例：11:左弯,42:三通,108:阀井">
-                </div>
+                <div class="special-point-group"><textarea class="textareayangshi" id="specialPoints" placeholder="例：11:左弯,42:三通,108:阀井
+                                                           如需多个请用逗号或空格隔开"></textarea></div>
             </div>
             <div class="operate-area">
                 <button class="operate-btn" id="generateBtn">一键生成</button>
@@ -437,494 +103,33 @@
             </div>
         </div>
 
+        <!-- 右侧预览区域 -->
         <div class="preview-area">
             <div class="preview-title">检测数据预览</div>
             <div class="preview-tip">使用说明：序号不可编辑，其余均可编辑。更改电流列数据会导致后续电流同步更改。右键可插入/删除行。</div>
-            <table class="data-table" id="dataTable">
-                <thead>
-                    <tr>
-                        <th>序号</th>
-                        <th>距离(m)</th>
-                        <th>数据1(mA)</th>
-                        <th>地形地貌</th>
-                        <th>埋深(m)</th>
-                        <th>破损点编号</th>
-                        <th>db值</th>
-                        <th>破损分级</th>
-                        <th>坐标</th>
-                        <th>位置描述</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="data-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>序号</th><th>距离(m)</th><th>数据1(mA)</th><th>地形地貌</th><th>埋深(m)</th>
+                            <th>破损点编号</th><th>db值</th><th>破损分级</th><th>坐标</th><th>位置描述</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="tip-box" id="tipBox"></div>
-    <div class="context-menu" id="contextMenu">
-        <div class="context-menu-item" id="insertBefore">上方插入</div>
-        <div class="context-menu-item" id="insertAfter">下方插入</div>
-        <div class="context-menu-item" id="deleteRow">删除本行</div>
-    </div>
+<!-- 提示框与右键菜单 -->
+<div class="tip-box" id="tipBox"></div>
+<div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" id="insertBefore">上方插入</div>
+    <div class="context-menu-item" id="insertAfter">下方插入</div>
+    <div class="context-menu-item" id="deleteRow">删除本行</div>
+</div>
 
-<script>
-    const AUTH_EXPIRE_DATE = "2026-12-31 23:59:59";
-    function checkAuth() {
-        let now = new Date();
-        let expire = new Date(AUTH_EXPIRE_DATE);
-        document.getElementById("showNowTime").innerText = now.toLocaleString();
-        document.getElementById("showExpireTime").innerText = AUTH_EXPIRE_DATE;
-		document.getElementById("smsshowExpireTime").innerText = AUTH_EXPIRE_DATE;
-        if (now > expire) {
-            document.getElementById("authMask").style.display = "flex";
-            return false;
-        } else {
-            document.getElementById("authMask").style.display = "none";
-            return true;
-        }
-    }
-
-    !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).saveAs=e()}(this,(function(){"use strict";function n(e,n,r){if(!n)throw new Error("文件名不能为空");r=r||{};var o=e instanceof Blob;if("string"==typeof e&&/^data:/.test(e)){var i=atob(e.split(",")[1]),a=new Uint8Array(i.length);for(var s=0;s<i.length;s++)a[s]=i.charCodeAt(s);e=new Blob([a],{type:e.split(":")[1].split(";")[0]})}return (o?Promise.resolve(e):fetch(e).then(function(t){if(!t.ok)throw new Error(t.status);return t.blob()})).then(function(t){var l=document.createElement("a");l.href=URL.createObjectURL(t);l.download=n;l.style.display="none";document.body.appendChild(l);l.click();setTimeout(function(){document.body.removeChild(l);URL.revokeObjectURL(l.href);},100);})["catch"](function(e){console.error(e)});}return n;}));
-
-    window.XLSX = {
-        utils: {
-            decode_cell: ref => {var c=0,r=0,i=0;for(;i<ref.length;i++){var ch=ref.charCodeAt(i);if(ch>=65&&ch<=90)c=c*26+ch-65+1;else break}r=parseInt(ref.slice(i))-1;return{c:c-1,r:r};},
-            encode_cell: cell => {var col=cell.c,row=cell.r+1,s="";while(col>=0){s=String.fromCharCode(65+col%26)+s;col=Math.floor(col/26)-1}return s+row;},
-            decode_range: ref => {var p=ref.split(":");return{s:XLSX.utils.decode_cell(p[0]),e:XLSX.utils.decode_cell(p[1])};},
-            encode_range: r=>XLSX.utils.encode_cell(r.s)+":"+XLSX.utils.encode_cell(r.e),
-            table_to_sheet: (table)=>{var s={},r={s:{r:0,c:0},e:{r:0,c:0}};var tr=table.querySelectorAll("tr");for(var R=0;R<tr.length;R++){var td=tr[R].querySelectorAll("td,th");for(var C=0;C<td.length;C++){var v="";var inp=td[C].querySelector("input,textarea");if(inp)v=inp.value||""; else v=td[C].textContent||"";v=v.replace(/\r?\n/g,"");var cr=XLSX.utils.encode_cell({r:R,c:C});s[cr]={v:v,t:"s"};if(r.s.r>R)r.s.r=R;if(r.s.c>C)r.s.c=C;if(r.e.r<R)r.e.r=R;if(r.e.c<C)r.e.c=C;}}s["!ref"]=XLSX.utils.encode_range(r);return s;},
-            book_new: ()=>({SheetNames:[],Sheets:{}}),
-            book_append_sheet: (b,s,n)=>{b.SheetNames.push(n);b.Sheets[n]=s}
-        },
-        writeFile: (wb,fn)=>{var sn=wb.SheetNames[0],s=wb.Sheets[sn],r=XLSX.utils.decode_range(s["!ref"]);var c="";for(var R=r.s.r;R<=r.e.r;R++){var row=[];for(var C=r.s.c;C<=r.e.c;C++){var cr=XLSX.utils.encode_cell({r:R,c:C});var v=s[cr]?s[cr].v:"";row.push(v);}c+=row.join("\t")+"\r\n";}var blob=new Blob([c],{type:"application/vnd.ms-excel;charset=utf-8"});saveAs(blob,fn||"检测数据.xlsx");}
-    };
-</script>
-
-<script>
-    let currentRow = null;               
-    let zeroRowDistance = 0;            
-    let lastDataRowDistance = 0;        
-
-    window.onload = function(){
-        if (!checkAuth()) return;
-        document.getElementById("generateBtn").onclick = generateBaseData;
-        document.getElementById("copyToExcelBtn").onclick = copyToExcel;
-        document.getElementById("exportExcelBtn").onclick = exportToExcel;
-        bindContextMenu();
-        document.getElementById("insertBefore").onclick = ()=>{insertRow(currentRow,"before");document.getElementById("contextMenu").style.display="none";};
-        document.getElementById("insertAfter").onclick = ()=>{insertRow(currentRow,"after");document.getElementById("contextMenu").style.display="none";};
-        document.getElementById("deleteRow").onclick = deleteCurrentRow;
-    };
-
-    function getFileNameTime(){
-        const d = new Date();
-        return d.getFullYear().toString() + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0") + String(d.getHours()).padStart(2,"0") + String(d.getMinutes()).padStart(2,"0");
-    }
-
-    function getExportFileName(){
-        const pipeStart = document.getElementById("pipeStart").value.trim();
-        const pipeEnd = document.getElementById("pipeEnd").value.trim();
-        if(pipeStart && pipeEnd){return `${pipeStart}至${pipeEnd}检测数据.xlsx`;}
-        return `检测数据_${getFileNameTime()}.xlsx`;
-    }
-
-    function parseDecayPoints() {
-        const decayInput = document.getElementById("decayPoints").value.trim();
-        if (!decayInput) return [];
-        const decayPoints = [];
-        const items = decayInput.split(/[ ,，]+/);
-        items.forEach(item => {
-            const [distanceStr, percentStr] = item.split(/[:：]/);
-            const distance = parseInt(distanceStr);
-            const percent = parseFloat(percentStr);
-            if (!isNaN(distance) && distance > 0 && !isNaN(percent) && percent > 0 && percent <= 100) {
-                const rate = (100 - percent) / 100;
-                decayPoints.push({ distance, rate });
-            }
-        });
-        decayPoints.sort((a, b) => a.distance - b.distance);
-        return decayPoints;
-    }
-
-    function parseSpecialPoints() {
-        const specialInput = document.getElementById("specialPoints").value.trim();
-        if (!specialInput) return [];
-        const specialPoints = [];
-        const items = specialInput.split(/[ ,，]+/);
-        items.forEach(item => {
-            const [distanceStr, label] = item.split(/[:：]/);
-            const distance = parseInt(distanceStr);
-            if (!isNaN(distance) && distance > 0) {
-                specialPoints.push({ d: distance, l: label || "" });
-            }
-        });
-        specialPoints.sort((a, b) => a.d - b.d);
-        return specialPoints;
-    }
-
-    function generateBurialValue(min, max) {
-        const rand = Math.random();
-        if (rand < 0.08) return min.toFixed(2);
-        if (rand < 0.16) return max.toFixed(2);
-        const val = min + Math.random() * (max - min);
-        return val.toFixed(2);
-    }
-
-    // 生成指定范围的随机整数
-    function getRandomInt(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    // 核心重构：按总行数均匀计算下浮率 + 空值随机默认值
-    function generateBaseData(){
-        const outputCurrent = parseInt(document.getElementById("outputCurrent").value);
-        const totalDistance = parseInt(document.getElementById("totalDistance").value);
-        const data1Max = parseInt(document.getElementById("data1Max").value)||null; // 允许为空
-        const data1Min = parseInt(document.getElementById("data1Min").value)||null; // 允许为空
-        const burialMax = parseFloat(document.getElementById("burialMax").value)||null;
-        const burialMin = parseFloat(document.getElementById("burialMin").value)||null;
-        const pipeStart = document.getElementById("pipeStart").value.trim();
-        const pipeEnd = document.getElementById("pipeEnd").value.trim();
-        const terrain = document.getElementById("defaultTerrain").value.trim()||"绿化带";
-
-        // 基础校验（仅校验必填项和逻辑冲突）
-        const errorTips = [];
-        if(!outputCurrent || isNaN(outputCurrent) || outputCurrent <= 0){errorTips.push("输出电流必填且大于0");}
-        if(!totalDistance || isNaN(totalDistance) || totalDistance <= 0){errorTips.push("总距离必填且大于0");}
-        if(data1Max !== null && data1Min !== null && data1Max < data1Min){errorTips.push("数据1最大值不能小于最小值");}
-        if(data1Max !== null && data1Max > outputCurrent){errorTips.push("数据1最大值不能大于输出电流");}
-        if(data1Min !== null && data1Min < 0){errorTips.push("数据1最小值不能小于0");}
-        if(burialMax !== null && burialMin !== null && burialMax < burialMin){errorTips.push("埋深最深不能小于最浅");}
-        if(burialMin !== null && burialMin <= 0){errorTips.push("埋深最浅必须大于0");}
-        if(errorTips.length > 0){showTip(errorTips.join("<br/>"), true);return;}
-
-        // ========== 新增：空值时的随机默认值逻辑 ==========
-        let finalData1Max, finalData1Min;
-        // 最大值为空：随机生成 输出电流的 80% ~ 90%
-        if(data1Max === null){
-            const minRate = 0.8;
-            const maxRate = 0.9;
-            const randomRate = minRate + Math.random() * (maxRate - minRate);
-            finalData1Max = Math.round(outputCurrent * randomRate);
-        } else {
-            finalData1Max = data1Max; // 非空则用用户输入值
-        }
-
-        // 最小值为空：随机生成 15 ~ 30 之间的整数
-        if(data1Min === null){
-            finalData1Min = getRandomInt(15, 30);
-        } else {
-            finalData1Min = data1Min; // 非空则用用户输入值
-        }
-
-        // 二次校验：确保随机生成的最大值≥最小值
-        if(finalData1Max < finalData1Min){
-            finalData1Min = Math.round(finalData1Max * 0.2); // 若冲突，最小值设为最大值的20%
-            showTip(`自动修正最小值为${finalData1Min}（最大值不能小于最小值）`, false);
-        }
-
-        // 确定埋深范围
-        let finalBurialMax, finalBurialMin;
-        if(burialMax !== null && burialMin !== null){
-            finalBurialMax = burialMax;
-            finalBurialMin = burialMin;
-        }else if(burialMax !== null && burialMin === null){
-            finalBurialMax = burialMax;
-            finalBurialMin = parseFloat((burialMax * 0.8).toFixed(2));
-        }else if(burialMax === null && burialMin !== null){
-            finalBurialMax = parseFloat((burialMin * 1.2).toFixed(2));
-            finalBurialMin = burialMin;
-        }else{
-            if(terrain === "水泥地"){finalBurialMax=1.0;finalBurialMin=0.8;}
-            else if(terrain==="绿化带"){finalBurialMax=0.8;finalBurialMin=0.6;}
-            else{finalBurialMax=0.9;finalBurialMin=0.7;}
-        }
-
-        // 解析特殊点和衰减点
-        const specialPoints = parseSpecialPoints();
-        const decayPoints = parseDecayPoints();
-
-        // 生成距离数组（20米间隔+特殊点+终点）
-        let arr = [0];
-        let valid20Distances = [];
-        for(let i=20;i<totalDistance;i+=20){
-            arr.push(i);
-            valid20Distances.push(i);
-        }
-        specialPoints.forEach(sp => {
-            if(!arr.includes(sp.d)) arr.push(sp.d);
-        });
-        if(!arr.includes(totalDistance))arr.push(totalDistance);
-        arr.sort((a,b)=>a-b);
-        zeroRowDistance = 0;
-        lastDataRowDistance = totalDistance;
-        
-        const tb = document.querySelector("#dataTable tbody");
-        tb.innerHTML = "";
-
-        // ========== 核心逻辑：按总行数计算均匀下浮率 ==========
-        let data1Values = {};
-        const decayMap = {};
-        decayPoints.forEach(p=>decayMap[p.distance]=p.rate);
-
-        // 计算总行数和每行的基础下浮步长
-        const totalValidRows = valid20Distances.length;
-        // 总衰减量 = 最大值 - 最小值
-        const totalDecayAmount = finalData1Max - finalData1Min;
-        // 每行基础下浮步长 = 总衰减量 / (总行数 - 1) （保证最后一行刚好到最小值）
-        const baseStep = totalValidRows > 1 ? totalDecayAmount / (totalValidRows - 1) : 0;
-
-        // 逐行生成均匀衰减的电流值
-        valid20Distances.forEach((d, idx) => {
-            // 1. 基础值：最大值 - 行号 × 基础步长（保证均匀衰减）
-            let currentValue = finalData1Max - (idx * baseStep);
-            
-            // 2. 应用自定义衰减（如果有）
-            let customDecayRate = decayMap[d];
-            if (customDecayRate !== undefined) {
-                currentValue = Math.round(currentValue * customDecayRate);
-            }
-
-            // 3. 小幅随机波动（±2%），模拟真实检测的微小误差
-            const fluctuation = currentValue * (Math.random() * 0.04 - 0.02); // -2% ~ +2%
-            currentValue += fluctuation;
-
-            // 4. 最后一行强制等于最小值（保证精准匹配）
-            if (idx === valid20Distances.length - 1) {
-                currentValue = finalData1Min;
-            }
-
-            // 取整（符合电流值整数特性）
-            data1Values[d] = Math.round(currentValue);
-        });
-
-        // ========== 生成表格行 ==========
-        arr.forEach((d,idx)=>{
-            const tr = document.createElement("tr");
-            const is20 = d%20===0;
-            const is0 = d===0;
-            const isLast = d===totalDistance;
-            const isValid20 = is20 && !is0 && !isLast;
-            const sp = specialPoints.find(x=>x.d===d);
-            let desc = sp?sp.l:"";
-            if(is0) desc = `检测起点-${pipeStart||desc}`;
-            if(isLast) desc = `检测终点-${pipeEnd||desc}`;
-
-            const td1 = document.createElement("td");
-            td1.textContent=idx+1;
-            tr.appendChild(td1);
-            
-            const td2 = document.createElement("td");
-            td2.innerHTML=`<input type="number" value="${d}">`;
-            tr.appendChild(td2);
-            
-            // 3. 数据1列（仅有效20米行填充电流值）
-			const td3 = document.createElement("td");
-			let data1Val = isValid20 ? data1Values[d] : "";
-			// 新增：添加data-distance标识距离，绑定input事件
-			td3.innerHTML = `<input type="number" class="data1-input" data-distance="${d}" value="${data1Val}" oninput="onData1Change(this)">`;
-			tr.appendChild(td3);
-
-            const td4 = document.createElement("td");
-            let t = isValid20 ? terrain : "";
-            td4.innerHTML=`<input type="text" value="${t}">`;
-            tr.appendChild(td4);
-
-            const td5 = document.createElement("td");
-            let buri = isValid20 ? generateBurialValue(finalBurialMin,finalBurialMax) : "";
-            td5.innerHTML=`<input type="text" value="${buri}">`;
-            tr.appendChild(td5);
-
-            const td6 = document.createElement("td");td6.innerHTML=`<input type="text" value="">`;tr.appendChild(td6);
-            const td7 = document.createElement("td");td7.innerHTML=`<input type="text" value="">`;tr.appendChild(td7);
-            const td8 = document.createElement("td");td8.innerHTML=`<input type="text" value="">`;tr.appendChild(td8);
-            const td9 = document.createElement("td");td9.innerHTML=`<textarea class="coord-input"></textarea>`;tr.appendChild(td9);
-            const td10 = document.createElement("td");td10.innerHTML=`<input type="text" value="${desc}">`;tr.appendChild(td10);
-
-            if(is0) tr.classList.add("zero-data-row");
-            if(isLast) tr.classList.add("last-data-row");
-            tb.appendChild(tr);
-        });
-        showTip(`生成完成！使用参数：最大值=${finalData1Max}mA，最小值=${finalData1Min}mA`);
-    }
-	
-	/**
- * 数据1输入框修改事件：重新计算后续行的电流值
- * @param {HTMLInputElement} input - 被修改的输入框元素
- */
-function onData1Change(input) {
-    // 1. 获取基础参数
-    const modifiedDistance = parseInt(input.dataset.distance); // 修改行的距离
-    const modifiedValue = parseInt(input.value); // 修改后的值
-    const totalDistance = parseInt(document.getElementById("totalDistance").value); // 总距离
-    const data1Min = parseInt(document.getElementById("data1Min").value) || Math.round(parseInt(document.getElementById("outputCurrent").value) * 0.1); // 数据1最小值
-    const terrain = document.getElementById("defaultTerrain").value.trim() || "绿化带"; // 地形地貌
-
-    // 合法性校验
-    if (isNaN(modifiedDistance) || isNaN(modifiedValue) || modifiedValue < 0) {
-        showTip("数据1值必须为大于0的数字", true);
-        input.value = ""; // 清空非法值
-        return;
-    }
-
-    // 2. 重新获取衰减点、20米间隔行等基础数据
-    const decayPoints = parseDecayPoints(); // 自定义衰减点
-    const decayMap = {};
-    decayPoints.forEach(p => decayMap[p.distance] = p.rate);
-
-    // 3. 筛选出：大于修改行距离的、有效20米间隔行（非起点/终点）
-    let valid20Distances = [];
-    for (let i = 20; i < totalDistance; i += 20) {
-        if (i > modifiedDistance) valid20Distances.push(i);
-    }
-    // 补充总距离（终点）前的最后一行强制为最小值
-    const last20Distance = valid20Distances.length > 0 ? valid20Distances[valid20Distances.length - 1] : null;
-
-    // 4. 计算新的衰减步长（以修改后的值为起点）
-    const totalValidRows = valid20Distances.length;
-    const totalDecayRange = modifiedValue - data1Min; // 新的总衰减量（修改值→最小值）
-    const baseStep = totalValidRows > 0 ? totalDecayRange / totalValidRows : 0; // 新的基础衰减步长
-
-    // 5. 逐行重新计算后续行的电流值
-    let currentValue = modifiedValue; // 以修改后的值为新起点
-    valid20Distances.forEach((d, idx) => {
-        // 5.1 应用自定义衰减（如果有）
-        let customDecayRate = decayMap[d];
-        if (customDecayRate !== undefined) {
-            currentValue = Math.round(currentValue * customDecayRate);
-        } else {
-            // 5.2 基础衰减步长 + 随机波动（±3%）
-            currentValue = currentValue - baseStep;
-            const fluctuation = currentValue * (Math.random() * 0.06 - 0.03);
-            currentValue += fluctuation;
-        }
-
-        // 5.3 边界保护：不低于最小值
-        currentValue = Math.max(currentValue, data1Min);
-        // 取整
-        const newData1Value = Math.round(currentValue);
-
-        // 5.4 强制最后一个20米行等于最小值
-        if (d === last20Distance) {
-            newData1Value = data1Min;
-        }
-
-        // 5.5 更新表格中对应行的“数据1”输入框值
-        const targetInput = document.querySelector(`.data1-input[data-distance="${d}"]`);
-        if (targetInput) {
-            targetInput.value = newData1Value;
-        }
-    });
-
-    // 提示修改生效
-    showTip("后续数据已自动更新", false);
-}
-
-    function bindContextMenu(){
-        const tableBody = document.querySelector("#dataTable tbody");
-        tableBody.addEventListener("contextmenu",e=>{
-            e.preventDefault();
-            const row = e.target.closest("tr");
-            if(row){ 
-                currentRow=row; 
-                const menu=document.getElementById("contextMenu");
-                menu.style.display="block";
-                menu.style.left=e.clientX+"px";
-                menu.style.top=e.clientY+"px";
-            }
-        });
-        document.addEventListener("click",()=>{document.getElementById("contextMenu").style.display="none";});
-    }
-
-    function insertRow(target,pos){
-        const newRow = document.createElement("tr");
-        const dis = getAutoDistance(target,pos);
-        newRow.innerHTML = `
-<td>0</td>
-<td><input type="number" value="${dis}"></td>
-<td><input type="text" value=""></td>
-<td><input type="text" value=""></td>
-<td><input type="text" value=""></td>
-<td><input type="text" value=""></td>
-<td><input type="text" value=""></td>
-<td><input type="text" value=""></td>
-<td><textarea class="coord-input"></textarea></td>
-<td><input type="text" value=""></td>`;
-        pos=="before"?target.before(newRow):target.after(newRow);
-        reorderSerialNumbers();
-        showTip("插入成功");
-    }
-
-    function getAutoDistance(tr,p){
-        const rows = Array.from(document.querySelectorAll("#dataTable tbody tr"));
-        const index = rows.indexOf(tr);
-        let pre = index>0?parseInt(rows[index-1].querySelector("td:nth-child(2) input").value)||0:0;
-        let nxt = index<rows.length-1?parseInt(rows[index+1].querySelector("td:nth-child(2) input").value)||0:0;
-        let cur = parseInt(tr.querySelector("td:nth-child(2) input").value)||0;
-        return p=="before"?(pre?Math.round((pre+cur)/2):cur-10):(nxt?Math.round((cur+nxt)/2):cur+10);
-    }
-
-    function reorderSerialNumbers(){
-        document.querySelectorAll("#dataTable tbody tr").forEach((row,index)=>{
-            row.querySelector("td:nth-child(1)").textContent = index+1;
-        });
-    }
-
-    function deleteCurrentRow(){
-        if(!currentRow || !confirm("确定删除？")) return;
-        currentRow.remove();
-        reorderSerialNumbers();
-        showTip("已删除");
-    }
-
-    // ========== 核心修改：复制功能（仅复制数据行，不包含表头） ==========
-    function copyToExcel(){
-        const table = document.getElementById("dataTable");
-        // 只选择tbody里的行（数据行），排除thead的表头行
-        const rows = table.querySelectorAll("tbody tr"); 
-        let copyText = "";
-        rows.forEach(tr=>{
-            const cells = tr.querySelectorAll("td"); // 只选td（数据单元格），排除th（表头单元格）
-            const rowData = [];
-            cells.forEach(cell=>{
-                let v="";
-                const inp=cell.querySelector("input,textarea");
-                if(inp)v=inp.value||"";
-                else v=cell.textContent||"";
-                v=v.replace(/\r?\n/g,"");
-                rowData.push(v);
-            });
-            copyText += rowData.join("\t")+"\r\n";
-        });
-        const t=document.createElement("textarea");
-        t.value=copyText;
-        t.style.position="fixed";
-        t.style.left="-9999px";
-        document.body.appendChild(t);
-        t.select();
-        document.execCommand("copy");
-        document.body.removeChild(t);
-        showTip("已复制数据行到剪贴板（不含表头）");
-    }
-
-    // 导出功能保持原有逻辑不变
-    function exportToExcel(){
-        const ws=XLSX.utils.table_to_sheet(document.getElementById("dataTable"));
-        const wb=XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb,ws,"检测数据");
-        XLSX.writeFile(wb,getExportFileName());
-        showTip("导出成功");
-    }
-
-    function showTip(msg,isError=false){
-        const b=document.getElementById("tipBox");
-        b.innerHTML=msg;
-        b.style.display="block";
-        isError?b.classList.add("error-tip"):b.classList.remove("error-tip");
-        setTimeout(()=>{b.style.display="none";},isError?8000:5000);
-    }
-</script>
+<script src="script.js"></script>
 </body>
 </html>
