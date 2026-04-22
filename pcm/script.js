@@ -47,35 +47,49 @@ async function getServerTime1() {
     }
 }
 
-// ==================== 登录验证模块（原代码基础上增加服务器时间对比） ====================
+// ==================== 登录验证模块（统一使用 UTC 时间比较） ====================
 async function checkUserAuth(username) {
     try {
-        // ---------- 新增：获取服务器时间（必须成功） ----------
+        // ---------- 1. 获取服务器标准时间（UTC） ----------
         const serverTime = await getServerTime();
         if (!serverTime) {
             return { status: 'error', msg: '授权查询请求失败' };
         }
 
-        // ---------- 原有代码保持不变 ----------
+        // ---------- 2. 原有代码：获取授权配置 ----------
         const timestamp = new Date().getTime();
         const url = `https://woonn.cn/pcm/auth-config.json?t=${timestamp}`;
         const response = await fetch(url, { method: 'GET' });
-        if (!response.ok) return { status: 'error', msg: '网络请求失败' };
+        if (!response.ok) return { status: 'error', msg: '网络请求失败（' + response.status + '）' };
         const authData = await response.json();
         if (!authData[username]) return { status: 'error', msg: '未给该用户授权，请核对' };
         const userInfo = authData[username];
         if (!userInfo.enabled) return { status: 'error', msg: '该用户已被禁用' };
 
-        // ---------- 修改点：将 new Date() 替换为 serverTime ----------
-        const expireTime = new Date(userInfo.expire);
-        //const expireTime = new Date(userInfo.expire + 'Z');获取的服务器当前时间的话，要这样写，强制将获取的过期时间用UTC展示
-        if (serverTime > expireTime) return { status: 'error', msg: '该用户授权已过期（有效期至：' + userInfo.expire + '）' };
+        // ---------- 3. 核心改进：统一转换为 UTC 时间的毫秒数进行比较 ----------
+        // 将服务器时间转换为 UTC 毫秒数
+        const serverTimeUTC = serverTime.getTime();
+
+        // 将授权过期时间也解析为 UTC 时间
+        // 假设 userInfo.expire 的格式为 "2026-04-23 23:59:59"，且代表北京时间
+        const expireTimeBeijing = new Date(userInfo.expire); // 浏览器会按本地时区（如北京时间）解析
+
+        // 关键一步：将解析后的北京时间转换为 UTC 时间
+        // 因为北京时间比 UTC 早8小时，所以减去 8 * 60 * 60 * 1000 毫秒
+        const expireTimeUTC = expireTimeBeijing.getTime() - (8 * 60 * 60 * 1000);
+
+        // 进行比较
+        if (serverTimeUTC > expireTimeUTC) {
+            return { status: 'error', msg: '该用户授权已过期（有效期至：' + userInfo.expire + '）' };
+        }
+
+        // 验证通过
+        userAuthInfo = userInfo;
         return { status: 'success', msg: '验证通过' };
     } catch (error) {
-        return { status: 'error', msg: '系统网络服务异常,请与管理员联系' };
+        return { status: 'error', msg: '网络异常：' + error.message };
     }
 }
-
 function bindLoginEvent() {
     const loginBtn = document.getElementById('loginBtn');
     const loginUsername = document.getElementById('loginUsername');
