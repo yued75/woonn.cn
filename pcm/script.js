@@ -20,7 +20,7 @@ window.XLSX = {
 };
 
 // ==================== 获取服务器标准时间（使用 TimeAPI.io） ====================
-async function getServerTime1() {
+async function getServerTime() {
     try {
         const res = await fetch('https://timeapi.io/api/timezone/zone?timeZone=UTC');
         if (!res.ok) throw new Error('时间服务异常');
@@ -34,7 +34,7 @@ async function getServerTime1() {
 }
 
 // ==================== 获取服务器标准时间（使用苏宁API，国内可用） ====================
-async function getServerTime() {
+async function getServerTime1() {
     try {
         const res = await fetch('http://quan.suning.com/getSysTime.do');
         if (!res.ok) throw new Error('时间服务异常');
