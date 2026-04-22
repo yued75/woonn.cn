@@ -87,7 +87,7 @@ async function checkUserAuth(username) {
         userAuthInfo = userInfo;
         return { status: 'success', msg: '验证通过' };
     } catch (error) {
-        return { status: 'error', msg: '网络异常：' + error.message };
+        return { status: 'error', msg: '系统网络服务异常，请联系管理员' };
     }
 }
 function bindLoginEvent() {
