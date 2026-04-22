@@ -29,7 +29,7 @@ async function checkUserAuth(username) {
         const response = await fetch(url, { method: 'GET' });
         if (!response.ok) return { status: 'error', msg: '网络请求失败（' + response.status + '）' };
         const authData = await response.json();
-        if (!authData[username]) return { status: 'error', msg: '未给该用户名授权，请核对' };
+        if (!authData[username]) return { status: 'error', msg: '未给该用户授权，请核对' };
         const userInfo = authData[username];
         if (!userInfo.enabled) return { status: 'error', msg: '该用户已被禁用' };
         const now = new Date();
