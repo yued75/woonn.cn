@@ -27,7 +27,7 @@ async function checkUserAuth(username) {
         const timestamp = new Date().getTime();
         const url = `https://woonn.cn/pcm/auth-config.json?t=${timestamp}`;
         const response = await fetch(url, { method: 'GET' });
-        if (!response.ok) return { status: 'error', msg: '网络请求失败（' + response.status + '）' };
+        if (!response.ok) return { status: 'error', msg: '授权查询请求失败'};
         const authData = await response.json();
         if (!authData[username]) return { status: 'error', msg: '未给该用户授权，请核对' };
         const userInfo = authData[username];
@@ -38,7 +38,7 @@ async function checkUserAuth(username) {
         userAuthInfo = userInfo;
         return { status: 'success', msg: '验证通过' };
     } catch (error) {
-        return { status: 'error', msg: '网络异常：' + error.message };
+        return { status: 'error', msg: '网络异常,请与管理员联系' };
     }
 }
 
