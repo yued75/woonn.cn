@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub响应头时间服务器</title>
+    <title>Time Server · 时间对比与 JSON 接口</title>
     <style>
         * {
             margin: 0;
@@ -23,7 +23,7 @@
 
         /* 主卡片 */
         .glass-card {
-            max-width: 880px;
+            max-width: 980px;
             width: 100%;
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(12px);
@@ -33,7 +33,6 @@
             transition: all 0.2s ease;
         }
 
-        /* 头部 */
         .header {
             background: rgba(255, 255, 255, 0.4);
             padding: 1.2rem 2rem;
@@ -69,7 +68,6 @@
             border-radius: 1.8rem;
             padding: 1.2rem 1.2rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 0 0 1px rgba(255,255,255,0.8);
-            transition: transform 0.1s ease;
         }
         .time-label {
             font-size: 0.75rem;
@@ -101,7 +99,7 @@
 
         /* JSON 区域 */
         .json-section {
-            margin: 0 2rem 2rem 2rem;
+            margin: 0 2rem 1.5rem 2rem;
             background: #0f212e;
             border-radius: 1.5rem;
             padding: 1.2rem;
@@ -147,6 +145,63 @@
             color: #cdeef9;
             border: 1px solid #2e5f6e;
             margin: 0;
+        }
+
+        /* 使用说明卡片 */
+        .usage-section {
+            margin: 0 2rem 1.5rem 2rem;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            border: 1px solid rgba(255,255,240,0.8);
+        }
+        .usage-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1f4e5e;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .code-block {
+            background: #1e2f3a;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            position: relative;
+        }
+        .code-block pre {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            border: none;
+            font-size: 0.75rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #e2f0f5;
+        }
+        .copy-code-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #3e7f91;
+            border: none;
+            color: white;
+            font-size: 0.65rem;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        .copy-code-btn:hover {
+            background: #2a6273;
+        }
+        .small-note {
+            font-size: 0.7rem;
+            color: #2c666e;
+            margin-top: 0.6rem;
         }
 
         .footer-note {
@@ -205,8 +260,32 @@
   "offset_seconds": 0,
   "unit": "seconds"
 }</pre>
-            <div style="margin-top: 8px; font-size:0.7rem; color:#bbd4e0;">
-                💡 在其他网站嵌入本页面 &nbsp;→&nbsp; <code>iframe.contentWindow.postMessage('getTime', '*')</code> 即可获取 JSON
+        </div>
+
+        <!-- 🌟 新增：使用说明 + 一键复制示例代码 -->
+        <div class="usage-section">
+            <div class="usage-title">
+                🔗 在其他网站获取本页面的时间 JSON
+            </div>
+            <div class="code-block" id="embedCodeBlock">
+                <button class="copy-code-btn" id="copyEmbedCodeBtn">📋 复制代码</button>
+                <pre id="embedCodePre">&lt;iframe id="timeFrame" src="https://你的域名/index.html" style="display:none;"&gt;&lt;/iframe&gt;
+&lt;script&gt;
+    const iframe = document.getElementById('timeFrame');
+    iframe.onload = () => {
+        iframe.contentWindow.postMessage('getTime', '*');
+    };
+    window.addEventListener('message', (e) =&gt; {
+        if (e.data &amp;&amp; typeof e.data === 'object' &amp;&amp; e.data.server_time) {
+            console.log('获取到的服务器时间:', e.data);
+            // e.data 包含 { server_time, local_time, offset_seconds, timestamp_unix_ms }
+            alert('服务器时间: ' + e.data.server_time);
+        }
+    });
+&lt;/script&gt;</pre>
+            </div>
+            <div class="small-note">
+                💡 将代码中的 <code>https://你的域名/index.html</code> 替换为你的实际地址。支持跨域通信，无需后端。
             </div>
         </div>
     </div>
@@ -230,7 +309,7 @@
     const offsetSpan = document.getElementById('offsetVal');
     const offsetHintSpan = document.getElementById('offsetHint');
     const jsonPre = document.getElementById('jsonPreview');
-    const copyBtn = document.getElementById('copyJsonBtn');
+    const copyJsonBtn = document.getElementById('copyJsonBtn');
 
     // 格式化日期时间: YYYY-MM-DD HH:MM:SS (本地时区)
     function formatDateTime(date) {
@@ -267,7 +346,6 @@
             unit: "seconds",
             timestamp_unix_ms: nowServer.getTime()
         };
-        // 美化 JSON 显示
         jsonPre.innerText = JSON.stringify(jsonData, null, 2);
     }
 
@@ -287,12 +365,10 @@
             timeOffsetMs = serverTimeMs - clientTimeMs;
             syncCompleted = true;
             
-            // 隐藏同步状态，显示主内容
             syncStatusDiv.style.display = 'none';
             mainDiv.style.display = 'block';
             updateDisplay();
             
-            // 启动每秒刷新
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(updateDisplay, 1000);
         } catch (err) {
@@ -306,18 +382,33 @@
         const jsonText = jsonPre.innerText;
         try {
             await navigator.clipboard.writeText(jsonText);
-            const originalText = copyBtn.innerText;
-            copyBtn.innerText = '✅ 已复制';
-            setTimeout(() => { copyBtn.innerText = originalText; }, 1500);
+            const originalText = copyJsonBtn.innerText;
+            copyJsonBtn.innerText = '✅ 已复制';
+            setTimeout(() => { copyJsonBtn.innerText = originalText; }, 1500);
         } catch (e) {
             alert('手动复制: ' + jsonText);
         }
     }
-    copyBtn.addEventListener('click', copyJson);
+    copyJsonBtn.addEventListener('click', copyJson);
+
+    // ---------- 复制嵌入代码 ----------
+    const copyEmbedBtn = document.getElementById('copyEmbedCodeBtn');
+    const embedCodePre = document.getElementById('embedCodePre');
+    async function copyEmbedCode() {
+        const codeText = embedCodePre.innerText;
+        try {
+            await navigator.clipboard.writeText(codeText);
+            const originalText = copyEmbedBtn.innerText;
+            copyEmbedBtn.innerText = '✅ 已复制';
+            setTimeout(() => { copyEmbedBtn.innerText = originalText; }, 1500);
+        } catch (e) {
+            alert('手动复制代码:\n' + codeText);
+        }
+    }
+    if (copyEmbedBtn) copyEmbedBtn.addEventListener('click', copyEmbedCode);
 
     // ---------- 跨域 postMessage 接口 (供其他网站获取 JSON 时间) ----------
     window.addEventListener('message', (event) => {
-        // 可选: 可以验证来源，为了通用不严格限制
         if (!syncCompleted) return;
         if (event.data === 'getTime') {
             const nowLocal = new Date();
@@ -330,10 +421,9 @@
                 unit: "seconds",
                 timestamp_unix_ms: nowServer.getTime()
             };
-            // 安全地回传消息
             try {
                 event.source.postMessage(responseJson, event.origin);
-            } catch(e) { /* 忽略跨域限制error */ }
+            } catch(e) { /* 忽略 */ }
         }
     });
 
