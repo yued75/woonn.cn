@@ -1,6 +1,6 @@
 {
   "yued75": { "type": "admin","enabled": true, "expire": "2099-12-30 23:59:59" },
   "dengyu": { "type": "user","enabled": true, "expire": "2026-5-31 23:59:59" },
-  "miaowei": { "type": "user", "enabled": true, "expire": "2026-04-24 00:47:00" },
+  "miaowei": { "type": "user", "enabled": true, "expire": "2026-04-24 01:15:00" },
   "user": { "type": "user", "enabled": false, "expire": "2024-01-01 00:00:00" }
 }
