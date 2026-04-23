@@ -2,9 +2,15 @@
 let currentRow = null;
 let zeroRowDistance = 0;
 let lastDataRowDistance = 0;
+let currentUserInfo = null;
+let currentUsername = null;
+
+// [NEW] 开始：会话超时时间（1小时）
+const SESSION_TIMEOUT = 60 * 60 * 1000;
+// [NEW] 结束
 
 // ==================== 文件保存与XLSX轻量实现 ====================
-!function (t, e) { "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = "undefined" != typeof globalThis ? globalThis : t || self).saveAs = e() }(this, function () { "use strict"; function n(e, n, r) { if (!n) throw new Error("文件名不能为空"); r = r || {}; var o = e instanceof Blob; if ("string" == typeof e && /^data:/.test(e)) { var i = atob(e.split(",")[1]), a = new Uint8Array(i.length); for (var s = 0; s < i.length; s++)a[s] = i.charCodeAt(s); e = new Blob([a], { type: e.split(":")[1].split(";")[0] }) } return (o ? Promise.resolve(e) : fetch(e).then(function (t) { if (!t.ok) throw new Error(t.status); return t.blob() })).then(function (t) { var l = document.createElement("a"); l.href = URL.createObjectURL(t); l.download = n; l.style.display = "none"; document.body.appendChild(l); l.click(); setTimeout(function () { document.body.removeChild(l); URL.revokeObjectURL(l.href) }, 100) })["catch"](function (e) { console.error(e) }) } return n });
+!function (t, e) { "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = "undefined" != typeof globalThis ? globalThis : t || self).saveAs = e() }(this, function () { "use strict"; function n(e, n, r) { if (!n) throw new Error("文件名不能为空"); r = r || {}; var o = e instanceof Blob; if ("string" == typeof e && /^data:/.test(e)) { var i = atob(e.split(",")[1]), a = new Uint8Array(i.length); for (var s = 0; s < i.length; s++)a[s] = i.charCodeAt(s); e = new Blob([a], { type: e.split(":")[1].split(";")[0] }) } return (o ? Promise.resolve(e) : fetch(e).then(function (t) { if (!t.ok) throw new Error(t.status); return t.blob() })).then(function (t) { var l = document.createElement("a"); l.href = URL.createObjectURL(t); l.download = n; l.style.display = "none"; document.body.appendChild(l); l.click(); setTimeout(function () { document.body.removeChild(l); URL.revokeObjectURL(l.href) }, 100) })["catch"](function (e) { console.error(e) }) } return n }); 
 
 window.XLSX = {
     utils: {
@@ -19,77 +25,155 @@ window.XLSX = {
     writeFile: (wb, fn) => { var sn = wb.SheetNames[0], s = wb.Sheets[sn], r = XLSX.utils.decode_range(s["!ref"]); var c = ""; for (var R = r.s.r; R <= r.e.r; R++) { var row = []; for (var C = r.s.c; C <= r.e.c; C++) { var cr = XLSX.utils.encode_cell({ r: R, c: C }); var v = s[cr] ? s[cr].v : ""; row.push(v) } c += row.join("\t") + "\r\n" } var blob = new Blob([c], { type: "application/vnd.ms-excel;charset=utf-8" }); saveAs(blob, fn || "检测数据.xlsx") }
 };
 
-// ==================== 获取服务器标准时间（使用 TimeAPI.io） ====================
-async function getServerTime() {
-    try {
-        const res = await fetch('https://timeapi.io/api/timezone/zone?timeZone=UTC');
-        if (!res.ok) throw new Error('时间服务异常');
-        const data = await res.json();
-        // TimeAPI.io 返回的 currentLocalTime 字段即为 UTC 时间
-        return new Date(data.currentLocalTime);
-    } catch (error) {
-        console.warn('获取服务器时间失败:', error);
-        return null;   // 返回 null 表示获取失败
-    }
+// ==================== 格式化北京时间 ====================
+function formatBeijingTime(ms) {
+    const date = new Date(ms);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-// ==================== 获取服务器标准时间（使用苏宁API，国内可用） ====================
-async function getServerTime1() {
-    try {
-        const res = await fetch('http://quan.suning.com/getSysTime.do');
-        if (!res.ok) throw new Error('时间服务异常');
-        const data = await res.json();
-        // 苏宁返回的 sysTime2 字段即为北京时间字符串，格式如 "2026-04-22 12:16:31"
-        return new Date(data.sysTime2);
-    } catch (error) {
-        console.warn('获取服务器时间失败:', error);
-        return null;
-    }
+// ==================== 获取北京时间（多源回退） ====================
+async function getBeijingTime() {
+    try { const ts = await fetchOwnServerTimeViaHead(); if (ts !== null) return { timestamp: ts, source: 'server' }; } catch (e) {}
+    try { const ts = await fetchSuning(); if (ts !== null) return { timestamp: ts, source: 'suning' }; } catch (e) {}
+    try { const ts = await fetchTimeapiIO(); if (ts !== null) return { timestamp: ts, source: 'timeapi' }; } catch (e) {}
+    return { timestamp: Date.now(), source: 'local' };
+}
+
+async function fetchOwnServerTimeViaHead() {
+    const res = await fetch(location.href + '?t=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+    if (!res.ok) return null;
+    const dateHeader = res.headers.get('Date');
+    if (!dateHeader) return null;
+    return new Date(dateHeader).getTime() + 8 * 60 * 60 * 1000;
+}
+
+async function fetchSuning() {
+    const res = await fetch('http://quan.suning.com/getSysTime.do');
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.sysTime2 ? new Date(data.sysTime2).getTime() : null;
+}
+
+async function fetchTimeapiIO() {
+    const res = await fetch('https://timeapi.io/api/timezone/zone?timeZone=UTC');
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.currentLocalTime ? new Date(data.currentLocalTime).getTime() + 8*60*60*1000 : null;
 }
 
 // ==================== 登录验证模块（统一使用 UTC 时间比较） ====================
 async function checkUserAuth(username) {
     try {
-        // ---------- 1. 获取服务器标准时间（UTC） ----------
-        const serverTime = await getServerTime();
-        if (!serverTime) {
-            return { status: 'error', msg: '授权查询请求失败' };
-        }
-
-        // ---------- 2. 原有代码：获取授权配置 ----------
-        const timestamp = new Date().getTime();
-        const url = `https://woonn.cn/pcm/auth-config.json?t=${timestamp}`;
-        const response = await fetch(url, { method: 'GET' });
-        if (!response.ok) return { status: 'error', msg: '网络请求失败（' + response.status + '）' };
-        const authData = await response.json();
+        // ---------- 1. 获取北京时间（多源） ----------
+        const [resp, timeResult] = await Promise.all([
+            fetch('https://woonn.cn/pcm/auth-config.json'),
+            getBeijingTime()
+        ]);
+        if (!resp.ok) return { status: 'error', msg: '网络请求失败' };
+        const authData = await resp.json();
         if (!authData[username]) return { status: 'error', msg: '未给该用户授权，请核对' };
         const userInfo = authData[username];
         if (!userInfo.enabled) return { status: 'error', msg: '该用户已被禁用' };
 
-        // ---------- 3. 核心改进：统一转换为 UTC 时间的毫秒数进行比较 ----------
-        // 将服务器时间转换为 UTC 毫秒数
-        const serverTimeUTC = serverTime.getTime();
-
-        // 将授权过期时间也解析为 UTC 时间
-        // 假设 userInfo.expire 的格式为 "2026-04-23 23:59:59"，且代表北京时间
-        const expireTimeBeijing = new Date(userInfo.expire); // 浏览器会按本地时区（如北京时间）解析
-
-        // 关键一步：将解析后的北京时间转换为 UTC 时间
-        // 因为北京时间比 UTC 早8小时，所以减去 8 * 60 * 60 * 1000 毫秒
-        const expireTimeUTC = expireTimeBeijing.getTime() - (8 * 60 * 60 * 1000);
-
-        // 进行比较
-        if (serverTimeUTC > expireTimeUTC) {
+        const { timestamp: beijingTimestamp, source } = timeResult;
+        const beijingTimeStr = formatBeijingTime(beijingTimestamp);
+        if (beijingTimestamp > new Date(userInfo.expire).getTime()) {
             return { status: 'error', msg: '该用户授权已过期（有效期至：' + userInfo.expire + '）' };
         }
-
-        // 验证通过
-        userAuthInfo = userInfo;
-        return { status: 'success', msg: '验证通过' };
+        // 验证通过，保存用户信息到全局变量及 sessionStorage
+        currentUserInfo = userInfo;
+        currentUsername = username;
+        saveLoginState(username, userInfo);
+        return { status: 'success', source, timeStr: beijingTimeStr };
     } catch (error) {
-        return { status: 'error', msg: '系统网络服务异常，请联系管理员' };
+        return { status: 'error', msg: '系统网络服务异常，请联系管理员'};
     }
 }
+
+//本地存储与状态恢复相关函数（已替换为 sessionStorage + 1小时会话超时）
+// [NEW] 开始：替换原有的 localStorage 保存逻辑，改用 sessionStorage 并添加时间戳
+/*
+function saveLoginState(username, userInfo) {
+    const state = {
+        username: username,
+        expire: userInfo.expire,
+        type: userInfo.type || 'user',
+        expireTimeUTC: new Date(userInfo.expire).getTime() - (8 * 60 * 60 * 1000)
+    };
+    localStorage.setItem('pcmLoginState', JSON.stringify(state));
+}
+*/
+function saveLoginState(username, userInfo) {
+    const state = {
+        username: username,
+        expire: userInfo.expire,
+        type: userInfo.type || 'user',
+        ts: Date.now()                     // 记录保存时间戳
+    };
+    sessionStorage.setItem('pcmLoginState', JSON.stringify(state));
+}
+// [NEW] 结束
+
+// [NEW] 开始：替换原有的 localStorage 清除逻辑
+/*
+function clearLoginState() {
+    localStorage.removeItem('pcmLoginState');
+    currentUserInfo = null;
+    currentUsername = null;
+}
+*/
+function clearLoginState() {
+    sessionStorage.removeItem('pcmLoginState');
+    currentUserInfo = null;
+    currentUsername = null;
+}
+// [NEW] 结束
+
+// [NEW] 开始：替换原有的 localStorage 读取逻辑，增加 1 小时超时检查
+/*
+function loadLoginState() {
+    const stateStr = localStorage.getItem('pcmLoginState');
+    if (!stateStr) return null;
+    try {
+        const state = JSON.parse(stateStr);
+        const nowUTC = Date.now();
+        if (state.expireTimeUTC > nowUTC) {
+            return { username: state.username, type: state.type, expire: state.expire };
+        } else {
+            localStorage.removeItem('pcmLoginState');
+            return null;
+        }
+    } catch (e) {
+        localStorage.removeItem('pcmLoginState');
+        return null;
+    }
+}
+*/
+function loadLoginState() {
+    const stateStr = sessionStorage.getItem('pcmLoginState');
+    if (!stateStr) return null;
+    try {
+        const state = JSON.parse(stateStr);
+        // 检查会话是否超过 1 小时
+        if (state.ts && (Date.now() - state.ts) <= SESSION_TIMEOUT) {
+            return { username: state.username, type: state.type, expire: state.expire };
+        } else {
+            sessionStorage.removeItem('pcmLoginState');
+            return null;
+        }
+    } catch (e) {
+        sessionStorage.removeItem('pcmLoginState');
+        return null;
+    }
+}
+// [NEW] 结束
+
 function bindLoginEvent() {
     const loginBtn = document.getElementById('loginBtn');
     const loginUsername = document.getElementById('loginUsername');
@@ -111,7 +195,11 @@ function bindLoginEvent() {
         if (result.status === 'success') {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('systemMain').style.display = 'flex';
+            updateUserInfoDisplay();
             initSystemEvents();
+            //显示时间来源提示
+            const sourceMap = { 'server': '服务器时间', 'suning': '苏宁服务器时间', 'timeapi': 'TimeAPI.io时间', 'local': '本地时间' };
+            showTip(`${sourceMap[result.source] || '未知'}：${result.timeStr}`, false);            
         } else {
             loginTip.textContent = result.msg;
             loginTip.style.display = 'block';
@@ -119,6 +207,39 @@ function bindLoginEvent() {
         }
     };
     loginUsername.onkeydown = e => { if (e.key === 'Enter') loginBtn.click(); };
+}
+
+//更新左侧用户信息栏
+function updateUserInfoDisplay() {
+    const displayUsername = document.getElementById('displayUsername');
+    const displayExpire = document.getElementById('displayExpire');
+    const adminLink = document.getElementById('adminLink');
+    if (currentUserInfo) {
+        displayUsername.textContent = '用户：' + (currentUsername || '');
+        displayExpire.textContent = '到期：' + (currentUserInfo.expire || '');
+        if (currentUserInfo.type === 'admin') {
+            adminLink.style.display = 'inline';
+        } else {
+            adminLink.style.display = 'none';
+        }
+    } else {
+        displayUsername.textContent = '';
+        displayExpire.textContent = '';
+        adminLink.style.display = 'none';
+    }
+}
+
+function bindLogoutEvent() {
+    const logoutLink = document.getElementById('logoutLink');
+    if (logoutLink) {
+        logoutLink.onclick = function() {
+            clearLoginState();
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('systemMain').style.display = 'none';
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginTip').style.display = 'none';
+        };
+    }
 }
 
 // ==================== 系统事件绑定 ====================
@@ -183,7 +304,7 @@ function getExportFileName() {
 }
 
 function parseDecayPoints() {
-    const input = document.getElementById("decayPoints").value.trim();
+    const input = document.getElementById("decayPoints") ? document.getElementById("decayPoints").value.trim() : '';
     if (!input) return [];
     const points = [];
     input.split(/[ ,，]+/).forEach(item => {
@@ -206,11 +327,13 @@ function parseSpecialPoints() {
     return points.sort((a, b) => a.d - b.d);
 }
 
+//修改 generateBurialValue 避免生成 .00 结尾的值
 function generateBurialValue(min, max) {
-    const r = Math.random();
-    if (r < 0.08) return min.toFixed(2);
-    if (r < 0.16) return max.toFixed(2);
-    return (min + Math.random() * (max - min)).toFixed(2);
+    let val;
+    do {
+        val = min + Math.random() * (max - min);
+    } while ((val * 100) % 1 === 0); // 如果小数点后两位为00，则重新生成
+    return val.toFixed(2);
 }
 
 function getRandomInt(min, max) {
@@ -230,7 +353,7 @@ function generateBaseData() {
     const terrain = document.getElementById("defaultTerrain").value.trim() || "绿化带";
 
     const errs = [];
-    if (!outCur || outCur <= 0) errs.push("输出电流都不填！");
+    if (!outCur || outCur <= 0) errs.push("输出电流都不填！你拿手检测？");
     if (!totalDist || totalDist <= 0) errs.push("不填管段长度我怎么帮你生成？");
     if (maxVal !== null && minVal !== null && maxVal < minVal) errs.push("最大电流还比最小电流小？");
     if (maxVal !== null && maxVal > outCur) errs.push("最大电流比输出电流还大？");
@@ -249,40 +372,53 @@ function generateBaseData() {
     else if (bMax === null && bMin !== null) bMax = parseFloat((bMin * 1.2).toFixed(2));
 
     const specials = parseSpecialPoints();
-    const decays = parseDecayPoints();
-    const decayMap = {}; decays.forEach(p => decayMap[p.distance] = p.rate);
-
     let distSet = new Set([0, totalDist]);
     for (let d = 20; d < totalDist; d += 20) distSet.add(d);
     specials.forEach(sp => distSet.add(sp.d));
-    decays.forEach(dp => distSet.add(dp.distance));
     const distances = Array.from(distSet).sort((a, b) => a - b);
     const valid20Distances = distances.filter(d => d > 0 && d < totalDist && d % 20 === 0);
 
     let data1Map = {};
     let prevEffective = maxVal;
 
+    //修正第一个有效数据点严格等于最大值，后续正常衰减
     valid20Distances.forEach((d, idx) => {
         let newVal;
-        const customRate = decayMap[d];
         if (idx === 0) {
-            newVal = customRate !== undefined ? maxVal * customRate : maxVal;
+            // 第一个有效数据点直接等于最大值，不受随机衰减影响
+            newVal = maxVal;
         } else {
-            if (customRate !== undefined) {
-                newVal = prevEffective * customRate;
-            } else {
-                const remaining = valid20Distances.length - idx;
-                const step = (prevEffective - minVal) / remaining;
-                newVal = prevEffective - step;
-                newVal += newVal * (Math.random() * 0.04 - 0.02);
-            }
+            const remaining = valid20Distances.length - idx;
+            const step = (prevEffective - minVal) / remaining;
+            newVal = prevEffective - step;
+            newVal += newVal * (Math.random() * 0.04 - 0.02);
+            if (idx === valid20Distances.length - 1) newVal = minVal;
+            else newVal = Math.max(newVal, minVal);
         }
-        if (idx === valid20Distances.length - 1) newVal = minVal;
-        else newVal = Math.max(newVal, minVal);
         newVal = Math.round(newVal);
         data1Map[d] = newVal;
         prevEffective = newVal;
     });
+
+    //预生成埋深数组，保证最大值和最小值随机出现且避免 .00
+    let depthValues = [];
+    const validCount = valid20Distances.length;
+    if (validCount > 0) {
+        const maxIndex = Math.floor(Math.random() * validCount);
+        let minIndex = Math.floor(Math.random() * validCount);
+        while (minIndex === maxIndex && validCount > 1) {
+            minIndex = Math.floor(Math.random() * validCount);
+        }
+        for (let i = 0; i < validCount; i++) {
+            if (i === maxIndex) {
+                depthValues.push(bMax.toFixed(2));
+            } else if (i === minIndex) {
+                depthValues.push(bMin.toFixed(2));
+            } else {
+                depthValues.push(generateBurialValue(bMin, bMax));
+            }
+        }
+    }
 
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
@@ -301,8 +437,17 @@ function generateBaseData() {
         const data1Val = isValid20 ? data1Map[d] : "";
         td3.innerHTML = `<input type="number" class="data1-input" data-distance="${d}" value="${data1Val}" onchange="onData1Change(this)">`;
         tr.appendChild(td3);
-        const td4 = document.createElement("td"); td4.innerHTML = `<input type="text" value="${isValid20 ? terrain : ''}">`; tr.appendChild(td4);
-        const td5 = document.createElement("td"); td5.innerHTML = `<input type="text" value="${isValid20 ? generateBurialValue(bMin, bMax) : ''}">`; tr.appendChild(td5);
+        const td4 = document.createElement("td");
+        td4.innerHTML = `<input type="text" class="terrain-input" data-distance="${d}" value="${isValid20 ? terrain : ''}" onchange="onTerrainChange(this)">`;
+        tr.appendChild(td4);
+        let depthVal = '';
+        if (isValid20) {
+            const depthIdx = valid20Distances.indexOf(d);
+            depthVal = depthValues[depthIdx] || '';
+        }
+        const td5 = document.createElement("td");
+        td5.innerHTML = `<input type="number" step="0.01" value="${depthVal}" onchange="onBurialChange(this)">`;
+        tr.appendChild(td5);
         const td6 = document.createElement("td"); td6.innerHTML = `<input type="text" value="">`; tr.appendChild(td6);
         const td7 = document.createElement("td"); td7.innerHTML = `<input type="text" value="">`; tr.appendChild(td7);
         const td8 = document.createElement("td"); td8.innerHTML = `<input type="text" value="">`; tr.appendChild(td8);
@@ -328,24 +473,16 @@ function onData1Change(input) {
         input.value = ""; return;
     }
 
-    const decays = parseDecayPoints();
-    const decayMap = {}; decays.forEach(p => decayMap[p.distance] = p.rate);
-
     let laterDistances = [];
     for (let d = 20; d < totalDist; d += 20) if (d > modDist) laterDistances.push(d);
 
     let current = modVal;
     laterDistances.forEach((d, idx) => {
         let newVal;
-        const rate = decayMap[d];
-        if (rate !== undefined) {
-            newVal = current * rate;
-        } else {
-            const remain = laterDistances.length - idx;
-            const step = (current - minVal) / remain;
-            newVal = current - step;
-            newVal += newVal * (Math.random() * 0.04 - 0.02);
-        }
+        const remain = laterDistances.length - idx;
+        const step = (current - minVal) / remain;
+        newVal = current - step;
+        newVal += newVal * (Math.random() * 0.04 - 0.02);
         if (idx === laterDistances.length - 1) newVal = minVal;
         else newVal = Math.max(newVal, minVal);
         newVal = Math.round(newVal);
@@ -356,12 +493,41 @@ function onData1Change(input) {
     showTip("后续电流已基于新值同步更新", false);
 }
 
+//地形联动修改函数
+function onTerrainChange(input) {
+    const modDist = parseInt(input.dataset.distance);
+    const newTerrain = input.value.trim();
+    if (isNaN(modDist)) return;
+    
+    const allTerrainInputs = document.querySelectorAll('.terrain-input');
+    allTerrainInputs.forEach(inp => {
+        const d = parseInt(inp.dataset.distance);
+        if (!isNaN(d) && d > modDist) {
+            inp.value = newTerrain;
+        }
+    });
+}
+
+//埋深手动修改时自动补齐两位小数
+function onBurialChange(input) {
+    let val = input.value.trim();
+    if (val === '') return;
+    let num = parseFloat(val);
+    if (isNaN(num) || num <= 0) {
+        showTip('埋深必须为大于0的数字', true);
+        input.value = '';
+        return;
+    }
+    // 格式化为两位小数
+    input.value = num.toFixed(2);
+}
+
 // ==================== 右键菜单与行操作 ====================
 function bindContextMenu() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.addEventListener("contextmenu", e => {
         e.preventDefault();
-        e.stopPropagation();   // 阻止事件冒泡，避免触发全局监听（虽然全局已阻止，但保持良好习惯）
+        e.stopPropagation();
         const row = e.target.closest("tr");
         if (row) {
             currentRow = row;
@@ -377,7 +543,17 @@ function bindContextMenu() {
 function insertRow(target, pos) {
     const newRow = document.createElement("tr");
     const dis = getAutoDistance(target, pos);
-    newRow.innerHTML = `<td>0</td><td><input type="number" value="${dis}"></td><td><input type="text" value=""></td><td><input type="text" value=""></td><td><input type="text" value=""></td><td><input type="text" value=""></td><td><input type="text" value=""></td><td><input type="text" value=""></td><td><textarea class="coord-input"></textarea></td><td><input type="text" value=""></td>`;
+    //修改插入行模板，埋深输入框添加 onchange 和 step
+    newRow.innerHTML = `<td>0</td>
+        <td><input type="number" value="${dis}"></td>
+        <td><input type="number" class="data1-input" data-distance="${dis}" value="" onchange="onData1Change(this)"></td>
+        <td><input type="text" class="terrain-input" data-distance="${dis}" value="" onchange="onTerrainChange(this)"></td>
+        <td><input type="number" step="0.01" value="" onchange="onBurialChange(this)"></td>
+        <td><input type="text" value=""></td>
+        <td><input type="text" value=""></td>
+        <td><input type="text" value=""></td>
+        <td><textarea class="coord-input"></textarea></td>
+        <td><input type="text" value=""></td>`;
     pos === "before" ? target.before(newRow) : target.after(newRow);
     reorderSerialNumbers();
     showTip("插入成功");
@@ -421,7 +597,7 @@ function copyToExcel() {
     const ta = document.createElement("textarea");
     ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
     document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-    showTip("已复制数据行到剪贴板，可直接在excel中粘贴（不含表头，匹配单元格）");
+    showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）");
 }
 
 function exportToExcel() {
@@ -442,7 +618,21 @@ function showTip(msg, isError = false) {
 
 // ==================== 页面启动 ====================
 window.onload = function () {
-    // 启用防调试与右键禁用
     preventDevTools();
+
+    const loginState = loadLoginState();
+    if (loginState) {
+        currentUsername = loginState.username;
+        currentUserInfo = { expire: loginState.expire, type: loginState.type };
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('systemMain').style.display = 'flex';
+        updateUserInfoDisplay();
+        initSystemEvents();
+    } else {
+        document.getElementById('loginPage').style.display = 'flex';
+        document.getElementById('systemMain').style.display = 'none';
+    }
+
     bindLoginEvent();
+    bindLogoutEvent();
 };
