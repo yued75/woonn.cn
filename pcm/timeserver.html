@@ -1,29 +1,60 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>当前时间</title>
+    <title>网络原子时钟</title>
 </head>
 <body>
-    <div id="clock" style="font-family: monospace; font-size: 2rem; margin: 2rem;"></div>
+    <h1>标准网络时间</h1>
+    <p id="server-time">加载中...</p>
+
     <script>
-        function formatTime() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        // 获取网络时间并显示
+        async function fetchAndDisplayServerTime() {
+            // 选择1: 使用 timeapi.world (推荐)
+            const apiUrl = 'https://timeapi.world/api/timezone/Asia/Shanghai';
+            // 选择2: 使用 WorldTimeAPI.org (备选)
+            // const apiUrl = 'http://worldtimeapi.org/api/timezone/Asia/Shanghai';
+            // 备胎储备：
+            // const apiUrl = 'https://time.you/developer/api/timezone/Asia/Shanghai';  // time.you
+            // const apiUrl = 'https://time.now/api/timezone/Asia/Shanghai';            // time.now
+
+            try {
+                // 1. 向公共API发送请求获取网络时间
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // 2. 从返回的数据中提取 datetime 字段并格式化
+                // 示例: "datetime": "2026-04-23T21:29:35.646088+08:00" [6†L29]
+                if (data && data.datetime) {
+                    // 将 ISO 8601 格式的字符串解析为 Date 对象
+                    const serverDate = new Date(data.datetime);
+                    
+                    // 进行格式化 (YYYY-MM-DD HH:MM:SS)
+                    const year = serverDate.getFullYear();
+                    const month = String(serverDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(serverDate.getDate()).padStart(2, '0');
+                    const hours = String(serverDate.getHours()).padStart(2, '0');
+                    const minutes = String(serverDate.getMinutes()).padStart(2, '0');
+                    const seconds = String(serverDate.getSeconds()).padStart(2, '0');
+
+                    const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                    document.getElementById('server-time').innerText = `当前时间 (网络): ${formattedTime}`;
+                } else {
+                    throw new Error('API返回数据异常');
+                }
+            } catch (error) {
+                // 若请求失败，显示错误信息
+                console.error('获取时间失败:', error);
+                document.getElementById('server-time').innerHTML = '获取网络时间失败，请检查网络或稍后重试。<br>' +
+                    '可尝试点击这里手动刷新。';
+            }
         }
 
-        function updateClock() {
-            document.getElementById('clock').textContent = formatTime();
-        }
-
-        updateClock();
-        setInterval(updateClock, 1000);
+        // 执行函数
+        fetchAndDisplayServerTime();
     </script>
 </body>
 </html>
