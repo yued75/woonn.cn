@@ -32,41 +32,12 @@
     <div class="container">
         <!-- 左侧输入区域 -->
         <div class="input-area">
-            <a href="javascript:void(0)" onclick="document.getElementById('manualMask').style.display='flex'" class="manual-link">
-                查看使用说明书
-            </a>
-
-            <!-- 说明书蒙版 -->
-            <div id="manualMask">
-                <div class="manual-content">
-                    <button onclick="document.getElementById('manualMask').style.display='none'" class="manual-close-btn">×</button>
-                    <div class="manual-title">燃气管道防腐层PCM检测数据生成系统使用说明书</div>
-                    <div style="margin-bottom:28px;">
-                        <div class="manual-section-title">一、系统介绍</div>
-                        <div class="manual-text">&nbsp;&nbsp;本系统专为燃气管道防腐层PCM检测设计，可根据基础参数自动生成标准化检测数据表格。支持自定义参数、特殊点标记、衰减规则，提供表格编辑、复制及Excel导出功能。</div>
-                    </div>
-                    <div style="margin-bottom:28px;">
-                        <div class="manual-section-title">二、核心数据逻辑</div>
-                        <ul class="manual-list">
-                            <li><strong>首个有效数据点</strong>：20米处的电流值严格等于您设置的“数据1最大值”（或随机默认值），确保起点可控。</li>
-                            <li><strong>迭代衰减机制</strong>：后续每个20米间隔点的电流值均基于“上一行有效数据”进行计算，贴合真实检测中的信号连续衰减特性。</li>
-                            <li><strong>自定义衰减点</strong>：在指定距离处，电流值 = 上一行有效值 × (1 - 衰减百分比)。</li>
-                            <li><strong>终点强制最小值</strong>：最后一个有效数据点强制等于“数据1最小值”。</li>
-                        </ul>
-                    </div>
-                    <div style="margin-bottom:28px;">
-                        <div class="manual-section-title">三、使用注意事项</div>
-                        <ul class="manual-list">
-                            <li>输出电流、总距离为必填项且需大于0。</li>
-                            <li>数据1最大值不能大于输出电流，埋深最浅值必须大于0。</li>
-                            <li>指定衰减格式：“距离:衰减百分比”，如“60:10”表示60米处电流衰减10%（即保留90%）。</li>
-                            <li>修改表格中某行电流值后，系统会自动基于该新值重新迭代计算后续所有行的电流。</li>
-                        </ul>
-                    </div>
-                    <div style="text-align:center; margin-top:30px;">
-                        <button onclick="document.getElementById('manualMask').style.display='none'" class="manual-confirm-btn">明白了</button>
-                    </div>
-                </div>
+            <!-- 用户信息、后台管理、登出区域 -->
+            <div id="userInfoBar" class="user-info-bar">
+                <span id="displayUsername"></span>
+                <span id="displayExpire"></span>
+                <a id="adminLink" href="https://github.com/yued75/woonn.cn/blob/main/pcm" target="_blank" class="info-link" style="display:none;">后台管理</a>
+                <a id="logoutLink" href="javascript:void(0)" class="info-link">登出</a>
             </div>
 
             <!-- 参数输入区 -->
@@ -76,15 +47,12 @@
                 <div class="input-item"><label>输出电流(mA)：</label><input type="number" id="outputCurrent" placeholder="例：600" required></div>
                 <div class="input-item"><label>管段起点：</label><input type="text" id="pipeStart" placeholder="例：2栋调压箱"></div>
                 <div class="input-item"><label>管段终点：</label><input type="text" id="pipeEnd" placeholder="例：市政阀井"></div>
-                <div class="input-item"><label>地形地貌：</label><input type="text" id="defaultTerrain" placeholder="例：绿化带（默认）"></div>
+                <div class="input-item"><label>地形地貌：</label><input type="text" id="defaultTerrain" placeholder="例：人行道/绿化带（默认）"></div>
             </div>
             <div class="input-group zcbj">
                 <h3>数据1范围</h3>
-                <div class="input-item"><label>最大值(mA)：</label><input type="number" id="data1Max" placeholder="起点默认为输出电流的80-90%"></div>
-                <div class="input-item"><label>最小值(mA)：</label><input type="number" id="data1Min" placeholder="末端默认为15-30"></div>
-                <div class="input-item"><label>指定距离衰减：</label></div>
-                <div class="special-point-group"><textarea class="textareayangshi" id="decayPoints" placeholder="例：60:10 代表60米处衰减10%
-                                                           如需多个请用逗号或空格隔开"></textarea></div>
+                <div class="input-item"><label>最大值(mA)：</label><input type="number" id="data1Max" placeholder="默认为输出电流的80-90%"></div>
+                <div class="input-item"><label>最小值(mA)：</label><input type="number" id="data1Min" placeholder="末端默认为15-30"></div>                
             </div>
             <div class="input-group zcbj">
                 <h3>埋深范围</h3>
