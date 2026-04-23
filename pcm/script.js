@@ -4,9 +4,8 @@ let zeroRowDistance = 0;
 let lastDataRowDistance = 0;
 let currentUserInfo = null;
 let currentUsername = null;
-
-// [NEW] 开始：会话超时时间（1小时）
-const SESSION_TIMEOUT = 60 * 60 * 1000;
+// [NEW] 开始：会话超时时间（12小时）
+const SESSION_TIMEOUT = 720 * 60 * 1000;
 // [NEW] 结束
 
 // ==================== 文件保存与XLSX轻量实现 ====================
@@ -50,7 +49,7 @@ async function fetchOwnServerTimeViaHead() {
     if (!res.ok) return null;
     const dateHeader = res.headers.get('Date');
     if (!dateHeader) return null;
-    return new Date(dateHeader).getTime() + 8 * 60 * 60 * 1000;
+    return new Date(dateHeader).getTime();
 }
 
 async function fetchSuning() {
