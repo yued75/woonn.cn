@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Server · 时间对比与 JSON 接口</title>
+    <title>时间信标 · Time Beacon</title>
     <style>
         * {
             margin: 0;
@@ -12,8 +12,8 @@
         }
 
         body {
-            background: linear-gradient(145deg, #e9f0f5 0%, #d9e2ec 100%);
-            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', 'Roboto', monospace;
+            background: linear-gradient(145deg, #e9ecef 0%, #cfd9e2 100%);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', monospace;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -21,205 +21,203 @@
             padding: 1.5rem;
         }
 
-        /* 主卡片 */
         .glass-card {
-            max-width: 980px;
+            max-width: 1120px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(12px);
-            border-radius: 2.5rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
             overflow: hidden;
-            transition: all 0.2s ease;
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(0, 0, 0, 0.03);
             padding: 1.2rem 2rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
         }
         .header h1 {
-            font-size: 1.6rem;
+            font-size: 1.7rem;
             font-weight: 600;
-            background: linear-gradient(135deg, #1a2a3a, #2c5368);
+            background: linear-gradient(135deg, #1f4870, #2a5f8a);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
-            letter-spacing: -0.3px;
         }
         .header p {
             font-size: 0.85rem;
-            color: #2c5a6e;
-            margin-top: 0.3rem;
+            color: #3a6b92;
+            margin-top: 0.25rem;
         }
 
-        /* 三列时间卡片 */
         .time-grid {
             display: flex;
             flex-wrap: wrap;
             gap: 1.2rem;
-            padding: 2rem;
+            padding: 2rem 2rem 1rem 2rem;
         }
         .time-card {
             flex: 1;
-            min-width: 200px;
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(4px);
-            border-radius: 1.8rem;
-            padding: 1.2rem 1.2rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 0 0 1px rgba(255,255,255,0.8);
+            min-width: 190px;
+            background: #ffffffcc;
+            backdrop-filter: blur(2px);
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
         .time-label {
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: 600;
-            color: #2c6b7c;
-            margin-bottom: 0.6rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            color: #2c5a7a;
+            margin-bottom: 0.5rem;
         }
         .time-value {
-            font-size: 1.45rem;
-            font-weight: 500;
+            font-size: 1.5rem;
+            font-weight: 600;
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            color: #1e2f3c;
-            word-break: break-word;
+            color: #1f2f3e;
         }
         .diff-card {
-            background: rgba(45, 110, 130, 0.12);
-            border: 1px solid rgba(60, 130, 150, 0.25);
+            background: #eef3fc;
+            border-left: 4px solid #4a9eff;
         }
         .diff-card .time-value {
-            font-size: 1.6rem;
-            font-weight: 600;
-            color: #1b6d85;
+            color: #1e6f5c;
         }
 
-        /* JSON 区域 */
         .json-section {
-            margin: 0 2rem 1.5rem 2rem;
-            background: #0f212e;
-            border-radius: 1.5rem;
-            padding: 1.2rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin: 0.5rem 2rem 1.2rem 2rem;
+            background: #f4f7fb;
+            border-radius: 1.2rem;
+            padding: 1rem;
+            border: 1px solid #dce5ef;
         }
         .json-header {
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
-            flex-wrap: wrap;
+            align-items: center;
             margin-bottom: 0.8rem;
         }
         .json-header span {
             font-size: 0.75rem;
             font-weight: 600;
-            color: #b9e2f0;
-            background: #1e3b48;
+            color: #1e5f7a;
+            background: #e6f0f5;
             padding: 0.2rem 0.8rem;
             border-radius: 30px;
-            letter-spacing: 0.5px;
         }
         .copy-btn {
-            background: #2e6d7e;
+            background: #cadcec;
             border: none;
-            color: white;
+            color: #1f4970;
             font-size: 0.7rem;
-            padding: 0.3rem 0.9rem;
-            border-radius: 60px;
+            padding: 0.25rem 0.9rem;
+            border-radius: 30px;
             cursor: pointer;
             font-family: monospace;
             transition: 0.1s;
         }
         .copy-btn:hover {
-            background: #1f5363;
+            background: #b2c9df;
         }
-        pre {
-            background: #0b1920;
+        #jsonPreview {
+            background: #ffffff;
             padding: 1rem;
             border-radius: 1rem;
-            overflow-x: auto;
             font-family: 'Fira Code', monospace;
-            font-size: 0.8rem;
-            color: #cdeef9;
-            border: 1px solid #2e5f6e;
-            margin: 0;
+            font-size: 0.75rem;
+            border: 1px solid #d4dfe9;
+            overflow-x: auto;
+            white-space: pre;
+            color: #1f2a3a;
         }
 
-        /* 使用说明卡片 */
+        /* 使用说明卡片 - 按钮放到标题栏右侧，不再遮挡代码 */
         .usage-section {
-            margin: 0 2rem 1.5rem 2rem;
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(4px);
-            border-radius: 1.5rem;
-            padding: 1.2rem;
-            border: 1px solid rgba(255,255,240,0.8);
+            margin: 0 2rem 1.8rem 2rem;
+            background: #f7fafd;
+            border-radius: 1.2rem;
+            padding: 1rem;
+            border: 1px solid #dce5ef;
+        }
+        .usage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
         }
         .usage-title {
             font-size: 0.9rem;
             font-weight: 600;
-            color: #1f4e5e;
-            margin-bottom: 0.8rem;
+            color: #1f5f7e;
             display: flex;
             align-items: center;
-            gap: 8px;
-        }
-        .code-block {
-            background: #1e2f3a;
-            border-radius: 1rem;
-            padding: 1rem;
-            margin: 0.5rem 0;
-            position: relative;
-        }
-        .code-block pre {
-            background: transparent;
-            padding: 0;
-            margin: 0;
-            border: none;
-            font-size: 0.75rem;
-            white-space: pre-wrap;
-            word-break: break-word;
-            color: #e2f0f5;
+            gap: 6px;
         }
         .copy-code-btn {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: #3e7f91;
+            background: #cadcec;
             border: none;
-            color: white;
-            font-size: 0.65rem;
-            padding: 0.2rem 0.7rem;
+            color: #1f4970;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.9rem;
             border-radius: 30px;
             cursor: pointer;
             font-family: monospace;
         }
         .copy-code-btn:hover {
-            background: #2a6273;
+            background: #b2c9df;
         }
+        .code-block {
+            background: #f0f3f8;
+            border-radius: 1rem;
+            padding: 0.8rem;
+        }
+        /* 代码高亮规则 */
+        .code-block pre {
+            background: #f8f9fc;
+            border-radius: 0.8rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            white-space: pre;
+            margin: 0;
+            color: #000000;  /* 黑色变量名/普通文本 */
+        }
+        .keyword { color: #0055cc; font-weight: 500; }      /* 蓝色关键字 */
+        .string { color: #008844; }                         /* 绿色字符串 */
+        .comment { color: #6a6a6a; font-style: italic; }    /* 灰色注释 */
+        .number { color: #cc1111; }                         /* 红色数字 */
+        .function { color: #8a2be2; }                       /* 紫色函数名 */
+        .variable { color: #000000; }                       /* 黑色变量名 */
+
         .small-note {
             font-size: 0.7rem;
-            color: #2c666e;
+            color: #4a6f8f;
             margin-top: 0.6rem;
         }
-
         .footer-note {
-            padding: 1rem 2rem 1.5rem;
+            padding: 0.8rem 2rem 1.5rem;
             font-size: 0.7rem;
             text-align: center;
-            color: #4e6e7c;
-            border-top: 1px solid rgba(0,0,0,0.05);
+            color: #5a6e7e;
+            border-top: 1px solid #dce5ef;
         }
-        code {
-            background: #dce9ef;
+        code.inline {
+            background: #eef2f6;
             padding: 0.2rem 0.4rem;
             border-radius: 8px;
             font-size: 0.7rem;
+            font-family: monospace;
         }
         @media (max-width: 700px) {
             .time-grid { flex-direction: column; }
             .time-value { font-size: 1.2rem; }
+            .usage-header { flex-wrap: wrap; gap: 0.5rem; }
         }
     </style>
 </head>
@@ -227,10 +225,10 @@
 <div class="glass-card">
     <div class="header">
         <h1>⏱️ 时间信标 · Time Beacon</h1>
-        <p>服务器时间 (HTTP Date 头) / 本地时间 / 实时差值 · 内置 JSON 接口</p>
+        <p>服务器时间 (HTTP Date 头) · 本地时间 · 实时差值 · 提供跨域 JSON 接口</p>
     </div>
 
-    <div id="syncStatus" style="padding: 0 2rem; color: #2c6b7c; font-size:0.8rem;">正在同步服务器时间…</div>
+    <div id="syncStatus" style="padding: 0 2rem; color:#2c6b7c; font-size:0.85rem;">⏳ 正在同步服务器时间，请稍候…</div>
 
     <div id="mainContent" style="display: none;">
         <div class="time-grid">
@@ -251,57 +249,57 @@
 
         <div class="json-section">
             <div class="json-header">
-                <span>📡 实时 JSON 数据 (同源可读 · 跨域 via postMessage)</span>
+                <span>📡 实时 JSON 数据 (postMessage 跨域可用)</span>
                 <button class="copy-btn" id="copyJsonBtn">📋 复制 JSON</button>
             </div>
             <pre id="jsonPreview">{
   "server_time": "--",
   "local_time": "--",
-  "offset_seconds": 0,
-  "unit": "seconds"
+  "offset_seconds": 0
 }</pre>
         </div>
 
-        <!-- 🌟 新增：使用说明 + 一键复制示例代码 -->
+        <!-- 使用说明卡片 - 按钮在标题右侧，完全不会挡住代码 -->
         <div class="usage-section">
-            <div class="usage-title">
-                🔗 在其他网站获取本页面的时间 JSON
-            </div>
-            <div class="code-block" id="embedCodeBlock">
+            <div class="usage-header">
+                <div class="usage-title">
+                    🔗 在其他网站获取本页面的时间 JSON
+                </div>
                 <button class="copy-code-btn" id="copyEmbedCodeBtn">📋 复制代码</button>
-                <pre id="embedCodePre">&lt;iframe id="timeFrame" src="https://你的域名/index.html" style="display:none;"&gt;&lt;/iframe&gt;
-&lt;script&gt;
-    const iframe = document.getElementById('timeFrame');
-    iframe.onload = () => {
-        iframe.contentWindow.postMessage('getTime', '*');
+            </div>
+            <div class="code-block">
+                <pre id="embedCodePre"><span class="keyword">&lt;iframe</span> <span class="variable">id</span>=<span class="string">"timeFrame"</span> <span class="variable">src</span>=<span class="string">"https://woonn.cn/pcm/timeserver.html"</span> <span class="variable">style</span>=<span class="string">"display:none;"</span><span class="keyword">&gt;&lt;/iframe&gt;</span>
+<span class="keyword">&lt;script&gt;</span>
+    <span class="keyword">const</span> <span class="variable">iframe</span> = document.<span class="function">getElementById</span>(<span class="string">'timeFrame'</span>);
+    <span class="variable">iframe</span>.<span class="function">onload</span> = () =&gt; {
+        <span class="variable">iframe</span>.<span class="variable">contentWindow</span>.<span class="function">postMessage</span>(<span class="string">'getTime'</span>, <span class="string">'*'</span>);
     };
-    window.addEventListener('message', (e) =&gt; {
-        if (e.data &amp;&amp; typeof e.data === 'object' &amp;&amp; e.data.server_time) {
-            console.log('获取到的服务器时间:', e.data);
-            // e.data 包含 { server_time, local_time, offset_seconds, timestamp_unix_ms }
-            alert('服务器时间: ' + e.data.server_time);
+    window.<span class="function">addEventListener</span>(<span class="string">'message'</span>, (e) =&gt; {
+        <span class="keyword">if</span> (e.data &amp;&amp; <span class="keyword">typeof</span> e.data === <span class="string">'object'</span> &amp;&amp; e.data.<span class="variable">server_time</span>) {
+            console.<span class="function">log</span>(<span class="string">'获取到的服务器时间:'</span>, e.data);
+            <span class="comment">// e.data 包含 { server_time, local_time, offset_seconds, timestamp_unix_ms }</span>
+            alert(<span class="string">'服务器时间: '</span> + e.data.<span class="variable">server_time</span>);
         }
     });
-&lt;/script&gt;</pre>
+<span class="keyword">&lt;/script&gt;</span></pre>
             </div>
             <div class="small-note">
-                💡 将代码中的 <code>https://你的域名/index.html</code> 替换为你的实际地址。支持跨域通信，无需后端。
+                💡 将上面的 src 地址保留为 <code class="inline">https://woonn.cn/pcm/timeserver.html</code>，这是你公开的时间服务发布地址。任何网页均可通过此方法跨域获取时间 JSON。
             </div>
         </div>
     </div>
 
     <div class="footer-note">
-        ✅ 服务器时间取自 GitHub Pages 响应头 <code>Date</code> · 不依赖第三方 API · 偏移量固定，每秒刷新显示
+        ✅ 纯静态实现 · 不依赖第三方 API · 通过 HTTP Date 头获取服务器时间 · 稳定可靠
     </div>
 </div>
 
 <script>
     // ---------- 全局变量 ----------
-    let timeOffsetMs = null;      // 服务器时间 - 本地时间 (毫秒)
+    let timeOffsetMs = null;
     let syncCompleted = false;
     let timerInterval = null;
-    
-    // DOM 元素
+
     const syncStatusDiv = document.getElementById('syncStatus');
     const mainDiv = document.getElementById('mainContent');
     const serverTimeSpan = document.getElementById('serverTimeVal');
@@ -311,7 +309,6 @@
     const jsonPre = document.getElementById('jsonPreview');
     const copyJsonBtn = document.getElementById('copyJsonBtn');
 
-    // 格式化日期时间: YYYY-MM-DD HH:MM:SS (本地时区)
     function formatDateTime(date) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -322,13 +319,11 @@
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     }
 
-    // 更新界面所有内容 (时间卡片 + JSON)
     function updateDisplay() {
         if (!syncCompleted || timeOffsetMs === null) return;
         const nowLocal = new Date();
         const nowServer = new Date(nowLocal.getTime() + timeOffsetMs);
-        
-        // 更新卡片
+
         serverTimeSpan.innerText = formatDateTime(nowServer);
         localTimeSpan.innerText = formatDateTime(nowLocal);
         const diffSeconds = (timeOffsetMs / 1000).toFixed(3);
@@ -338,18 +333,15 @@
         else if (timeOffsetMs < 0) offsetHintSpan.innerText = '🐢 服务器时间比本地慢';
         else offsetHintSpan.innerText = '⚖️ 几乎一致';
 
-        // 构建 JSON 数据对象
         const jsonData = {
             server_time: formatDateTime(nowServer),
             local_time: formatDateTime(nowLocal),
             offset_seconds: parseFloat(diffSeconds),
-            unit: "seconds",
             timestamp_unix_ms: nowServer.getTime()
         };
         jsonPre.innerText = JSON.stringify(jsonData, null, 2);
     }
 
-    // 核心同步：通过 HEAD 请求获取响应头 Date
     async function syncServerTime() {
         try {
             const url = location.href + '?t=' + Date.now();
@@ -364,20 +356,19 @@
             const clientTimeMs = Date.now();
             timeOffsetMs = serverTimeMs - clientTimeMs;
             syncCompleted = true;
-            
+
             syncStatusDiv.style.display = 'none';
             mainDiv.style.display = 'block';
             updateDisplay();
-            
+
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(updateDisplay, 1000);
         } catch (err) {
             console.error('同步失败', err);
-            syncStatusDiv.innerHTML = `<span style="color:#bc5a2c;">⚠️ 无法获取服务器时间: ${err.message}<br>请确保页面通过 http/https 访问，且不拦截请求。刷新重试。</span>`;
+            syncStatusDiv.innerHTML = `<span style="color:#b33;">⚠️ 无法获取服务器时间: ${err.message}<br>请确保页面通过 http/https 访问，刷新重试。</span>`;
         }
     }
 
-    // ---------- 复制 JSON ----------
     async function copyJson() {
         const jsonText = jsonPre.innerText;
         try {
@@ -386,28 +377,26 @@
             copyJsonBtn.innerText = '✅ 已复制';
             setTimeout(() => { copyJsonBtn.innerText = originalText; }, 1500);
         } catch (e) {
-            alert('手动复制: ' + jsonText);
+            alert('手动复制:\n' + jsonText);
         }
     }
     copyJsonBtn.addEventListener('click', copyJson);
 
-    // ---------- 复制嵌入代码 ----------
     const copyEmbedBtn = document.getElementById('copyEmbedCodeBtn');
     const embedCodePre = document.getElementById('embedCodePre');
     async function copyEmbedCode() {
-        const codeText = embedCodePre.innerText;
+        const rawCode = embedCodePre.innerText;
         try {
-            await navigator.clipboard.writeText(codeText);
+            await navigator.clipboard.writeText(rawCode);
             const originalText = copyEmbedBtn.innerText;
             copyEmbedBtn.innerText = '✅ 已复制';
             setTimeout(() => { copyEmbedBtn.innerText = originalText; }, 1500);
         } catch (e) {
-            alert('手动复制代码:\n' + codeText);
+            alert('手动复制代码:\n' + rawCode);
         }
     }
     if (copyEmbedBtn) copyEmbedBtn.addEventListener('click', copyEmbedCode);
 
-    // ---------- 跨域 postMessage 接口 (供其他网站获取 JSON 时间) ----------
     window.addEventListener('message', (event) => {
         if (!syncCompleted) return;
         if (event.data === 'getTime') {
@@ -418,16 +407,14 @@
                 server_time: formatDateTime(nowServer),
                 local_time: formatDateTime(nowLocal),
                 offset_seconds: parseFloat(diffSec),
-                unit: "seconds",
                 timestamp_unix_ms: nowServer.getTime()
             };
             try {
                 event.source.postMessage(responseJson, event.origin);
-            } catch(e) { /* 忽略 */ }
+            } catch(e) { /* 静默处理 */ }
         }
     });
 
-    // 启动同步
     syncServerTime();
 </script>
 </body>
