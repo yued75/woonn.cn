@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>燃气管道防腐层PCM检测数据生成系统</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 
@@ -36,7 +37,7 @@
             <div id="userInfoBar" class="user-info-bar">
                 <span id="displayUsername"></span>
                 <span id="displayExpire"></span>
-                <a id="adminLink" href="https://github.com/yued75/woonn.cn/blob/main/pcm" target="_blank" class="info-link" style="display:none;">后台管理</a>
+                <a id="adminLink" href="admin.html" target="_blank" class="info-link" style="display:none;">后台管理</a>
                 <a id="logoutLink" href="javascript:void(0)" class="info-link">登出</a>
             </div>
 
@@ -62,18 +63,21 @@
             <div class="input-group">
                 <h3>特殊点标记</h3>
                 <div class="special-point-group"><textarea class="textareayangshi" id="specialPoints" placeholder="例：11:左弯,42:三通,108:阀井
-                                                           如需多个请用逗号或空格隔开"></textarea></div>
+如需多个请用逗号或空格隔开"></textarea></div>
             </div>
             <div class="operate-area">
-                <button class="operate-btn" id="generateBtn">一键生成</button>
-                <button class="operate-btn" id="copyToExcelBtn">复制表格</button>
-                <button class="operate-btn" id="exportExcelBtn">导出Excel</button>
+                <button class="operate-btn" id="generateBtn"><i class="fas fa-magic"></i> 生成</button>
+                <button class="operate-btn" id="copyToExcelBtn"><i class="fas fa-copy"></i> 复制</button>
+                <button class="operate-btn" id="exportExcelBtn"><i class="fas fa-download"></i> 导出</button>
             </div>
         </div>
 
         <!-- 右侧预览区域 -->
         <div class="preview-area">
-            <div class="preview-title">检测数据预览</div>
+            <div class="preview-header">
+                <div class="preview-title">检测数据预览</div>
+                <div class="status-badge"><span class="dot"></span> 运行中</div>
+            </div>
             <div class="preview-tip">使用说明：序号不可编辑，其余均可编辑。更改电流列数据会导致后续电流同步更改。右键可插入/删除行。</div>
             <div class="table-wrapper">
                 <table class="data-table" id="dataTable">
@@ -98,6 +102,8 @@
     <div class="context-menu-item" id="deleteRow">删除本行</div>
 </div>
 
-<script src="script.js"></script>
+<!-- 引入 Supabase SDK，用于日志记录 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/index.js"></script>
 </body>
 </html>
