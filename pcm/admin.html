@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理-燃气管道PCM检测数据生成系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="layout">
+        <div class="sidebar">
+            <div class="header-row">
+                <h1><i class="fas fa-clipboard-list"></i> 燃气管道PCM检测数据生成系统后台管理</h1>
+                <span class="header-badge"><span class="dot"></span> 运行中</span>
+            </div>
+            
+            <div class="toolbar">
+                <button id="refreshBtn"><i class="fas fa-sync-alt"></i> 刷新日志</button>
+                <button id="deleteSelectedBtn" class="danger-btn"><i class="fas fa-trash-alt"></i> 删除选中</button>
+                <button id="deleteAllBtn" class="danger-btn"><i class="fas fa-exclamation-triangle"></i> 删除全部日志</button>
+                <button id="sourceBtn" class="source-btn"><i class="fas fa-code-branch"></i> 授权/源码管理</button>
+                <button id="exportBtn" class="export-btn"><i class="fas fa-download"></i> 导出日志</button>
+            </div>
+            
+            <div class="filters">
+                <div class="search-box">
+                    <span class="search-icon"><i class="fas fa-user"></i></span>
+                    <input type="text" id="filterUsername" placeholder="用户名筛选...">
+                </div>
+                <select id="filterAction">
+                    <option value="">所有操作</option>
+                    <option value="login">登录</option>
+                    <option value="logout">登出</option>
+                    <option value="login_failed">登录失败</option>
+                    <option value="generate">一键生成</option>
+                    <option value="copy">复制表格</option>
+                    <option value="export">导出Excel</option>
+                </select>
+                <input type="date" id="filterDateStart" placeholder="起始日期">
+                <input type="date" id="filterDateEnd" placeholder="结束日期">
+                <button id="applyFilterBtn"><i class="fas fa-search"></i> 应用筛选</button>
+                <button id="resetFilterBtn"><i class="fas fa-undo-alt"></i> 重置</button>
+            </div>
+            
+            <div id="messageBox" class="message"></div>
+        </div>
+        
+        <div class="main">
+            <div class="stats" id="statsArea"></div>
+            
+            <div class="table-wrapper">
+                <table id="logTable">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th>
+                            <th>ID</th><th>用户名</th><th>操作</th><th>详情</th><th>管段名称</th><th>长度(m)</th><th>操作时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        <tr><td colspan="8" style="text-align:center;">正在加载数据...</td></tr>
+                    </tbody>
+                </table>
+                <div class="loading" id="loadingIndicator">正在加载...</div>
+            </div>
+            
+            <div class="pagination" id="paginationArea"></div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
