@@ -149,7 +149,7 @@ body {
     top: var(--header-height);
     left: 0;
     right: 0;
-    bottom: calc(var(--player-height) + 28px); /* 留出进度条和播放栏 */
+    bottom: calc(var(--player-height) + 28px);
     background: rgba(0, 0, 0, 0.85);
     z-index: 400;
     display: flex;
@@ -178,24 +178,28 @@ body {
 .lyric-overlay-content {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 40px;
+    padding: 60px 40px;
     line-height: 2.8;
     text-align: center;
-    color: var(--text-secondary);
+    color: #888;
     font-size: 1rem;
     cursor: pointer;
+    /* 渐变消失效果 */
+    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
 }
 .lyric-overlay-content p {
     transition: all 0.3s ease;
     padding: 2px 8px;
     border-radius: 4px;
     white-space: pre-wrap;
+    color: #888; /* 未播放歌词灰色 */
 }
 .lyric-overlay-content p.current {
-    color: var(--accent);
+    color: #fff;
     font-weight: 700;
     font-size: 1.2rem;
-    background: rgba(198, 47, 47, 0.2);
+    background: rgba(198, 47, 47, 0.2); /* 轻微红色背景，保留网易云风格 */
 }
 .lyric-empty { color: var(--text-muted); margin-top: 60px; font-size: 1.1rem; }
 
