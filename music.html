@@ -1159,37 +1159,39 @@
                     queueCount.textContent = '0';
                 }
             }
+async function playSongAtIndex(index) {
+    if (index < 0 || index >= playlist.length) return;
+    currentIndex = index;
+    const song = playlist[index];
 
-            async function playSongAtIndex(index) {
-                if (index < 0 || index >= playlist.length) return;
-                currentIndex = index;
-                const song = playlist[index];
-
-                // 获取播放URL
-                if (!song.url) {
-                    try {
-                        showToast('正在获取播放链接...', '');
-                        song.url = await getSongUrl(song.id);
-                    } catch (e) {
-                        showToast('⚠️ 无法获取播放链接，可能因版权限制', 'error');
-                        console.error('获取URL失败:', e);
-                        return;
-                    }
-                }
-
-                audioPlayer.src = song.url;
-                audioPlayer.currentTime = 0;
-                try {
-                    await audioPlayer.play();
-                    isPlaying = true;
-                } catch (e) {
-                    console.warn('自动播放被阻止，请手动点击播放:', e);
-                    isPlaying = false;
-                }
-                updatePlayerUI();
-                // 滚动到当前歌曲
-                scrollToCurrentSong();
+    // 获取播放URL
+    if (!song.url) {
+        try {
+            showToast('正在获取播放链接...', '');
+            song.url = await getSongUrl(song.id);
+        } catch (e) {
+            if (e.message === 'copyright') {
+                showToast('⛔ 该歌曲因版权限制无法播放', 'error');
+            } else {
+                showToast('📶 暂无可用的播放链接', 'error');
             }
+            console.error('获取URL失败:', e);
+            return;
+        }
+    }
+
+    audioPlayer.src = song.url;
+    audioPlayer.currentTime = 0;
+    try {
+        await audioPlayer.play();
+        isPlaying = true;
+    } catch (e) {
+        console.warn('自动播放被阻止，请手动点击播放:', e);
+        isPlaying = false;
+    }
+    updatePlayerUI();
+    scrollToCurrentSong();
+}
 
             function playNext() {
                 if (playlist.length === 0) return;
