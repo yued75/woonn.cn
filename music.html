@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小智AI音乐播放器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00d4ff;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background: #00d4ff;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #00b8e6;
+        }
+        .result-list {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .song-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .song-info {
+            flex: 1;
+        }
+        .song-name {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .song-artist {
+            font-size: 14px;
+            color: #aaa;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-play {
+            background: #28a745;
+        }
+        .btn-copy {
+            background: #ffc107;
+            color: #1a1a2e;
+        }
+        audio {
+            width: 100%;
+            margin-top: 30px;
+            border-radius: 8px;
+        }
+        .copy-notice {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 小智AI音乐播放器（纯前端版）</h1>
+        
+        <div class="search-box">
+            <input type="text" id="keyword" placeholder="输入歌曲名/歌手名，比如：周杰伦 晴天">
+            <button onclick="searchMusic()">搜索歌曲</button>
+        </div>
+
+        <div class="result-list" id="resultList"></div>
+
+        <audio id="player" controls>
+
+        <div class="copy-notice" id="copyNotice">链接已复制！</div>
+    </div>
+
+    <script>
+        // 带跨域代理的API地址
+        const API_BASE = "https://api.allorigins.win/raw?url=https://netease-cloud-music-api-five-roan-88.vercel.app";
+
+        // 搜索歌曲
+        async function searchMusic() {
+            const keyword = document.getElementById('keyword').value.trim();
+            if (!keyword) return alert('请输入歌曲名称');
+
+            const resultList = document.getElementById('resultList');
+            resultList.innerHTML = '<div class="song-item">搜索中...</div>';
+
+            try {
+                // 1. 搜索歌曲
+                const searchRes = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(keyword)}&type=1`);
+                const searchData = await searchRes.json();
+                const songs = searchData.result?.songs || [];
+
+                if (songs.length === 0) {
+                    resultList.innerHTML = '<div class="song-item">未找到相关歌曲</div>';
+                    return;
+                }
+
+                // 2. 渲染列表
+                resultList.innerHTML = '';
+                songs.slice(0, 10).forEach(song => {
+                    const item = document.createElement('div');
+                    item.className = 'song-item';
+                    item.innerHTML = `
+                        <div class="song-info">
+                            <div class="song-name">${song.name}</div>
+                            <div class="song-artist">${song.artists?.map(a => a.name).join(' / ') || '未知歌手'}</div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-play" onclick="playSong('${song.id}')">播放</button>
+                            <button class="btn-copy" onclick="copyLink('${song.id}')">复制直链</button>
+                        </div>
+                    `;
+                    resultList.appendChild(item);
+                });
+            } catch (err) {
+                resultList.innerHTML = `<div class="song-item">搜索失败：${err.message}</div>`;
+            }
+        }
+
+        // 播放歌曲
+        async function playSong(songId) {
+            try {
+                const urlRes = await fetch(`${API_BASE}/song/url?id=${songId}`);
+                const urlData = await urlRes.json();
+                const playUrl = urlData.data?.[0]?.url;
+
+                if (!playUrl) return alert('无法获取播放链接，可能是版权限制');
+
+                const player = document.getElementById('player');
+                player.src = playUrl;
+                player.play();
+            } catch (err) {
+                alert('播放失败：' + err.message);
+            }
+        }
+
+        // 复制直链（给小智AI用）
+        async function copyLink(songId) {
+            try {
+                const urlRes = await fetch(`${API_BASE}/song/url?id=${songId}`);
+                const urlData = await urlRes.json();
+                const playUrl = urlData.data?.[0]?.url;
+
+                if (!playUrl) return alert('无法获取播放链接');
+
+                await navigator.clipboard.writeText(playUrl);
+                const notice = document.getElementById('copyNotice');
+                notice.style.display = 'block';
+                setTimeout(() => notice.style.display = 'none', 2000);
+            } catch (err) {
+                alert('复制失败：' + err.message);
+            }
+        }
+
+        // 回车触发搜索
+        document.getElementById('keyword').addEventListener('keydown', e => {
+            if (e.key === 'Enter') searchMusic();
+        });
+    </script>
+</body>
+</html>
