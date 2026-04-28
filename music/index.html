@@ -19,7 +19,6 @@
         <div class="header-actions">
             <button class="btn-icon" id="btnPlaylist" title="播放队列">📋<span class="badge-dot" id="queueDot" style="display:none;"></span></button>
             <button class="btn-icon" id="btnMode" title="播放模式：列表循环">🔁</button>
-            <button class="btn-icon" id="btnLyric" title="显示/隐藏歌词">📜</button>
         </div>
     </header>
 
@@ -42,16 +41,17 @@
             </div>
             <div class="song-list" id="songList"></div>
         </main>
+    </div>
 
-        <aside class="lyric-panel" id="lyricPanel" style="display:none;">
-            <div class="lyric-header">
-                <span class="lyric-title" id="lyricTitle">歌词</span>
-                <button class="lyric-close" id="lyricClose">✕</button>
-            </div>
-            <div class="lyric-content" id="lyricContent">
-                <p class="lyric-empty">暂无歌词</p>
-            </div>
-        </aside>
+    <!-- 歌词全屏覆盖层 -->
+    <div class="lyric-overlay" id="lyricOverlay" style="display:none;">
+        <div class="lyric-overlay-header">
+            <span>歌词</span>
+            <button class="lyric-overlay-close" id="lyricOverlayClose">✕</button>
+        </div>
+        <div class="lyric-overlay-content" id="lyricOverlayContent">
+            <p class="lyric-empty">暂无歌词</p>
+        </div>
     </div>
 
     <div class="progress-bar-container" id="progressBarContainer">
