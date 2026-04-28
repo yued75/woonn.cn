@@ -133,11 +133,16 @@
     async function getLyric(songId) {
         try {
             const data = await apiCall(`/lyric?id=${songId}`);
+            console.log('歌词原始数据:', data); // 调试
             return data?.lrc?.lyric || null;
-        } catch(e) { return null; }
+        } catch(e) {
+            console.error('歌词获取失败:', e);
+            return null;
+        }
     }
 
     function parseLyric(lrcText) {
+        if (!lrcText) return [];
         const lines = lrcText.split('\n');
         const parsed = [];
         const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
@@ -225,6 +230,7 @@
     async function fetchAndDisplayLyric(songId) {
         const lrc = await getLyric(songId);
         currentLyric = lrc ? parseLyric(lrc) : [];
+        console.log('解析后的歌词数组:', currentLyric); // 调试
         if (lyricOverlay.style.display !== 'none') {
             updateLyricDisplay();
         }
@@ -247,15 +253,6 @@
             scrollToCurrentSong();
         } catch(e) {
             showToast('⛔ ' + e.message, 'error');
-            // 恢复当前索引，不更新界面
-            if(currentIndex !== idx) {
-                // 如果之前有歌曲，重新加载原来的
-                if(currentIndex >= 0 && playlist[currentIndex].url) {
-                    audioPlayer.src = playlist[currentIndex].url;
-                    audioPlayer.play().catch(()=>{});
-                }
-            }
-            updatePlayerUI();
         }
     }
 
@@ -329,7 +326,7 @@
                     <button class="btn-sm btn-add-queue" data-song-id="${song.id}">➕</button>
                 </div>
             `;
-            // 点击整行：只有成功获取播放链接才加入队列
+            // 点击整行：先尝试获取URL，成功后才加入播放列表
             item.addEventListener('click', async (e) => {
                 if(e.target.closest('.btn-sm')) return;
                 const targetSong = songs[i];
@@ -349,6 +346,7 @@
                     renderSongList(searchResults);
                 } catch(err) {
                     showToast('⛔ ' + err.message, 'error');
+                    // 获取失败，不加入列表
                 }
             });
             songList.appendChild(item);
@@ -482,7 +480,6 @@
         }
     });
 
-    // 搜索
     let searchTimer;
     searchInput.addEventListener('input', () => {
         clearTimeout(searchTimer);
@@ -519,7 +516,6 @@
         }
     }
 
-    // 进度条
     progressBarWrap.addEventListener('click', (e) => {
         if(!audioPlayer.duration || isNaN(audioPlayer.duration)) return;
         const rect = progressBarWrap.getBoundingClientRect();
@@ -600,7 +596,6 @@
         if(e.key===' ' && e.target===document.body) { e.preventDefault(); togglePlayPause(); }
     });
 
-    // 初始化
     renderHotTags();
     showStatus('initial');
     updatePlayerUI();
