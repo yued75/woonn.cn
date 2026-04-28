@@ -233,16 +233,13 @@
     async function playSongAtIndex(idx) {
         if(idx<0 || idx>=playlist.length) return;
         const song = playlist[idx];
-        const previousIndex = currentIndex;
-        // 尝试获取播放链接，如果失败则不改变状态
         try {
             if(!song.url) {
                 showToast('正在获取播放链接...');
                 song.url = await getSongUrl(song.id);
             }
-            // 获取成功，才开始播放
             audioPlayer.src = song.url;
-            currentIndex = idx;   // 只有成功获取才切换索引
+            currentIndex = idx;
             audioPlayer.currentTime = 0;
             try { await audioPlayer.play(); isPlaying = true; } catch(e) { isPlaying = false; }
             updatePlayerUI();
@@ -250,17 +247,15 @@
             scrollToCurrentSong();
         } catch(e) {
             showToast('⛔ ' + e.message, 'error');
-            // 恢复之前的状态
-            currentIndex = previousIndex;
-            // 如果之前有其他歌曲在播放，继续播放；否则停止
-            if(previousIndex >= 0 && playlist[previousIndex].url) {
-                // 什么都不做，保持原来播放
-            } else {
-                // 之前没播放，现在也没获取成功，停止播放
-                audioPlayer.pause();
-                isPlaying = false;
-                updatePlayerUI();
+            // 恢复当前索引，不更新界面
+            if(currentIndex !== idx) {
+                // 如果之前有歌曲，重新加载原来的
+                if(currentIndex >= 0 && playlist[currentIndex].url) {
+                    audioPlayer.src = playlist[currentIndex].url;
+                    audioPlayer.play().catch(()=>{});
+                }
             }
+            updatePlayerUI();
         }
     }
 
@@ -334,15 +329,26 @@
                     <button class="btn-sm btn-add-queue" data-song-id="${song.id}">➕</button>
                 </div>
             `;
-            item.addEventListener('click', (e) => {
+            // 点击整行：只有成功获取播放链接才加入队列
+            item.addEventListener('click', async (e) => {
                 if(e.target.closest('.btn-sm')) return;
                 const targetSong = songs[i];
                 const existIdx = playlist.findIndex(s=>s.id===targetSong.id);
                 if(existIdx>=0) {
                     playSongAtIndex(existIdx);
-                } else {
-                    playlist.push({...targetSong, url: null});
+                    return;
+                }
+                // 不在列表中，先获取URL
+                try {
+                    showToast('正在获取播放链接...');
+                    const url = await getSongUrl(targetSong.id);
+                    const newSong = {...targetSong, url};
+                    playlist.push(newSong);
                     playSongAtIndex(playlist.length-1);
+                    updatePlayerUI();
+                    renderSongList(searchResults);
+                } catch(err) {
+                    showToast('⛔ ' + err.message, 'error');
                 }
             });
             songList.appendChild(item);
@@ -374,7 +380,7 @@
         const id = parseInt(btn.dataset.songId);
         const song = searchResults.find(s=>s.id===id);
         if(song && !playlist.find(s=>s.id===id)) {
-            playlist.push({...song, url:null});
+            playlist.push({...song, url: null});
             showToast('✅ 已添加到播放队列');
             updatePlayerUI();
             renderSongList(searchResults);
@@ -451,7 +457,6 @@
     function openModal() { modalOverlay.style.display = ''; renderQueueModal(); }
     function closeModal() { modalOverlay.style.display = 'none'; }
 
-    // 歌词覆盖层控制
     function toggleLyricOverlay() {
         if (currentIndex < 0) {
             showToast('请先播放一首歌曲');
@@ -469,9 +474,7 @@
     lyricOverlay.addEventListener('click', (e) => {
         if (e.target === lyricOverlay) lyricOverlay.style.display = 'none';
     });
-    // 点击底部旋转专辑封面切换歌词
     playerCoverArea.addEventListener('click', toggleLyricOverlay);
-    // 歌词点击跳转
     lyricOverlayContent.addEventListener('click', (e) => {
         const p = e.target.closest('p');
         if(p && p.dataset.time) {
@@ -573,7 +576,6 @@
         else if(e.key==='ArrowDown') { e.preventDefault(); audioPlayer.volume = Math.max(0, audioPlayer.volume-0.1); volumeSlider.value=Math.round(audioPlayer.volume*100); }
     });
 
-    // 绑定按钮事件
     btnPlayPause.addEventListener('click', togglePlayPause);
     btnPrev.addEventListener('click', playPrev);
     btnNext.addEventListener('click', playNext);
