@@ -176,6 +176,7 @@ body {
     backdrop-filter: blur(10px);
     z-index: 150;
     display: flex; flex-direction: column;
+    /* 为指示线提供定位上下文 */
     overflow: hidden;
 }
 .lyric-overlay-header {
@@ -193,12 +194,12 @@ body {
 .lyric-overlay-content {
     flex: 1;
     overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;
-    padding: 50vh 40px;   /* 上下各留半个视口高度，保证首尾行都能滚动到中间 */
-    line-height: 2.6; text-align: center;
+    padding: 50px 40px; line-height: 2.6; text-align: center;
     color: var(--text-muted); font-size: 0.95rem; cursor: grab;
     user-select: none; -webkit-user-select: none;
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+    /* 不再需要相对定位 */
 }
 .lyric-overlay-content::-webkit-scrollbar { display: none; }
 .lyric-overlay-content:active { cursor: grabbing; }
@@ -213,16 +214,18 @@ body {
     background: transparent !important;
 }
 
-/* 固定指示线（相对 lyricOverlay 居中，位置由 JS 动态设定） */
+/* 固定的拖动指示线（相对 lyricOverlay 居中，不随滚动） */
 .lyric-indicator {
     position: absolute;
     left: 20px;
     right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 5;
     display: none;
     align-items: center;
     justify-content: center;
-    pointer-events: none;
+    pointer-events: none;  /* 不响应点击，也不阻挡拖拽 */
 }
 .lyric-indicator-time {
     color: var(--accent-light);
