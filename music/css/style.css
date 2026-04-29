@@ -184,7 +184,6 @@ body {
     color: #888;
     font-size: 1rem;
     cursor: pointer;
-    /* 渐变消失效果 */
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
 }
@@ -193,17 +192,16 @@ body {
     padding: 2px 8px;
     border-radius: 4px;
     white-space: pre-wrap;
-    color: #888; /* 未播放歌词灰色 */
+    color: #888;
 }
 .lyric-overlay-content p.current {
     color: #fff;
     font-weight: 700;
     font-size: 1.2rem;
-    background: rgba(198, 47, 47, 0.2); /* 轻微红色背景，保留网易云风格 */
+    background: rgba(198, 47, 47, 0.2);
 }
 .lyric-empty { color: var(--text-muted); margin-top: 60px; font-size: 1.1rem; }
 
-/* 进度条 */
 .progress-bar-container {
     position: fixed;
     bottom: var(--player-height);
@@ -226,7 +224,6 @@ body {
     height:100%; background:var(--accent); border-radius:10px; transition:width 0.1s linear;
 }
 
-/* 播放栏 */
 .player-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
