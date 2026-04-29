@@ -2,23 +2,19 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>网易云音乐</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>音乐播放器</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <header class="header">
         <div class="logo">
             <div class="logo-icon">🎵</div>
-            <span>网易云音乐</span>
+            <span>音乐播放器</span>
         </div>
         <div class="search-wrapper">
             <input type="text" class="search-input" id="searchInput" placeholder="搜索歌曲、歌手、专辑..." autocomplete="off">
             <button class="search-btn" id="searchBtn">🔍</button>
-        </div>
-        <div class="header-actions">
-            <button class="btn-icon" id="btnPlaylist" title="播放队列">📋<span class="badge-dot" id="queueDot" style="display:none;"></span></button>
-            <button class="btn-icon" id="btnMode" title="播放模式：列表循环">🔁</button>
         </div>
     </header>
 
@@ -52,16 +48,25 @@
         <div class="lyric-overlay-content" id="lyricOverlayContent">
             <p class="lyric-empty">暂无歌词</p>
         </div>
+        <!-- 固定指示线（在可滚动区域外，绝对居中） -->
+        <div class="lyric-indicator" id="lyricIndicator">
+            <span class="lyric-indicator-time">00:00</span>
+            <span class="lyric-indicator-line"></span>
+            <span class="lyric-indicator-play">▶</span>
+        </div>
     </div>
 
+    <!-- 进度条（包含拖动提示） -->
     <div class="progress-bar-container" id="progressBarContainer">
         <span class="progress-time" id="timeCurrent">00:00</span>
         <div class="progress-bar-wrap" id="progressBarWrap">
             <div class="progress-bar-fill" id="progressBarFill" style="width:0%;"></div>
+            <div class="progress-tooltip" id="progressTooltip">00:00</div>
         </div>
         <span class="progress-time" id="timeDuration">00:00</span>
     </div>
 
+    <!-- 播放栏 -->
     <div class="player-bar" id="playerBar">
         <div class="player-cover-area" id="playerCoverArea">
             <div class="player-cover-placeholder">🎶</div>
@@ -76,12 +81,10 @@
             <button class="btn-play" id="btnPlayPause">▶</button>
             <button class="btn-ctrl" id="btnNext">⏭️</button>
         </div>
-        <div class="player-right">
-            <div class="volume-wrap">
-                <span>🔊</span>
-                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
-            </div>
-            <button class="btn-sm" id="btnCopyLink">🔗</button>
+        <div class="player-extra">
+            <button class="btn-ctrl" id="btnMode" title="播放模式：列表循环">🔁</button>
+            <button class="btn-ctrl" id="btnPlaylist" title="播放列表">≡<span class="badge-dot" id="queueDot" style="display:none;"></span></button>
+            <button class="btn-ctrl" id="btnCopyLink">🔗</button>
         </div>
     </div>
 
@@ -90,11 +93,11 @@
     <div class="modal-overlay" id="modalOverlay" style="display:none;">
         <div class="modal">
             <div class="modal-header">
-                <span>📋 播放队列 (<span id="queueCount">0</span>)</span>
+                <span>📋 播放列表 (<span id="queueCount">0</span>)</span>
                 <button class="modal-close" id="modalClose">✕</button>
             </div>
             <div class="modal-body" id="modalQueueList">
-                <p style="text-align:center;color:var(--text-muted);padding:30px;">队列为空，搜索并添加歌曲吧</p>
+                <p style="text-align:center;color:var(--text-muted);padding:30px;">列表为空，搜索并添加歌曲吧</p>
             </div>
         </div>
     </div>
