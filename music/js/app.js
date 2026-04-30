@@ -41,7 +41,7 @@
     const progressTooltip = $('#progressTooltip');
     const lyricIndicator = $('#lyricIndicator');
 
-    const API_BASE_URL = 'https://musicapi.yued75.workers.dev';
+    const API_BASE_URL = 'https://musicapi.yued75.dpdns.org/';
     let playlist = [];
     let searchResults = [];
     let playMode = 'list';
