@@ -26,6 +26,14 @@
                     </svg>
                     修改密码
                 </button>
+                <button class="btn btn-secondary btn-sm" id="logoutBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    退出
+                </button>
             </div>
         </header>
 
@@ -125,9 +133,10 @@
                         <label for="applyDate">申请时间</label>
                         <input type="date" id="applyDate" />
                     </div>
+                    <!-- 到期时间无必填标识 -->
                     <div class="form-group">
-                        <label for="expireDate">到期时间 <span class="required">*</span></label>
-                        <input type="date" id="expireDate" required />
+                        <label for="expireDate">到期时间</label>
+                        <input type="date" id="expireDate" />
                     </div>
                 </div>
                 <div class="form-row-2">
@@ -145,6 +154,7 @@
                     <textarea id="remark" rows="2" placeholder="备注信息..."></textarea>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="clearFormBtn">清空</button>
                     <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
                     <button type="submit" class="btn btn-primary">保存</button>
                 </div>
@@ -164,7 +174,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p class="confirm-text">确定要删除域名 <strong id="deleteDomainName"></strong> 吗？此操作不可撤销。</p>
+                <p class="confirm-text">确定要删除域名 <strong id="deleteDomainName"></strong> 吗？</p>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="confirmCancelBtn">取消</button>
                     <button type="button" class="btn btn-danger" id="confirmDeleteBtn">删除</button>
@@ -173,7 +183,7 @@
         </div>
     </div>
 
-    <!-- 修改密码模态框 -->
+    <!-- 修改密码 -->
     <div class="modal-overlay" id="passwordModalOverlay">
         <div class="modal modal-sm">
             <div class="modal-header">
