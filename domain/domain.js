@@ -1,17 +1,16 @@
-// domain.js - 域名管理系统（统一错误处理、友好提示）
-(function () {
+// domain.js - 域名管理系统（最终版）
+(function() {
     // ========== 配置 ==========
     const API_BASE_URLS = [
         'https://domainapi.yued75.cc.cd/api',
         'https://domainapi.yued75.dpdns.org/api',
         'https://domainapi.yued75.indevs.in/api'
     ];
-
     const STORAGE_KEY = 'domain_master_password';
+    const DRAFT_KEY = 'domain_form_draft';
     let currentPassword = sessionStorage.getItem(STORAGE_KEY) || '';
 
     // ========== 工具函数 ==========
-    // 统一的 Toast 提示
     function showToast(msg, duration = 3000) {
         const toast = document.getElementById('toast');
         if (!toast) return;
@@ -21,34 +20,36 @@
         toast._timeout = setTimeout(() => toast.classList.remove('show'), duration);
     }
 
-    // HTML 转义
     function escapeHtml(str) {
         if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // 到期状态
+    // 到期状态与标签
     function getExpiryStatus(dateStr) {
-        if (!dateStr) return { class: '', text: '' };
+        if (!dateStr || dateStr === '2999-12-30') {
+            return { tagClass: 'permanent', text: '永久有效' };
+        }
         const exp = new Date(dateStr);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const diff = Math.ceil((exp - today) / 86400000);
-        if (diff < 0) return { class: 'expiry-danger', text: '已过期' };
-        if (diff <= 30) return { class: 'expiry-warning', text: `${diff}天后到期` };
-        return { class: '', text: '' };
+        const diffMs = exp - today;
+        const diffDays = Math.ceil(diffMs / 86400000);
+
+        if (diffDays < 0) {
+            return { tagClass: 'danger', text: `已过期${Math.abs(diffDays)}天` };
+        } else if (diffDays <= 30) {
+            return { tagClass: 'warning', text: `${diffDays}天后到期` };
+        } else {
+            return { tagClass: 'safe', text: `${diffDays}天后到期` };
+        }
     }
 
-    // ========== 核心：带容灾的 fetch（改进错误处理） ==========
+    // ========== API 请求 (多地址容灾) ==========
     async function fetchWithFallback(path, options = {}) {
         const { method = 'GET', body, headers: extraHeaders } = options;
         let lastError;
         const urlPath = path.startsWith('/') ? path : `/${path}`;
-
         for (const baseUrl of API_BASE_URLS) {
             try {
                 const url = `${baseUrl}${urlPath}`;
@@ -60,63 +61,92 @@
                         ...extraHeaders
                     }
                 };
-                if (body && method !== 'GET' && method !== 'DELETE') {
-                    fetchOpts.body = JSON.stringify(body);
-                }
+                if (body && method !== 'GET' && method !== 'DELETE') fetchOpts.body = JSON.stringify(body);
                 const res = await fetch(url, fetchOpts);
-                // 只要成功建立连接就返回响应（让上层判断业务状态）
                 return res;
             } catch (e) {
                 lastError = e;
-                // 网络错误，尝试下一个地址
                 continue;
             }
         }
-        throw new Error('所有备用地址均无法访问，请检查网络连接');
+        throw new Error('所有备用地址均无法访问');
     }
 
-    // 统一处理响应，提取错误信息
     async function handleResponse(res, successMsg, errorPrefix) {
         if (res.ok || res.status === 201 || res.status === 204) {
             if (successMsg) showToast(successMsg);
             return res;
         }
-        let errorMsg = `${errorPrefix || '操作失败'}`;
+        let errMsg = errorPrefix || '操作失败';
         try {
-            const errData = await res.json();
-            if (errData.error) {
-                errorMsg = errData.error;
-            }
-        } catch (e) {
-            // 无法解析 JSON，使用状态码提示
-            if (res.status === 401) errorMsg = '密码错误，请重新登录';
-            else if (res.status === 403) errorMsg = '权限不足，请检查密码';
-            else if (res.status === 404) errorMsg = '资源不存在';
-            else if (res.status === 500) errorMsg = '服务器内部错误，请稍后重试';
-            else errorMsg = `请求失败 (${res.status})`;
+            const data = await res.json();
+            if (data.error) errMsg = data.error;
+        } catch {
+            if (res.status === 401) errMsg = '密码错误';
+            else if (res.status === 403) errMsg = '权限不足';
+            else if (res.status === 500) errMsg = '服务器内部错误';
         }
-        showToast(errorMsg);
-        throw new Error(errorMsg);
+        showToast(errMsg);
+        throw new Error(errMsg);
     }
 
-    // ========== 登录页面逻辑 ==========
+    // ========== 草稿管理 ==========
+    function saveDraft(formData) {
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+    }
+    function loadDraft() {
+        const raw = sessionStorage.getItem(DRAFT_KEY);
+        if (!raw) return null;
+        try { return JSON.parse(raw); } catch { return null; }
+    }
+    function clearDraft() {
+        sessionStorage.removeItem(DRAFT_KEY);
+    }
+
+    function collectFormData() {
+        return {
+            provider: document.getElementById('provider').value.trim(),
+            providerUrl: document.getElementById('providerUrl').value.trim(),
+            providerAccount: document.getElementById('providerAccount').value.trim(),
+            providerPassword: document.getElementById('providerPassword').value.trim(),
+            domain: document.getElementById('domain').value.trim(),
+            applyDate: document.getElementById('applyDate').value,
+            expireDate: document.getElementById('expireDate').value,
+            renewRule: document.getElementById('renewRule').value.trim(),
+            purpose: document.getElementById('purpose').value.trim(),
+            remark: document.getElementById('remark').value.trim()
+        };
+    }
+
+    function restoreDraftToForm(draft) {
+        document.getElementById('provider').value = draft.provider || '';
+        document.getElementById('providerUrl').value = draft.providerUrl || '';
+        document.getElementById('providerAccount').value = draft.providerAccount || '';
+        document.getElementById('providerPassword').value = draft.providerPassword || '';
+        document.getElementById('domain').value = draft.domain || '';
+        document.getElementById('applyDate').value = draft.applyDate || '';
+        document.getElementById('expireDate').value = draft.expireDate || '';
+        document.getElementById('renewRule').value = draft.renewRule || '';
+        document.getElementById('purpose').value = draft.purpose || '';
+        document.getElementById('remark').value = draft.remark || '';
+    }
+
+    // ========== 登录页逻辑 ==========
     if (window.location.pathname.endsWith('login.html') || window.location.pathname === '/login.html') {
+        // 如果已登录直接跳转管理页
+        if (sessionStorage.getItem(STORAGE_KEY)) {
+            window.location.href = 'index.html';
+            return;
+        }
         const passwordInput = document.getElementById('passwordInput');
         const loginBtn = document.getElementById('loginBtn');
         const loginError = document.getElementById('loginError');
 
         async function handleLogin() {
             const pwd = passwordInput.value.trim();
-            if (!pwd) {
-                loginError.textContent = '请输入密码';
-                return;
-            }
+            if (!pwd) { loginError.textContent = '请输入密码'; return; }
             try {
-                const res = await fetchWithFallback('/auth', {
-                    method: 'POST',
-                    body: { password: pwd },
-                    headers: {}
-                });
+                const res = await fetchWithFallback('/auth', { method:'POST', body:{ password: pwd }, headers:{} });
                 if (res.ok) {
                     const data = await res.json();
                     if (data.success) {
@@ -127,21 +157,19 @@
                     }
                 } else {
                     const err = await res.json().catch(() => ({}));
-                    loginError.textContent = err.error || '服务器连接失败，请检查地址';
+                    loginError.textContent = err.error || '服务器错误';
                 }
-            } catch (err) {
-                loginError.textContent = '所有备用地址均无法访问，请检查网络';
+            } catch (e) {
+                loginError.textContent = '无法连接服务器';
             }
         }
-
         loginBtn.addEventListener('click', handleLogin);
-        passwordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
+        passwordInput.addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
         return;
     }
 
-    // ========== 管理页面逻辑 ==========
+    // ========== 管理页逻辑 ==========
+    // 未登录则跳转
     if (!currentPassword) {
         window.location.href = 'login.html';
         return;
@@ -154,22 +182,13 @@
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
     const addBtn = document.getElementById('addBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const changePasswordBtn = document.getElementById('changePasswordBtn');
 
     const modalOverlay = document.getElementById('modalOverlay');
-    const modalTitle = document.getElementById('modalTitle');
-    const domainForm = document.getElementById('domainForm');
     const editId = document.getElementById('editId');
-    const providerInp = document.getElementById('provider');
-    const providerUrlInp = document.getElementById('providerUrl');
-    const providerAccountInp = document.getElementById('providerAccount');
-    const providerPasswordInp = document.getElementById('providerPassword');
-    const domainInp = document.getElementById('domain');
-    const applyDateInp = document.getElementById('applyDate');
-    const expireDateInp = document.getElementById('expireDate');
-    const renewRuleInp = document.getElementById('renewRule');
-    const purposeInp = document.getElementById('purpose');
-    const remarkInp = document.getElementById('remark');
+    const domainForm = document.getElementById('domainForm');
+    const clearFormBtn = document.getElementById('clearFormBtn');
     const cancelBtn = document.getElementById('cancelBtn');
     const modalClose = document.getElementById('modalClose');
 
@@ -180,8 +199,6 @@
     const confirmClose = document.getElementById('confirmClose');
 
     const passwordModalOverlay = document.getElementById('passwordModalOverlay');
-    const oldPasswordInp = document.getElementById('oldPassword');
-    const newPasswordInp = document.getElementById('newPassword');
     const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
     const passwordCancelBtn = document.getElementById('passwordCancelBtn');
     const passwordModalClose = document.getElementById('passwordModalClose');
@@ -189,32 +206,27 @@
     let domains = [];
     let deleteId = null;
 
-    // 加载域名列表
+    // 退出功能
+    logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem(STORAGE_KEY);
+        window.location.href = 'login.html';
+    });
+
+    // 加载域名
     async function loadDomains() {
         try {
             tableBody.innerHTML = '<tr><td colspan="11" class="loading-text">加载中...</td></tr>';
             const res = await fetchWithFallback('/domains');
-            if (res.ok) {
-                domains = await res.json();
-            } else {
-                const err = await res.json().catch(() => ({}));
-                showToast(err.error || '加载域名失败');
-                domains = [];
-            }
-        } catch (e) {
-            showToast('加载失败：' + e.message);
-            domains = [];
-        }
+            if (res.ok) domains = await res.json();
+            else { showToast('加载失败'); domains = []; }
+        } catch (e) { showToast('加载失败'); domains = []; }
         renderTable(searchInput.value);
     }
 
-    // 渲染表格
     function renderTable(filter) {
         const kw = (filter || '').trim().toLowerCase();
         const filtered = domains.filter(d =>
-            !kw || [d.provider, d.domain, d.purpose, d.remark, d.provider_account].some(f =>
-                (f || '').toLowerCase().includes(kw)
-            )
+            !kw || [d.provider, d.domain, d.purpose, d.remark, d.provider_account].some(f => (f||'').toLowerCase().includes(kw))
         );
         domainCount.textContent = `共 ${domains.length} 个域名`;
 
@@ -230,12 +242,15 @@
                     <td>${item.provider_url ? `<a href="${escapeHtml(item.provider_url)}" target="_blank" class="provider-url">${escapeHtml(item.provider_url)}</a>` : '-'}</td>
                     <td>${escapeHtml(item.provider_account) || '-'}</td>
                     <td class="password-cell">
-                        <span class="masked-password" data-password="${escapeHtml(item.provider_password || '')}">${item.provider_password ? '******' : '-'}</span>
-                        ${item.provider_password ? '<button class="password-toggle" data-action="toggle">查看</button>' : ''}
+                        <span class="masked-password" data-password="${escapeHtml(item.provider_password||'')}">${item.provider_password ? '******' : '-'}</span>
+                        ${item.provider_password ? '<button class="password-toggle">查看</button>' : ''}
                     </td>
                     <td><strong>${escapeHtml(item.domain)}</strong></td>
                     <td>${item.apply_date || '-'}</td>
-                    <td><span class="${status.class}">${item.expire_date || '-'}</span>${status.text ? ` <small>(${status.text})</small>` : ''}</td>
+                    <td>
+                        ${item.expire_date || '-'}
+                        <span class="expiry-tag ${status.tagClass}">${status.text}</span>
+                    </td>
                     <td>${escapeHtml(item.renew_rule) || '-'}</td>
                     <td>${escapeHtml(item.purpose) || '-'}</td>
                     <td>${escapeHtml(item.remark) || '-'}</td>
@@ -256,16 +271,10 @@
 
     function togglePassword(e) {
         const btn = e.target;
-        const cell = btn.parentNode;
-        const span = cell.querySelector('.masked-password');
-        const pwd = span.dataset.password;
-        if (span.textContent === '******') {
-            span.textContent = pwd;
-            btn.textContent = '隐藏';
-        } else {
-            span.textContent = '******';
-            btn.textContent = '查看';
-        }
+        const span = btn.parentElement.querySelector('.masked-password');
+        const pw = span.dataset.password;
+        if (span.textContent === '******') { span.textContent = pw; btn.textContent = '隐藏'; }
+        else { span.textContent = '******'; btn.textContent = '查看'; }
     }
 
     // 搜索
@@ -274,85 +283,97 @@
         clearSearch.style.display = searchInput.value ? 'flex' : 'none';
     });
     clearSearch.addEventListener('click', () => {
-        searchInput.value = '';
-        renderTable('');
-        clearSearch.style.display = 'none';
-        searchInput.focus();
+        searchInput.value = ''; renderTable(''); clearSearch.style.display = 'none'; searchInput.focus();
     });
 
-    // 添加/编辑域名模态框
+    // 添加按钮（草稿恢复）
     addBtn.addEventListener('click', () => {
-        modalTitle.textContent = '添加域名';
+        document.getElementById('modalTitle').textContent = '添加域名';
         domainForm.reset();
         editId.value = '';
-        applyDateInp.value = new Date().toISOString().split('T')[0];
+        document.getElementById('applyDate').value = new Date().toISOString().split('T')[0];
+        const draft = loadDraft();
+        if (draft) {
+            restoreDraftToForm(draft);
+            showToast('已恢复上次未保存的内容');
+        }
         modalOverlay.classList.add('active');
     });
 
+    // 编辑域名
     function editDomain(id) {
         const item = domains.find(d => d.id === id);
         if (!item) return;
-        modalTitle.textContent = '编辑域名';
+        document.getElementById('modalTitle').textContent = '编辑域名';
         editId.value = item.id;
-        providerInp.value = item.provider || '';
-        providerUrlInp.value = item.provider_url || '';
-        providerAccountInp.value = item.provider_account || '';
-        providerPasswordInp.value = item.provider_password || '';
-        domainInp.value = item.domain || '';
-        applyDateInp.value = item.apply_date || '';
-        expireDateInp.value = item.expire_date || '';
-        renewRuleInp.value = item.renew_rule || '';
-        purposeInp.value = item.purpose || '';
-        remarkInp.value = item.remark || '';
+        document.getElementById('provider').value = item.provider || '';
+        document.getElementById('providerUrl').value = item.provider_url || '';
+        document.getElementById('providerAccount').value = item.provider_account || '';
+        document.getElementById('providerPassword').value = item.provider_password || '';
+        document.getElementById('domain').value = item.domain || '';
+        document.getElementById('applyDate').value = item.apply_date || '';
+        document.getElementById('expireDate').value = (item.expire_date === '2999-12-30') ? '' : (item.expire_date || '');
+        document.getElementById('renewRule').value = item.renew_rule || '';
+        document.getElementById('purpose').value = item.purpose || '';
+        document.getElementById('remark').value = item.remark || '';
         modalOverlay.classList.add('active');
     }
 
-    function closeModal() {
+    function closeModal(clearDraftFlag = false) {
         modalOverlay.classList.remove('active');
         domainForm.reset();
         editId.value = '';
+        if (clearDraftFlag) clearDraft();
     }
-    cancelBtn.addEventListener('click', closeModal);
-    modalClose.addEventListener('click', closeModal);
-    modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
-    // 提交添加/编辑
+    cancelBtn.addEventListener('click', () => closeModal(false));
+    modalClose.addEventListener('click', () => closeModal(false));
+    modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(false); });
+
+    // 清空按钮
+    clearFormBtn.addEventListener('click', () => {
+        domainForm.reset();
+        document.getElementById('applyDate').value = new Date().toISOString().split('T')[0];
+        editId.value = '';
+        document.getElementById('modalTitle').textContent = '添加域名';
+		clearDraft();  // 清空表单同时清除草稿
+    });
+
+    // 表单提交（保存成功才清除草稿）
     domainForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const provider = providerInp.value.trim();
-        const domain = domainInp.value.trim();
-        const expireDate = expireDateInp.value;
-        if (!provider || !domain || !expireDate) {
-            showToast('服务商、域名和到期时间不能为空');
-            return;
-        }
+        const provider = document.getElementById('provider').value.trim();
+        const domain = document.getElementById('domain').value.trim();
+        if (!provider || !domain) { showToast('服务商和域名不能为空'); return; }
+        let expireDate = document.getElementById('expireDate').value;
+        if (!expireDate) expireDate = '2999-12-30';
+
         const data = {
             provider,
-            providerUrl: providerUrlInp.value.trim(),
-            providerAccount: providerAccountInp.value.trim(),
-            providerPassword: providerPasswordInp.value.trim(),
+            providerUrl: document.getElementById('providerUrl').value.trim(),
+            providerAccount: document.getElementById('providerAccount').value.trim(),
+            providerPassword: document.getElementById('providerPassword').value.trim(),
             domain,
-            applyDate: applyDateInp.value,
+            applyDate: document.getElementById('applyDate').value,
             expireDate,
-            renewRule: renewRuleInp.value.trim(),
-            purpose: purposeInp.value.trim(),
-            remark: remarkInp.value.trim()
+            renewRule: document.getElementById('renewRule').value.trim(),
+            purpose: document.getElementById('purpose').value.trim(),
+            remark: document.getElementById('remark').value.trim()
         };
+
         try {
             let res;
             if (editId.value) {
-                res = await fetchWithFallback(`/domains/${editId.value}`, { method: 'PUT', body: data });
-                await handleResponse(res, '域名更新成功', '更新失败');
+                res = await fetchWithFallback(`/domains/${editId.value}`, { method:'PUT', body: data });
+                await handleResponse(res, '域名更新成功');
             } else {
                 data.id = crypto.randomUUID();
-                res = await fetchWithFallback('/domains', { method: 'POST', body: data });
-                await handleResponse(res, '域名添加成功', '添加失败');
+                res = await fetchWithFallback('/domains', { method:'POST', body: data });
+                await handleResponse(res, '域名添加成功');
             }
-            closeModal();
+            closeModal(true); // 只有成功才清草稿
             loadDomains();
-        } catch (err) {
-            // 错误已在 handleResponse 中提示，无需重复
-        }
+        } catch (err) {}
     });
 
     // 删除确认
@@ -367,41 +388,32 @@
     confirmCancelBtn.addEventListener('click', closeConfirm);
     confirmClose.addEventListener('click', closeConfirm);
     confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) closeConfirm(); });
-
     confirmDeleteBtn.addEventListener('click', async () => {
         if (!deleteId) return;
         try {
-            const res = await fetchWithFallback(`/domains/${deleteId}`, { method: 'DELETE' });
-            await handleResponse(res, '域名已删除', '删除失败');
+            const res = await fetchWithFallback(`/domains/${deleteId}`, { method:'DELETE' });
+            await handleResponse(res, '域名已删除');
             closeConfirm();
             loadDomains();
-        } catch (err) { }
+        } catch {}
     });
 
     // 修改密码
     changePasswordBtn.addEventListener('click', () => {
-        oldPasswordInp.value = '';
-        newPasswordInp.value = '';
+        document.getElementById('oldPassword').value = '';
+        document.getElementById('newPassword').value = '';
         passwordModalOverlay.classList.add('active');
     });
-
     function closePasswordModal() { passwordModalOverlay.classList.remove('active'); }
     passwordCancelBtn.addEventListener('click', closePasswordModal);
     passwordModalClose.addEventListener('click', closePasswordModal);
     passwordModalOverlay.addEventListener('click', e => { if (e.target === passwordModalOverlay) closePasswordModal(); });
-
     passwordSubmitBtn.addEventListener('click', async () => {
-        const oldPwd = oldPasswordInp.value;
-        const newPwd = newPasswordInp.value;
-        if (!oldPwd || !newPwd) {
-            showToast('旧密码和新密码不能为空');
-            return;
-        }
+        const oldPwd = document.getElementById('oldPassword').value;
+        const newPwd = document.getElementById('newPassword').value;
+        if (!oldPwd || !newPwd) { showToast('新旧密码不能为空'); return; }
         try {
-            const res = await fetchWithFallback('/password', {
-                method: 'PUT',
-                body: { oldPassword: oldPwd, newPassword: newPwd }
-            });
+            const res = await fetchWithFallback('/password', { method:'PUT', body:{ oldPassword: oldPwd, newPassword: newPwd } });
             if (res.ok) {
                 const data = await res.json();
                 if (data.success) {
@@ -409,25 +421,29 @@
                     currentPassword = newPwd;
                     showToast('密码修改成功');
                     closePasswordModal();
-                } else {
-                    showToast(data.error || '修改失败');
-                }
+                } else showToast(data.error || '修改失败');
             } else {
-                const err = await res.json().catch(() => ({}));
-                showToast(err.error || '修改密码失败');
+                const err = await res.json().catch(()=>({}));
+                showToast(err.error || '修改失败');
             }
-        } catch (err) {
-            showToast('修改密码失败：' + err.message);
-        }
+        } catch { showToast('修改密码失败'); }
     });
 
     // 键盘 Esc
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             if (confirmOverlay.classList.contains('active')) closeConfirm();
             else if (passwordModalOverlay.classList.contains('active')) closePasswordModal();
-            else if (modalOverlay.classList.contains('active')) closeModal();
+            else if (modalOverlay.classList.contains('active')) closeModal(false);
         }
+    });
+
+    // 自动保存草稿（仅添加模式）
+    const formInputs = document.querySelectorAll('#domainForm input, #domainForm textarea');
+    formInputs.forEach(el => {
+        el.addEventListener('input', () => {
+            if (editId.value === '') saveDraft(collectFormData());
+        });
     });
 
     // 启动
