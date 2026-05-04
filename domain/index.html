@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>域名管理</title>
+    <link rel="stylesheet" href="domain.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                <h1>域名管理</h1>
+            </div>
+            <div class="header-right">
+                <span class="domain-count" id="domainCount">加载中...</span>
+                <button class="btn btn-secondary btn-sm" id="changePasswordBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    修改密码
+                </button>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+                <input type="text" id="searchInput" placeholder="搜索域名、服务商或用途..." />
+                <button class="clear-search" id="clearSearch" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <button class="btn btn-primary" id="addBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="M12 5v14M5 12h14" />
+                </svg>
+                添加域名
+            </button>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="domain-table" id="domainTable">
+                <thead>
+                    <tr>
+                        <th class="col-provider">服务商</th>
+                        <th class="col-url">服务商网址</th>
+                        <th class="col-account">账号</th>
+                        <th class="col-password">密码</th>
+                        <th class="col-domain">我的域名</th>
+                        <th class="col-date">申请时间</th>
+                        <th class="col-date">到期时间</th>
+                        <th class="col-rule">续费规则</th>
+                        <th class="col-purpose">用途</th>
+                        <th class="col-remark">备注</th>
+                        <th class="col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="11" class="loading-text">加载中...</td></tr>
+                </tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="64" height="64">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                <p>暂无域名记录</p>
+                <span>点击上方按钮添加您的第一个域名</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑域名模态框 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 id="modalTitle">添加域名</h2>
+                <button class="modal-close" id="modalClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form class="modal-body" id="domainForm">
+                <input type="hidden" id="editId" />
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label for="provider">服务商 <span class="required">*</span></label>
+                        <input type="text" id="provider" placeholder="例如：阿里云" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="providerUrl">服务商网址</label>
+                        <input type="url" id="providerUrl" placeholder="https://example.com" />
+                    </div>
+                    <div class="form-group">
+                        <label for="domain">我的域名 <span class="required">*</span></label>
+                        <input type="text" id="domain" placeholder="example.com" required />
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="providerAccount">服务商账号</label>
+                        <input type="text" id="providerAccount" placeholder="登录邮箱或账号" />
+                    </div>
+                    <div class="form-group">
+                        <label for="providerPassword">服务商密码</label>
+                        <input type="text" id="providerPassword" placeholder="登录密码" />
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="applyDate">申请时间</label>
+                        <input type="date" id="applyDate" />
+                    </div>
+                    <div class="form-group">
+                        <label for="expireDate">到期时间 <span class="required">*</span></label>
+                        <input type="date" id="expireDate" required />
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="renewRule">续费规则</label>
+                        <input type="text" id="renewRule" placeholder="例如：到期前30天续费" />
+                    </div>
+                    <div class="form-group">
+                        <label for="purpose">用途</label>
+                        <input type="text" id="purpose" placeholder="例如：公司主站" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="remark">备注</label>
+                    <textarea id="remark" rows="2" placeholder="备注信息..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 确认删除 -->
+    <div class="modal-overlay" id="confirmOverlay">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>确认删除</h2>
+                <button class="modal-close" id="confirmClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="confirm-text">确定要删除域名 <strong id="deleteDomainName"></strong> 吗？此操作不可撤销。</p>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="confirmCancelBtn">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码模态框 -->
+    <div class="modal-overlay" id="passwordModalOverlay">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>修改主密码</h2>
+                <button class="modal-close" id="passwordModalClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="oldPassword">旧密码</label>
+                    <input type="password" id="oldPassword" placeholder="输入旧密码" />
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">新密码</label>
+                    <input type="password" id="newPassword" placeholder="输入新密码" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="passwordCancelBtn">取消</button>
+                    <button type="button" class="btn btn-primary" id="passwordSubmitBtn">确认修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="domain.js"></script>
+</body>
+</html>
