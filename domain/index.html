@@ -26,6 +26,13 @@
                     </svg>
                     修改密码
                 </button>
+                <button class="btn btn-secondary btn-sm" id="mailSettingsBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    邮件设置
+                </button>
                 <button class="btn btn-secondary btn-sm" id="logoutBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -206,6 +213,54 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="passwordCancelBtn">取消</button>
                     <button type="button" class="btn btn-primary" id="passwordSubmitBtn">确认修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+         <div class="modal-overlay" id="mailModalOverlay">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>邮件提醒设置</h2>
+                <button class="modal-close" id="mailModalClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="switch-label">
+                        <span>启用到期邮件提醒</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="mailEnabled" />
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+                </div>
+                <div class="form-group" id="recipientGroup" style="display:none;">
+                    <label for="mailRecipient">接收邮箱</label>
+                    &nbsp;<input type="email" id="mailRecipient" placeholder="your@email.com" />
+                </div>
+                <!-- 检测频率：一行并排 -->
+                <div class="form-group" id="frequencyGroup" style="display:none;">
+                    <div class="frequency-line">
+                        <label class="frequency-label">检测频率</label>
+                        <select id="mailFrequency" class="form-select">
+                            <option value="daily">每日</option>
+                            <option value="monthly" selected>每月</option>
+                        </select>
+                        <div id="sendDayGroup" style="display:flex; align-items:center; gap:6px;">
+                            <span>每月</span>
+                            <input type="number" id="mailSendDay" class="form-number" min="1" max="28" value="1" />
+                            <span>号</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="mailCancelBtn">取消</button>
+                    <button type="button" class="btn btn-secondary" id="checkNowBtn">立即检测</button>
+                    <button type="button" class="btn btn-primary" id="mailSaveBtn">保存设置</button>
                 </div>
             </div>
         </div>
