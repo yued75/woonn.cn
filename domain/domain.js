@@ -10,6 +10,26 @@
     const DRAFT_KEY = 'domain_form_draft';
     let currentPassword = sessionStorage.getItem(STORAGE_KEY) || '';
 
+    // ========== 统一剩余天数计算（基于北京时间 UTC+8） ==========
+    function getBeijingNow() {
+        return Date.now() + 8 * 60 * 60 * 1000;
+    }
+
+    function getExpireBeijingTime(dateStr) {
+        if (!dateStr || dateStr === '2999-12-30') return Infinity;
+        const parts = dateStr.split('-').map(Number);
+        const year = parts[0], month = parts[1], day = parts[2];
+        return Date.UTC(year, month - 1, day) - 8 * 60 * 60 * 1000;
+    }
+
+    function calcRemainDays(dateStr) {
+        if (!dateStr || dateStr === '2999-12-30') return Infinity;
+        const expireBeijingUTC = getExpireBeijingTime(dateStr);
+        const beijingNow = getBeijingNow();
+        const diffMs = expireBeijingUTC - beijingNow;
+        return Math.ceil(diffMs / 86400000);
+    }
+
     // ========== 工具函数 ==========
     function showToast(msg, duration = 3000) {
         const toast = document.getElementById('toast');
@@ -25,17 +45,12 @@
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // 到期状态与标签
+    // 到期状态与标签（动态计算）
     function getExpiryStatus(dateStr) {
         if (!dateStr || dateStr === '2999-12-30') {
             return { tagClass: 'permanent', text: '永久有效' };
         }
-        const exp = new Date(dateStr);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const diffMs = exp - today;
-        const diffDays = Math.ceil(diffMs / 86400000);
-
+        const diffDays = calcRemainDays(dateStr);
         if (diffDays < 0) {
             return { tagClass: 'danger', text: `已过期${Math.abs(diffDays)}天` };
         } else if (diffDays <= 30) {
@@ -133,7 +148,6 @@
 
     // ========== 登录页逻辑 ==========
     if (window.location.pathname.endsWith('login.html') || window.location.pathname === '/login.html') {
-        // 如果已登录直接跳转管理页
         if (sessionStorage.getItem(STORAGE_KEY)) {
             window.location.href = 'index.html';
             return;
@@ -169,7 +183,6 @@
     }
 
     // ========== 管理页逻辑 ==========
-    // 未登录则跳转
     if (!currentPassword) {
         window.location.href = 'login.html';
         return;
@@ -203,6 +216,20 @@
     const passwordCancelBtn = document.getElementById('passwordCancelBtn');
     const passwordModalClose = document.getElementById('passwordModalClose');
 
+    const mailSettingsBtn = document.getElementById('mailSettingsBtn');
+    const mailModalOverlay = document.getElementById('mailModalOverlay');
+    const mailEnabledInp = document.getElementById('mailEnabled');
+    const mailRecipientInp = document.getElementById('mailRecipient');
+    const mailSaveBtn = document.getElementById('mailSaveBtn');
+    const mailCancelBtn = document.getElementById('mailCancelBtn');
+    const mailModalClose = document.getElementById('mailModalClose');
+    const checkNowBtn = document.getElementById('checkNowBtn');
+    const recipientGroup = document.getElementById('recipientGroup');
+    const mailFrequencyInp = document.getElementById('mailFrequency');
+    const mailSendDayInp = document.getElementById('mailSendDay');
+    const frequencyGroup = document.getElementById('frequencyGroup');
+    const sendDayGroup = document.getElementById('sendDayGroup');
+
     let domains = [];
     let deleteId = null;
 
@@ -210,6 +237,119 @@
     logoutBtn.addEventListener('click', () => {
         sessionStorage.removeItem(STORAGE_KEY);
         window.location.href = 'login.html';
+    });
+
+    // 邮件设置：打开弹窗
+    mailSettingsBtn.addEventListener('click', async () => {
+        try {
+            const res = await fetchWithFallback('/settings');
+            if (res.ok) {
+                const cfg = await res.json();
+                mailEnabledInp.checked = cfg.enabled;
+                mailRecipientInp.value = cfg.recipient || '';
+                if (cfg.enabled) {
+                    recipientGroup.style.display = 'block';
+                    frequencyGroup.style.display = 'block';
+                } else {
+                    recipientGroup.style.display = 'none';
+                    frequencyGroup.style.display = 'none';
+                    sendDayGroup.style.display = 'none';
+                }
+                mailFrequencyInp.value = cfg.frequency || 'monthly';
+                if (mailFrequencyInp.value === 'monthly') {
+                    sendDayGroup.style.display = 'flex';
+                } else {
+                    sendDayGroup.style.display = 'none';
+                }
+                mailSendDayInp.value = cfg.sendDay || 1;
+            }
+        } catch { showToast('加载设置失败'); }
+        mailModalOverlay.classList.add('active');
+    });
+
+    // 开关切换
+    mailEnabledInp.addEventListener('change', () => {
+        const on = mailEnabledInp.checked;
+        recipientGroup.style.display = on ? 'block' : 'none';
+        frequencyGroup.style.display = on ? 'block' : 'none';
+        if (on && mailFrequencyInp.value === 'monthly') {
+            sendDayGroup.style.display = 'flex';
+        } else {
+            sendDayGroup.style.display = 'none';
+        }
+    });
+
+    // 频率切换
+    mailFrequencyInp.addEventListener('change', () => {
+        if (mailFrequencyInp.value === 'monthly') {
+            sendDayGroup.style.display = 'flex';
+        } else {
+            sendDayGroup.style.display = 'none';
+        }
+    });
+
+    function closeMailModal() {
+        mailModalOverlay.classList.remove('active');
+    }
+    mailCancelBtn.addEventListener('click', closeMailModal);
+    mailModalClose.addEventListener('click', closeMailModal);
+    mailModalOverlay.addEventListener('click', e => {
+        if (e.target === mailModalOverlay) closeMailModal();
+    });
+
+    // 立即检测按钮（强制发送，不检查前端启用状态）
+    checkNowBtn.addEventListener('click', async () => {
+        try {
+            const res = await fetchWithFallback('/send-reminders', {
+                method: 'POST',
+                body: { force: true }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.message === 'No domains expiring soon') {
+                    showToast('当前没有即将到期的域名');
+                } else if (data.success) {
+                    showToast('检测完成，到期提醒邮件已发送');
+                } else {
+                    showToast('检测完成，但可能未发送邮件');
+                }
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showToast(err.error || '检测失败');
+            }
+        } catch {
+            showToast('检测请求失败，请检查网络');
+        }
+    });
+
+    // 保存邮件设置
+    mailSaveBtn.addEventListener('click', async () => {
+        const enabled = mailEnabledInp.checked;
+        const recipient = mailRecipientInp.value.trim();
+        const frequency = mailFrequencyInp.value;
+        const sendDay = parseInt(mailSendDayInp.value) || 1;
+
+        if (enabled && !recipient) {
+            showToast('请填写接收邮箱地址');
+            return;
+        }
+        if (frequency === 'monthly' && (sendDay < 1 || sendDay > 28)) {
+            showToast('每月检测日期必须在 1-28 之间');
+            return;
+        }
+        try {
+            const res = await fetchWithFallback('/settings', {
+                method: 'PUT',
+                body: { enabled, recipient, frequency, sendDay }
+            });
+            if (res.ok) {
+                showToast('邮件设置已保存');
+                closeMailModal();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showToast(err.error || '保存失败');
+            }
+        } catch { showToast('保存设置失败'); }
     });
 
     // 加载域名
@@ -277,7 +417,6 @@
         else { span.textContent = '******'; btn.textContent = '查看'; }
     }
 
-    // 搜索
     searchInput.addEventListener('input', () => {
         renderTable(searchInput.value);
         clearSearch.style.display = searchInput.value ? 'flex' : 'none';
@@ -286,7 +425,6 @@
         searchInput.value = ''; renderTable(''); clearSearch.style.display = 'none'; searchInput.focus();
     });
 
-    // 添加按钮（草稿恢复）
     addBtn.addEventListener('click', () => {
         document.getElementById('modalTitle').textContent = '添加域名';
         domainForm.reset();
@@ -300,7 +438,6 @@
         modalOverlay.classList.add('active');
     });
 
-    // 编辑域名
     function editDomain(id) {
         const item = domains.find(d => d.id === id);
         if (!item) return;
@@ -330,16 +467,14 @@
     modalClose.addEventListener('click', () => closeModal(false));
     modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(false); });
 
-    // 清空按钮
     clearFormBtn.addEventListener('click', () => {
         domainForm.reset();
         document.getElementById('applyDate').value = new Date().toISOString().split('T')[0];
         editId.value = '';
         document.getElementById('modalTitle').textContent = '添加域名';
-		clearDraft();  // 清空表单同时清除草稿
+        clearDraft();
     });
 
-    // 表单提交（保存成功才清除草稿）
     domainForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const provider = document.getElementById('provider').value.trim();
@@ -371,12 +506,11 @@
                 res = await fetchWithFallback('/domains', { method:'POST', body: data });
                 await handleResponse(res, '域名添加成功');
             }
-            closeModal(true); // 只有成功才清草稿
+            closeModal(true);
             loadDomains();
         } catch (err) {}
     });
 
-    // 删除确认
     function confirmDelete(id) {
         const item = domains.find(d => d.id === id);
         if (!item) return;
@@ -398,7 +532,6 @@
         } catch {}
     });
 
-    // 修改密码
     changePasswordBtn.addEventListener('click', () => {
         document.getElementById('oldPassword').value = '';
         document.getElementById('newPassword').value = '';
@@ -429,16 +562,15 @@
         } catch { showToast('修改密码失败'); }
     });
 
-    // 键盘 Esc
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             if (confirmOverlay.classList.contains('active')) closeConfirm();
             else if (passwordModalOverlay.classList.contains('active')) closePasswordModal();
+            else if (mailModalOverlay.classList.contains('active')) closeMailModal();
             else if (modalOverlay.classList.contains('active')) closeModal(false);
         }
     });
 
-    // 自动保存草稿（仅添加模式）
     const formInputs = document.querySelectorAll('#domainForm input, #domainForm textarea');
     formInputs.forEach(el => {
         el.addEventListener('input', () => {
@@ -446,6 +578,5 @@
         });
     });
 
-    // 启动
     loadDomains();
 })();
