@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>全球虚拟身份生成器 | Virtual Identity Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🌍全球虚拟身份生成器 <span class="en-title">Global Virtual Identity Generator</span></h1>
+        <p class="subtitle">中国身份证国标校验 · 全球真实地区 · 虚拟身份随机生成</p>
+    </div>
+
+    <!-- 筛选面板（随机生成用） -->
+    <div class="panel">
+        <div class="row">
+            <div class="form-item">
+                <div class="label-wrap">
+                    <span class="label-cn">国家/地区</span>
+                    <span class="label-en">Country</span>
+                </div>
+                <select id="countrySelect"></select>
+            </div>
+            <div class="form-item" id="provinceGroup">
+                <div class="label-wrap">
+                    <span class="label-cn">省份/州</span>
+                    <span class="label-en">State</span>
+                </div>
+                <select id="provinceSelect"></select>
+            </div>
+            <div class="form-item" id="cityGroup">
+                <div class="label-wrap">
+                    <span class="label-cn">城市</span>
+                    <span class="label-en">City</span>
+                </div>
+                <select id="citySelect"></select>
+            </div>
+            <div class="form-item">
+                <div class="label-wrap">
+                    <span class="label-cn">性别</span>
+                    <span class="label-en">Gender</span>
+                </div>
+                <select id="genderSelect">
+                    <option value="random">随机</option>
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                </select>
+            </div>
+            <div class="form-item">
+                <div class="label-wrap">
+                    <span class="label-cn">年龄</span>
+                    <span class="label-en">Age</span>
+                </div>
+                <select id="ageSelect"></select>
+            </div>
+        </div>
+
+        <!-- [NEW] 补全专用独立区域：只保留身份证输入和性别选择，交换左右顺序 -->
+        <div class="row row-second">
+            <div class="form-item id-input-wrapper">
+                <div class="label-wrap">
+                    <span class="label-cn">🔍 身份证号码补全</span>
+                    <span class="label-en">ID Complete</span>
+                </div>
+                <div class="id-input-group">
+                    <input type="text" id="idQueryInput" placeholder="输入部分号码（如4401061990010112）" maxlength="18">
+                    <select id="idGenderInput" style="width:auto; min-width:70px;">
+                        <option value="random">随机</option>
+                        <option value="male">男</option>
+                        <option value="female">女</option>
+                    </select>
+                    <button id="idCompleteBtn" class="btn">补全18位</button>
+                    <button id="generateBtn" class="btn">随机生成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 身份信息卡片 -->
+    <div class="card" id="identityCard">
+        <div class="name-block">
+            <div class="name-cn" id="nameCn">—</div>
+            <div class="name-en" id="nameEn">—</div>
+        </div>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">国家</div>
+                    <div class="label-en">Country</div>
+                </div>
+                <div id="countryDisplay" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">性别</div>
+                    <div class="label-en">Gender</div>
+                </div>
+                <div id="genderText" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">民族/种族</div>
+                    <div class="label-en">Ethnicity</div>
+                </div>
+                <div id="race" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">出生日期</div>
+                    <div class="label-en">Birth</div>
+                </div>
+                <div id="birthday" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">年龄</div>
+                    <div class="label-en">Age</div>
+                </div>
+                <div id="age" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">身份证/ID</div>
+                    <div class="label-en">ID Number</div>
+                </div>
+                <div id="idCard" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">街道地址</div>
+                    <div class="label-en">Address</div>
+                </div>
+                <div id="street" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">省市区·邮编</div>
+                    <div class="label-en">Region & Zip</div>
+                </div>
+                <div id="cityStateZip" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">固定电话</div>
+                    <div class="label-en">Landline</div>
+                </div>
+                <div id="telephone" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">手机号码</div>
+                    <div class="label-en">Mobile</div>
+                </div>
+                <div id="mobile" class="value">—</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label-group">
+                    <div class="label-cn">电子邮箱</div>
+                    <div class="label-en">Email</div>
+                </div>
+                <div id="email" class="value">—</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
