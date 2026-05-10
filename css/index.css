@@ -34,7 +34,7 @@ h4 {
 }
 
 p {
-	font-size: 1em;
+	font-size: 1.2em;
 	color: #999999;
 
 }
@@ -908,7 +908,7 @@ ul.social-list li a:focus {
 
 /* 小图标样式 */
 .icon-item img:first-child {
-	width: 20px;
+	width: 16px;
 	height: auto;
 	vertical-align: middle;
 }
