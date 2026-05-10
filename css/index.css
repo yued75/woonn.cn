@@ -716,11 +716,14 @@ ul.social-list li a:hover, ul.social-list li a:focus{
 			font-size: 10px;
 			text-align: center;
 		}
-		.copyright a,
-.copyright a:hover {
-	color:#999999;
-    text-decoration: none;
-}
+		.copyright a {
+    		color: #999999;
+    		text-decoration: none;
+		}
+		.copyright a:hover {
+   			 color: #b3b3b3;
+   			 text-decoration: none;
+		}
 
 
 
