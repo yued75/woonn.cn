@@ -908,7 +908,7 @@ ul.social-list li a:focus {
 
 /* 小图标样式 */
 .icon-item img:first-child {
-	width: 14px;
+	width: 20px;
 	height: auto;
 	vertical-align: middle;
 }
