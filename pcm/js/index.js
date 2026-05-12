@@ -458,9 +458,9 @@ function generateBaseData() {
         const td5 = document.createElement("td");
         td5.innerHTML = `<input type="number" step="0.01" value="${depthVal}" onchange="onBurialChange(this)">`;
         tr.appendChild(td5);
-        const td6 = document.createElement("td"); td6.innerHTML = `<input type="text" class="defectno-input" value="" readonly>`; tr.appendChild(td6);
+        const td6 = document.createElement("td"); td6.className = "defectno-cell"; td6.textContent = ""; tr.appendChild(td6);
         const td7 = document.createElement("td"); td7.innerHTML = `<input type="text" class="db-input" value="" data-old-value="">`; tr.appendChild(td7);
-        const td8 = document.createElement("td"); td8.innerHTML = `<input type="text" class="grade-input" value="" readonly>`; tr.appendChild(td8);
+        const td8 = document.createElement("td"); td8.className = "grade-cell"; td8.textContent = ""; tr.appendChild(td8);
         const td9 = document.createElement("td"); td9.innerHTML = `<textarea class="coord-input"></textarea>`; tr.appendChild(td9);
         const td10 = document.createElement("td"); td10.innerHTML = `<input type="text" value="${desc}">`; tr.appendChild(td10);
 
@@ -539,7 +539,6 @@ function formatBurialInput(input) {
     if (val === '') return;
     let num = parseFloat(val);
     if (isNaN(num) || num <= 0) {
-        // 无效值不处理，交给onchange提示
         return;
     }
     let fixed = num.toFixed(2);
@@ -559,9 +558,7 @@ function onBurialChange(input) {
         input.value = '';
         return;
     }
-    //使用统一格式化
     formatBurialInput(input);
-    // 手动修改后立即保存和更新统计（已在失去焦点时调用，但额外触发一次保存，通过防抖不会重复）
     saveTableData();
     updateStatistics();
 }
@@ -595,9 +592,9 @@ function insertRow(target, pos) {
         <td><input type="number" class="data1-input" data-distance="${dis}" value="" onchange="onData1Change(this)"></td>
         <td><input type="text" class="terrain-input" data-distance="${dis}" value="" onchange="onTerrainChange(this)"></td>
         <td><input type="number" step="0.01" value="" onchange="onBurialChange(this)"></td>
-        <td><input type="text" class="defectno-input" value="" readonly></td>
+        <td class="defectno-cell"></td>
         <td><input type="text" class="db-input" value="" data-old-value=""></td>
-        <td><input type="text" class="grade-input" value="" readonly></td>
+        <td class="grade-cell"></td>
         <td><textarea class="coord-input"></textarea></td>
         <td><input type="text" value=""></td>`;
     pos === "before" ? target.before(newRow) : target.after(newRow);
@@ -666,7 +663,7 @@ function exportToExcel() {
         showTip('没有可导出的数据，请先生成表格', true);
         return;
     }
-    //添加边框样式
+    // 带边框样式
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
 <x:Name>检测数据</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
@@ -734,12 +731,10 @@ function saveTableData() {
         rowData.terrain = terrainInput ? terrainInput.value : '';
         const burialInput = cells[4]?.querySelector('input');
         rowData.burial = burialInput ? burialInput.value : '';
-        const defectInput = cells[5]?.querySelector('input');
-        rowData.defectNo = defectInput ? defectInput.value : '';
+        rowData.defectNo = cells[5]?.textContent.trim() || '';
         const dbInput = cells[6]?.querySelector('input');
         rowData.db = dbInput ? dbInput.value : '';
-        const gradeInput = cells[7]?.querySelector('input');
-        rowData.grade = gradeInput ? gradeInput.value : '';
+        rowData.grade = cells[7]?.textContent.trim() || '';
         const coordTextarea = cells[8]?.querySelector('textarea');
         rowData.coord = coordTextarea ? coordTextarea.value : '';
         const descInput = cells[9]?.querySelector('input');
@@ -781,9 +776,9 @@ function restoreTableData() {
                     <td><input type="number" class="data1-input" data-distance="${row.distance || ''}" value="${row.data1 || ''}" onchange="onData1Change(this)"></td>
                     <td><input type="text" class="terrain-input" data-distance="${row.distance || ''}" value="${row.terrain || ''}" onchange="onTerrainChange(this)"></td>
                     <td><input type="number" step="0.01" value="${row.burial || ''}" onchange="onBurialChange(this)"></td>
-                    <td><input type="text" class="defectno-input" value="${row.defectNo || ''}" readonly></td>
+                    <td class="defectno-cell">${row.defectNo || ''}</td>
                     <td><input type="text" class="db-input" value="${row.db || ''}" data-old-value="${row.db || ''}"></td>
-                    <td><input type="text" class="grade-input" value="${row.grade || ''}" readonly></td>
+                    <td class="grade-cell">${row.grade || ''}</td>
                     <td><textarea class="coord-input">${row.coord || ''}</textarea></td>
                     <td><input type="text" value="${row.description || ''}"></td>`;
                 if (is0) tr.classList.add('zero-data-row');
@@ -791,9 +786,9 @@ function restoreTableData() {
                 tbody.appendChild(tr);
             });
             isRestoring = false;
-            //恢复后强制格式化所有埋深，确保末位非0
+            // 强制格式化埋深
             tbody.querySelectorAll('td:nth-child(5) input').forEach(inp => formatBurialInput(inp));
-            autoAssignDefectNumbers();
+            // 恢复后直接使用存储的编号和分级，不重新自动分配，但需调用一次保存以同步状态
             saveTableData();
             updateStatistics();
         }
@@ -814,17 +809,17 @@ function debounceSaveAndStats() {
 
 function updateGradeForRow(row) {
     const dbInput = row.querySelector('.db-input');
-    const gradeInput = row.querySelector('.grade-input');
-    if (!dbInput || !gradeInput) return;
+    const gradeCell = row.querySelector('.grade-cell');
+    if (!dbInput || !gradeCell) return;
     const dbVal = parseFloat(dbInput.value);
     if (isNaN(dbVal) || dbInput.value.trim() === '') {
-        gradeInput.value = '';
+        gradeCell.textContent = '';
     } else if (dbVal <= 30) {
-        gradeInput.value = '轻';
+        gradeCell.textContent = '轻';
     } else if (dbVal < 60) {
-        gradeInput.value = '中';
+        gradeCell.textContent = '中';
     } else {
-        gradeInput.value = '严重';
+        gradeCell.textContent = '严重';
     }
 }
 
@@ -835,13 +830,13 @@ function autoAssignDefectNumbers() {
     let defectIndex = 0;
     rows.forEach(tr => {
         const dbInput = tr.querySelector('.db-input');
-        const defectInput = tr.querySelector('.defectno-input');
-        if (dbInput && defectInput) {
+        const defectCell = tr.querySelector('.defectno-cell');
+        if (dbInput && defectCell) {
             if (dbInput.value.trim() !== '') {
                 defectIndex++;
-                defectInput.value = defectIndex;
+                defectCell.textContent = defectIndex;
             } else {
-                defectInput.value = '';
+                defectCell.textContent = '';
             }
         }
     });
@@ -865,17 +860,15 @@ function updateStatistics() {
             const d = parseFloat(distInput.value);
             if (!isNaN(d) && d > maxDistance) maxDistance = d;
         }
-        const defectInput = cells[5]?.querySelector('input');
-        if (defectInput && defectInput.value.trim() !== '') {
-            defectNos.push(defectInput.value.trim());
+        const defectText = cells[5]?.textContent.trim() || '';
+        if (defectText !== '') {
+            defectNos.push(defectText);
         }
-        const gradeInput = cells[7]?.querySelector('input');
-        if (gradeInput) {
-            const grade = gradeInput.value.trim();
-            if (grade === '轻') grades.light++;
-            else if (grade === '中') grades.medium++;
-            else if (grade === '严重') grades.severe++;
-        }
+        const gradeText = cells[7]?.textContent.trim() || '';
+        if (gradeText === '轻') grades.light++;
+        else if (gradeText === '中') grades.medium++;
+        else if (gradeText === '严重') grades.severe++;
+        
         const burialInput = cells[4]?.querySelector('input');
         if (burialInput && burialInput.value.trim() !== '') {
             const b = parseFloat(burialInput.value);
