@@ -321,7 +321,7 @@ body {
     text-align: center;
     font-size: 12px;
     padding: 2px;
-    height: 26px;
+    height: auto;
     color: var(--text-primary);
     color-scheme: dark;            /* 使表格内数字微调箭头变为暗色 */
 }
@@ -333,7 +333,7 @@ body {
     text-align: center;
     font-size: 12px;
     padding: 2px;
-    height: 26px;
+    height: auto;
     color: var(--text-primary);
 }
 
@@ -344,7 +344,7 @@ body {
 
 .coord-input {
     width: 100%;
-    height: 30px;
+    height: auto;
     border: none;
     background: transparent;
     font-size: 12px;
