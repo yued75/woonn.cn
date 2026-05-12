@@ -6,6 +6,8 @@ let currentUserInfo = null;
 let currentUsername = null;
 // 会话超时时间（12小时）
 const SESSION_TIMEOUT = 720 * 60 * 1000;
+let isRestoring = false;       // 恢复数据标志，防止保存/联动
+let saveTimeout;               // 防抖定时器
 
 // Supabase 初始化及日志记录辅助函数
 const SUPABASE_URL = 'https://khertrygeuybdfpurnjd.supabase.co';
@@ -43,7 +45,7 @@ async function logUserAction(action, options = {}) {
 }
 
 // ==================== 文件保存与XLSX轻量实现 ====================
-!function (t, e) { "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = "undefined" != typeof globalThis ? globalThis : t || self).saveAs = e() }(this, function () { "use strict"; function n(e, n, r) { if (!n) throw new Error("文件名不能为空"); r = r || {}; var o = e instanceof Blob; if ("string" == typeof e && /^data:/.test(e)) { var i = atob(e.split(",")[1]), a = new Uint8Array(i.length); for (var s = 0; s < i.length; s++)a[s] = i.charCodeAt(s); e = new Blob([a], { type: e.split(":")[1].split(";")[0] }) } return (o ? Promise.resolve(e) : fetch(e).then(function (t) { if (!t.ok) throw new Error(t.status); return t.blob() })).then(function (t) { var l = document.createElement("a"); l.href = URL.createObjectURL(t); l.download = n; l.style.display = "none"; document.body.appendChild(l); l.click(); setTimeout(function () { document.body.removeChild(l); URL.revokeObjectURL(l.href) }, 100) })["catch"](function (e) { console.error(e) }) } return n }); 
+!function (t, e) { "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = "undefined" != typeof globalThis ? globalThis : t || self).saveAs = e() }(this, function () { "use strict"; function n(e, n, r) { if (!n) throw new Error("文件名不能为空"); r = r || {}; var o = e instanceof Blob; if ("string" == typeof e && /^data:/.test(e)) { var i = atob(e.split(",")[1]), a = new Uint8Array(i.length); for (var s = 0; s < i.length; s++)a[s] = i.charCodeAt(s); e = new Blob([a], { type: e.split(":")[1].split(";")[0] }) } return (o ? Promise.resolve(e) : fetch(e).then(function (t) { if (!t.ok) throw new Error(t.status); return t.blob() })).then(function (t) { var l = document.createElement("a"); l.href = URL.createObjectURL(t); l.download = n; l.style.display = "none"; document.body.appendChild(l); l.click(); setTimeout(function () { document.body.removeChild(l); URL.revokeObjectURL(l.href) }, 100) })["catch"](function (e) { console.error(e) }) } return n });
 
 window.XLSX = {
     utils: {
@@ -72,9 +74,9 @@ function formatBeijingTime(ms) {
 
 // ==================== 获取北京时间（多源回退） ====================
 async function getBeijingTime() {
-    try { const ts = await fetchOwnServerTimeViaHead(); if (ts !== null) return { timestamp: ts, source: 'server' }; } catch (e) {}
-    try { const ts = await fetchSuning(); if (ts !== null) return { timestamp: ts, source: 'suning' }; } catch (e) {}
-    try { const ts = await fetchTimeapiIO(); if (ts !== null) return { timestamp: ts, source: 'timeapi' }; } catch (e) {}
+    try { const ts = await fetchOwnServerTimeViaHead(); if (ts !== null) return { timestamp: ts, source: 'server' }; } catch (e) { }
+    try { const ts = await fetchSuning(); if (ts !== null) return { timestamp: ts, source: 'suning' }; } catch (e) { }
+    try { const ts = await fetchTimeapiIO(); if (ts !== null) return { timestamp: ts, source: 'timeapi' }; } catch (e) { }
     return { timestamp: Date.now(), source: 'local' };
 }
 
@@ -97,31 +99,27 @@ async function fetchTimeapiIO() {
     const res = await fetch('https://timeapi.io/api/timezone/zone?timeZone=UTC');
     if (!res.ok) return null;
     const data = await res.json();
-    return data.currentLocalTime ? new Date(data.currentLocalTime).getTime() + 8*60*60*1000 : null;
+    return data.currentLocalTime ? new Date(data.currentLocalTime).getTime() + 8 * 60 * 60 * 1000 : null;
 }
 
 // ==================== 登录验证模块（统一使用 UTC 时间比较） ====================
 async function checkUserAuth(username) {
     try {
-        // ---------- 1. 获取北京时间（多源） ----------
         const [resp, timeResult] = await Promise.all([
             fetch('https://woonn.cn/pcm/auth-config.json'),
             getBeijingTime()
         ]);
         if (!resp.ok) {
-            // 记录登录失败日志
             logUserAction('login_failed', { details: '网络请求失败', username });
             return { status: 'error', msg: '网络请求失败' };
         }
         const authData = await resp.json();
         if (!authData[username]) {
-            // 记录登录失败日志
             logUserAction('login_failed', { details: '未给该用户授权', username });
             return { status: 'error', msg: '未给该用户授权，请核对' };
         }
         const userInfo = authData[username];
         if (!userInfo.enabled) {
-            // 记录登录失败日志
             logUserAction('login_failed', { details: '该用户已被禁用', username });
             return { status: 'error', msg: '该用户已被禁用' };
         }
@@ -129,32 +127,28 @@ async function checkUserAuth(username) {
         const { timestamp: beijingTimestamp, source } = timeResult;
         const beijingTimeStr = formatBeijingTime(beijingTimestamp);
         if (beijingTimestamp > new Date(userInfo.expire).getTime()) {
-            // 记录登录失败日志
             logUserAction('login_failed', { details: '授权已过期（有效期至：' + userInfo.expire + '）', username });
             return { status: 'error', msg: '该用户授权已过期（有效期至：' + userInfo.expire + '）' };
         }
-        // 验证通过，保存用户信息到全局变量及 localStorage
         currentUserInfo = userInfo;
         currentUsername = username;
         saveLoginState(username, userInfo);
-        // 记录登录成功日志
         logUserAction('login', { details: '来源：' + source });
         return { status: 'success', source, timeStr: beijingTimeStr };
     } catch (error) {
-        // 记录登录异常日志
         logUserAction('login_failed', { details: '系统网络服务异常', username });
-        return { status: 'error', msg: '系统网络服务异常，请联系管理员'};
+        return { status: 'error', msg: '系统网络服务异常，请联系管理员' };
     }
 }
 
-// ==================== 本地存储与状态恢复（使用 localStorage 并添加 ts 字段以兼容 admin.js统一超时逻辑） ====================
+// ==================== 本地存储与状态恢复 ====================
 function saveLoginState(username, userInfo) {
     const state = {
         username: username,
         expire: userInfo.expire,
         type: userInfo.type || 'user',
         expireTimeUTC: new Date(userInfo.expire).getTime() - (8 * 60 * 60 * 1000),
-        ts: Date.now()                     // 兼容 admin.js 的会话超时检查
+        ts: Date.now()
     };
     localStorage.setItem('pcmLoginState', JSON.stringify(state));
 }
@@ -165,7 +159,6 @@ function clearLoginState() {
     currentUsername = null;
 }
 
-// 统一基于 ts 的超时判断（与 admin.js 完全一致）
 function loadLoginState() {
     const stateStr = localStorage.getItem('pcmLoginState');
     if (!stateStr) return null;
@@ -202,13 +195,13 @@ function bindLoginEvent() {
         loginBtn.disabled = false;
         loginBtn.textContent = '验证并进入系统';
         if (result.status === 'success') {
+            sessionStorage.setItem('pageOpened', '1');
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('systemMain').style.display = 'flex';
             updateUserInfoDisplay();
             initSystemEvents();
-            //显示时间来源提示
             const sourceMap = { 'server': '服务器时间', 'suning': '苏宁服务器时间', 'timeapi': 'TimeAPI.io时间', 'local': '本地时间' };
-            showTip(`${sourceMap[result.source] || '未知'}：${result.timeStr}`, false);            
+            showTip(`${sourceMap[result.source] || '未知'}：${result.timeStr}`, false);
         } else {
             loginTip.textContent = result.msg;
             loginTip.style.display = 'block';
@@ -218,7 +211,6 @@ function bindLoginEvent() {
     loginUsername.onkeydown = e => { if (e.key === 'Enter') loginBtn.click(); };
 }
 
-//更新左侧用户信息栏
 function updateUserInfoDisplay() {
     const displayUsername = document.getElementById('displayUsername');
     const displayExpire = document.getElementById('displayExpire');
@@ -241,10 +233,26 @@ function updateUserInfoDisplay() {
 function bindLogoutEvent() {
     const logoutLink = document.getElementById('logoutLink');
     if (logoutLink) {
-        logoutLink.onclick = async function() {
-            // 记录登出日志
+        logoutLink.onclick = async function () {
             logUserAction('logout');
             clearLoginState();
+            // 清除保存的数据和标记
+            localStorage.removeItem('pcmSavedData');
+            sessionStorage.removeItem('pageOpened');
+            
+            // 清空表格 DOM
+            const tbody = document.querySelector('#dataTable tbody');
+            if (tbody) tbody.innerHTML = '';
+            // 重置统计提示
+            const tip = document.querySelector('.preview-tip');
+            if (tip) tip.innerHTML = '使用说明：序号不可编辑，其余均可编辑。更改电流列数据会导致后续电流同步更改。右键可插入/删除行。';
+
+            // 清空左侧所有输入框和文本域
+            document.querySelectorAll('#systemMain .input-area input, #systemMain .input-area textarea').forEach(el => {
+                el.value = '';
+            });
+
+            // 切换界面
             document.getElementById('loginPage').style.display = 'flex';
             document.getElementById('systemMain').style.display = 'none';
             document.getElementById('loginUsername').value = '';
@@ -262,39 +270,38 @@ function initSystemEvents() {
     document.getElementById("insertBefore").onclick = () => { insertRow(currentRow, "before"); document.getElementById("contextMenu").style.display = "none"; };
     document.getElementById("insertAfter").onclick = () => { insertRow(currentRow, "after"); document.getElementById("contextMenu").style.display = "none"; };
     document.getElementById("deleteRow").onclick = deleteCurrentRow;
+
+    bindTableEvents();
+
+    document.querySelectorAll('.input-area input, .input-area textarea').forEach(el => {
+        el.addEventListener('input', debounceSaveAndStats);
+    });
 }
 
-// ==================== 禁用右键和F12（保留表格内自定义右键菜单） ====================
+// ==================== 禁用右键和F12 ====================
 function preventDevTools() {
-    // 1. 全局禁止浏览器右键菜单（任何地方都不弹出浏览器菜单）
     document.addEventListener('contextmenu', function (e) {
         e.preventDefault();
         return false;
     });
 
-    // 2. 禁用 F12、Ctrl+Shift+I、Ctrl+Shift+J、Ctrl+U、Ctrl+S 等快捷键
     document.addEventListener('keydown', function (e) {
-        // F12
         if (e.keyCode === 123) {
             e.preventDefault();
             return false;
         }
-        // Ctrl+Shift+I (打开开发者工具)
         if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
             e.preventDefault();
             return false;
         }
-        // Ctrl+Shift+J (打开控制台)
         if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
             e.preventDefault();
             return false;
         }
-        // Ctrl+U (查看源代码)
         if (e.ctrlKey && e.keyCode === 85) {
             e.preventDefault();
             return false;
         }
-        // Ctrl+S (保存网页)
         if (e.ctrlKey && e.keyCode === 83) {
             e.preventDefault();
             return false;
@@ -311,19 +318,7 @@ function getFileNameTime() {
 function getExportFileName() {
     const ps = document.getElementById("pipeStart").value.trim();
     const pe = document.getElementById("pipeEnd").value.trim();
-    return (ps && pe) ? `${ps}至${pe}检测数据.xlsx` : `检测数据_${getFileNameTime()}.xlsx`;
-}
-
-function parseDecayPoints() {
-    const input = document.getElementById("decayPoints") ? document.getElementById("decayPoints").value.trim() : '';
-    if (!input) return [];
-    const points = [];
-    input.split(/[ ,，]+/).forEach(item => {
-        const [dStr, pStr] = item.split(/[:：]/);
-        const d = parseInt(dStr), p = parseFloat(pStr);
-        if (!isNaN(d) && d > 0 && !isNaN(p) && p > 0 && p <= 100) points.push({ distance: d, rate: (100 - p) / 100 });
-    });
-    return points.sort((a, b) => a.distance - b.distance);
+    return (ps && pe) ? `${ps}至${pe}检测数据.xls` : `检测数据_${getFileNameTime()}.xls`;
 }
 
 function parseSpecialPoints() {
@@ -338,13 +333,21 @@ function parseSpecialPoints() {
     return points.sort((a, b) => a.d - b.d);
 }
 
-//修改 generateBurialValue 避免生成 .00 结尾的值
+function enforceNonZeroLastDecimal(value) {
+    let fixed = parseFloat(value).toFixed(2);
+    if (fixed.charAt(fixed.length - 1) === '0') {
+        fixed = fixed.slice(0, -1) + '1';
+    }
+    return fixed;
+}
+
 function generateBurialValue(min, max) {
-    let val;
+    let val, fixed;
     do {
         val = min + Math.random() * (max - min);
-    } while ((val * 100) % 1 === 0); // 如果小数点后两位为00，则重新生成
-    return val.toFixed(2);
+        fixed = val.toFixed(2);
+    } while (fixed.charAt(fixed.length - 1) === '0');
+    return fixed;
 }
 
 function getRandomInt(min, max) {
@@ -353,7 +356,7 @@ function getRandomInt(min, max) {
 
 // ==================== 核心：生成表格数据 ====================
 function generateBaseData() {
-    const outCur = parseInt(document.getElementById("outputCurrent").value);
+    const outCur = parseInt(document.getElementById("outputCurrent").value) || 300;
     const totalDist = parseInt(document.getElementById("totalDistance").value);
     let maxVal = parseInt(document.getElementById("data1Max").value) || null;
     let minVal = parseInt(document.getElementById("data1Min").value) || null;
@@ -364,7 +367,6 @@ function generateBaseData() {
     const terrain = document.getElementById("defaultTerrain").value.trim() || "绿化带";
 
     const errs = [];
-    if (!outCur || outCur <= 0) errs.push("输出电流都不填！你拿手检测？");
     if (!totalDist || totalDist <= 0) errs.push("不填管段长度我怎么帮你生成？");
     if (maxVal !== null && minVal !== null && maxVal < minVal) errs.push("最大电流还比最小电流小？");
     if (maxVal !== null && maxVal > outCur) errs.push("最大电流比输出电流还大？");
@@ -392,11 +394,9 @@ function generateBaseData() {
     let data1Map = {};
     let prevEffective = maxVal;
 
-    //修正第一个有效数据点严格等于最大值，后续正常衰减
     valid20Distances.forEach((d, idx) => {
         let newVal;
         if (idx === 0) {
-            // 第一个有效数据点直接等于最大值，不受随机衰减影响
             newVal = maxVal;
         } else {
             const remaining = valid20Distances.length - idx;
@@ -411,7 +411,6 @@ function generateBaseData() {
         prevEffective = newVal;
     });
 
-    //预生成埋深数组，保证最大值和最小值随机出现且避免 .00
     let depthValues = [];
     const validCount = valid20Distances.length;
     if (validCount > 0) {
@@ -422,9 +421,9 @@ function generateBaseData() {
         }
         for (let i = 0; i < validCount; i++) {
             if (i === maxIndex) {
-                depthValues.push(bMax.toFixed(2));
+                depthValues.push(enforceNonZeroLastDecimal(bMax));
             } else if (i === minIndex) {
-                depthValues.push(bMin.toFixed(2));
+                depthValues.push(enforceNonZeroLastDecimal(bMin));
             } else {
                 depthValues.push(generateBurialValue(bMin, bMax));
             }
@@ -459,9 +458,9 @@ function generateBaseData() {
         const td5 = document.createElement("td");
         td5.innerHTML = `<input type="number" step="0.01" value="${depthVal}" onchange="onBurialChange(this)">`;
         tr.appendChild(td5);
-        const td6 = document.createElement("td"); td6.innerHTML = `<input type="text" value="">`; tr.appendChild(td6);
-        const td7 = document.createElement("td"); td7.innerHTML = `<input type="text" value="">`; tr.appendChild(td7);
-        const td8 = document.createElement("td"); td8.innerHTML = `<input type="text" value="">`; tr.appendChild(td8);
+        const td6 = document.createElement("td"); td6.innerHTML = `<input type="text" class="defectno-input" value="" readonly>`; tr.appendChild(td6);
+        const td7 = document.createElement("td"); td7.innerHTML = `<input type="text" class="db-input" value="" data-old-value="">`; tr.appendChild(td7);
+        const td8 = document.createElement("td"); td8.innerHTML = `<input type="text" class="grade-input" value="" readonly>`; tr.appendChild(td8);
         const td9 = document.createElement("td"); td9.innerHTML = `<textarea class="coord-input"></textarea>`; tr.appendChild(td9);
         const td10 = document.createElement("td"); td10.innerHTML = `<input type="text" value="${desc}">`; tr.appendChild(td10);
 
@@ -470,9 +469,13 @@ function generateBaseData() {
         tbody.appendChild(tr);
     });
 
-    // 记录一键生成日志
     const pipeName = pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '';
     logUserAction('generate', { pipeName, pipeLength: totalDist });
+
+    autoAssignDefectNumbers();
+    saveTableData();
+    updateStatistics();
+
     showTip(`生成完成！起点电流：${maxVal}mA，末端电流：${minVal}mA`);
 }
 
@@ -505,6 +508,8 @@ function onData1Change(input) {
         if (target) target.value = newVal;
         current = newVal;
     });
+    saveTableData();
+    updateStatistics();
     showTip("后续电流已基于新值同步更新", false);
 }
 
@@ -513,17 +518,38 @@ function onTerrainChange(input) {
     const modDist = parseInt(input.dataset.distance);
     const newTerrain = input.value.trim();
     if (isNaN(modDist)) return;
-    
+
+    const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
     const allTerrainInputs = document.querySelectorAll('.terrain-input');
     allTerrainInputs.forEach(inp => {
         const d = parseInt(inp.dataset.distance);
-        if (!isNaN(d) && d > modDist) {
-            inp.value = newTerrain;
+        if (!isNaN(d) && d > modDist && d !== totalDist) {
+            if (inp.value.trim() !== '') {
+                inp.value = newTerrain;
+            }
         }
     });
+    saveTableData();
+    updateStatistics();
 }
 
-//埋深手动修改时自动补齐两位小数
+//静默格式化函数，供恢复和手动修改使用
+function formatBurialInput(input) {
+    let val = input.value.trim();
+    if (val === '') return;
+    let num = parseFloat(val);
+    if (isNaN(num) || num <= 0) {
+        // 无效值不处理，交给onchange提示
+        return;
+    }
+    let fixed = num.toFixed(2);
+    if (fixed.charAt(fixed.length - 1) === '0') {
+        fixed = fixed.slice(0, -1) + '1';
+    }
+    input.value = fixed;
+}
+
+//埋深手动修改时自动补齐两位小数，并确保末位非0
 function onBurialChange(input) {
     let val = input.value.trim();
     if (val === '') return;
@@ -533,14 +559,20 @@ function onBurialChange(input) {
         input.value = '';
         return;
     }
-    // 格式化为两位小数
-    input.value = num.toFixed(2);
+    //使用统一格式化
+    formatBurialInput(input);
+    // 手动修改后立即保存和更新统计（已在失去焦点时调用，但额外触发一次保存，通过防抖不会重复）
+    saveTableData();
+    updateStatistics();
 }
 
 // ==================== 右键菜单与行操作 ====================
 function bindContextMenu() {
     const tbody = document.querySelector("#dataTable tbody");
-    tbody.addEventListener("contextmenu", e => {
+    const newTbody = tbody.cloneNode(true);
+    tbody.parentNode.replaceChild(newTbody, tbody);
+    const finalTbody = document.querySelector("#dataTable tbody");
+    finalTbody.addEventListener("contextmenu", e => {
         e.preventDefault();
         e.stopPropagation();
         const row = e.target.closest("tr");
@@ -558,19 +590,21 @@ function bindContextMenu() {
 function insertRow(target, pos) {
     const newRow = document.createElement("tr");
     const dis = getAutoDistance(target, pos);
-    //修改插入行模板，埋深输入框添加 onchange 和 step
     newRow.innerHTML = `<td>0</td>
         <td><input type="number" value="${dis}"></td>
         <td><input type="number" class="data1-input" data-distance="${dis}" value="" onchange="onData1Change(this)"></td>
         <td><input type="text" class="terrain-input" data-distance="${dis}" value="" onchange="onTerrainChange(this)"></td>
         <td><input type="number" step="0.01" value="" onchange="onBurialChange(this)"></td>
-        <td><input type="text" value=""></td>
-        <td><input type="text" value=""></td>
-        <td><input type="text" value=""></td>
+        <td><input type="text" class="defectno-input" value="" readonly></td>
+        <td><input type="text" class="db-input" value="" data-old-value=""></td>
+        <td><input type="text" class="grade-input" value="" readonly></td>
         <td><textarea class="coord-input"></textarea></td>
         <td><input type="text" value=""></td>`;
     pos === "before" ? target.before(newRow) : target.after(newRow);
     reorderSerialNumbers();
+    autoAssignDefectNumbers();
+    saveTableData();
+    updateStatistics();
     showTip("插入成功");
 }
 
@@ -590,12 +624,14 @@ function reorderSerialNumbers() {
 function deleteCurrentRow() {
     currentRow.remove();
     reorderSerialNumbers();
+    autoAssignDefectNumbers();
+    saveTableData();
+    updateStatistics();
     showTip("已删除");
 }
 
 // ==================== 复制与导出 ====================
 function copyToExcel() {
-    // 复制前校验表格是否为空
     const rows = document.querySelectorAll("#dataTable tbody tr");
     if (rows.length === 0 || (rows.length === 1 && !rows[0].querySelector('td:nth-child(2) input'))) {
         showTip('没有可复制的数据，请先生成表格', true);
@@ -617,7 +653,6 @@ function copyToExcel() {
     const ta = document.createElement("textarea");
     ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
     document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-    // 记录复制操作日志
     const pipeStart = document.getElementById("pipeStart").value.trim();
     const pipeEnd = document.getElementById("pipeEnd").value.trim();
     const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
@@ -626,17 +661,33 @@ function copyToExcel() {
 }
 
 function exportToExcel() {
-    // 导出前校验表格是否为空
     const rows = document.querySelectorAll("#dataTable tbody tr");
     if (rows.length === 0 || (rows.length === 1 && !rows[0].querySelector('td:nth-child(2) input'))) {
         showTip('没有可导出的数据，请先生成表格', true);
         return;
     }
-    const ws = XLSX.utils.table_to_sheet(document.getElementById("dataTable"));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "检测数据");
-    XLSX.writeFile(wb, getExportFileName());
-    //记录导出Excel操作日志
+    //添加边框样式
+    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+<x:Name>检测数据</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
+</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>td,th{font-family:'Times New Roman';font-size:10pt;text-align:center;vertical-align:middle;border:1px solid black;}</style></head>
+<body><table>`;
+    html += '<tr><th>序号</th><th>距离(m)</th><th>数据1(mA)</th><th>地形地貌</th><th>埋深(m)</th><th>破损点编号</th><th>db值</th><th>破损分级</th><th>坐标</th><th>位置描述</th></tr>';
+    rows.forEach(tr => {
+        html += '<tr>';
+        const cells = tr.querySelectorAll('td');
+        cells.forEach(cell => {
+            let val = '';
+            const inp = cell.querySelector('input,textarea');
+            if (inp) val = inp.value || '';
+            else val = cell.textContent || '';
+            html += `<td>${val}</td>`;
+        });
+        html += '</tr>';
+    });
+    html += '</table></body></html>';
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    saveAs(blob, getExportFileName());
     const pipeStart = document.getElementById("pipeStart").value.trim();
     const pipeEnd = document.getElementById("pipeEnd").value.trim();
     const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
@@ -652,6 +703,238 @@ function showTip(msg, isError = false) {
     setTimeout(() => b.style.display = "none", isError ? 8000 : 5000);
 }
 
+// ==================== 保存/恢复/统计/编号 ====================
+function saveTableData() {
+    if (isRestoring) return;
+    const data = {
+        params: {
+            totalDistance: document.getElementById('totalDistance').value,
+            outputCurrent: document.getElementById('outputCurrent').value,
+            data1Max: document.getElementById('data1Max').value,
+            data1Min: document.getElementById('data1Min').value,
+            burialMax: document.getElementById('burialMax').value,
+            burialMin: document.getElementById('burialMin').value,
+            pipeStart: document.getElementById('pipeStart').value,
+            pipeEnd: document.getElementById('pipeEnd').value,
+            defaultTerrain: document.getElementById('defaultTerrain').value,
+            specialPoints: document.getElementById('specialPoints').value
+        },
+        rows: []
+    };
+    const tbody = document.querySelector('#dataTable tbody');
+    if (!tbody) return;
+    tbody.querySelectorAll('tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        const rowData = {};
+        const distInput = cells[1]?.querySelector('input');
+        rowData.distance = distInput ? distInput.value : '';
+        const data1Input = cells[2]?.querySelector('input');
+        rowData.data1 = data1Input ? data1Input.value : '';
+        const terrainInput = cells[3]?.querySelector('input');
+        rowData.terrain = terrainInput ? terrainInput.value : '';
+        const burialInput = cells[4]?.querySelector('input');
+        rowData.burial = burialInput ? burialInput.value : '';
+        const defectInput = cells[5]?.querySelector('input');
+        rowData.defectNo = defectInput ? defectInput.value : '';
+        const dbInput = cells[6]?.querySelector('input');
+        rowData.db = dbInput ? dbInput.value : '';
+        const gradeInput = cells[7]?.querySelector('input');
+        rowData.grade = gradeInput ? gradeInput.value : '';
+        const coordTextarea = cells[8]?.querySelector('textarea');
+        rowData.coord = coordTextarea ? coordTextarea.value : '';
+        const descInput = cells[9]?.querySelector('input');
+        rowData.description = descInput ? descInput.value : '';
+        data.rows.push(rowData);
+    });
+    localStorage.setItem('pcmSavedData', JSON.stringify(data));
+}
+
+function restoreTableData() {
+    const saved = localStorage.getItem('pcmSavedData');
+    if (!saved) return false;
+    try {
+        const data = JSON.parse(saved);
+        if (data.params) {
+            const p = data.params;
+            document.getElementById('totalDistance').value = p.totalDistance || '';
+            document.getElementById('outputCurrent').value = p.outputCurrent || '';
+            document.getElementById('data1Max').value = p.data1Max || '';
+            document.getElementById('data1Min').value = p.data1Min || '';
+            document.getElementById('burialMax').value = p.burialMax || '';
+            document.getElementById('burialMin').value = p.burialMin || '';
+            document.getElementById('pipeStart').value = p.pipeStart || '';
+            document.getElementById('pipeEnd').value = p.pipeEnd || '';
+            document.getElementById('defaultTerrain').value = p.defaultTerrain || '';
+            document.getElementById('specialPoints').value = p.specialPoints || '';
+        }
+        const tbody = document.querySelector('#dataTable tbody');
+        tbody.innerHTML = '';
+        if (data.rows && Array.isArray(data.rows)) {
+            isRestoring = true;
+            data.rows.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                const is0 = row.distance == '0';
+                const totalDist = parseFloat(data.params.totalDistance);
+                const isLast = row.distance == totalDist;
+                tr.innerHTML = `<td>${idx+1}</td>
+                    <td><input type="number" value="${row.distance || ''}"></td>
+                    <td><input type="number" class="data1-input" data-distance="${row.distance || ''}" value="${row.data1 || ''}" onchange="onData1Change(this)"></td>
+                    <td><input type="text" class="terrain-input" data-distance="${row.distance || ''}" value="${row.terrain || ''}" onchange="onTerrainChange(this)"></td>
+                    <td><input type="number" step="0.01" value="${row.burial || ''}" onchange="onBurialChange(this)"></td>
+                    <td><input type="text" class="defectno-input" value="${row.defectNo || ''}" readonly></td>
+                    <td><input type="text" class="db-input" value="${row.db || ''}" data-old-value="${row.db || ''}"></td>
+                    <td><input type="text" class="grade-input" value="${row.grade || ''}" readonly></td>
+                    <td><textarea class="coord-input">${row.coord || ''}</textarea></td>
+                    <td><input type="text" value="${row.description || ''}"></td>`;
+                if (is0) tr.classList.add('zero-data-row');
+                if (isLast) tr.classList.add('last-data-row');
+                tbody.appendChild(tr);
+            });
+            isRestoring = false;
+            //恢复后强制格式化所有埋深，确保末位非0
+            tbody.querySelectorAll('td:nth-child(5) input').forEach(inp => formatBurialInput(inp));
+            autoAssignDefectNumbers();
+            saveTableData();
+            updateStatistics();
+        }
+        return true;
+    } catch(e) {
+        console.error('恢复数据失败：', e);
+        return false;
+    }
+}
+
+function debounceSaveAndStats() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        saveTableData();
+        updateStatistics();
+    }, 200);
+}
+
+function updateGradeForRow(row) {
+    const dbInput = row.querySelector('.db-input');
+    const gradeInput = row.querySelector('.grade-input');
+    if (!dbInput || !gradeInput) return;
+    const dbVal = parseFloat(dbInput.value);
+    if (isNaN(dbVal) || dbInput.value.trim() === '') {
+        gradeInput.value = '';
+    } else if (dbVal <= 30) {
+        gradeInput.value = '轻';
+    } else if (dbVal < 60) {
+        gradeInput.value = '中';
+    } else {
+        gradeInput.value = '严重';
+    }
+}
+
+function autoAssignDefectNumbers() {
+    const tbody = document.querySelector('#dataTable tbody');
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll('tr');
+    let defectIndex = 0;
+    rows.forEach(tr => {
+        const dbInput = tr.querySelector('.db-input');
+        const defectInput = tr.querySelector('.defectno-input');
+        if (dbInput && defectInput) {
+            if (dbInput.value.trim() !== '') {
+                defectIndex++;
+                defectInput.value = defectIndex;
+            } else {
+                defectInput.value = '';
+            }
+        }
+    });
+}
+
+function updateStatistics() {
+    const tbody = document.querySelector('#dataTable tbody');
+    if (!tbody || tbody.children.length === 0) {
+        document.querySelector('.preview-tip').innerHTML = '使用说明：序号不可编辑，其余均可编辑。更改电流列数据会导致后续电流同步更改。右键可插入/删除行。';
+        return;
+    }
+    const rows = tbody.querySelectorAll('tr');
+    let maxDistance = 0;
+    const defectNos = [];
+    const grades = { light: 0, medium: 0, severe: 0 };
+    let burialValues = [];
+    rows.forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        const distInput = cells[1]?.querySelector('input');
+        if (distInput) {
+            const d = parseFloat(distInput.value);
+            if (!isNaN(d) && d > maxDistance) maxDistance = d;
+        }
+        const defectInput = cells[5]?.querySelector('input');
+        if (defectInput && defectInput.value.trim() !== '') {
+            defectNos.push(defectInput.value.trim());
+        }
+        const gradeInput = cells[7]?.querySelector('input');
+        if (gradeInput) {
+            const grade = gradeInput.value.trim();
+            if (grade === '轻') grades.light++;
+            else if (grade === '中') grades.medium++;
+            else if (grade === '严重') grades.severe++;
+        }
+        const burialInput = cells[4]?.querySelector('input');
+        if (burialInput && burialInput.value.trim() !== '') {
+            const b = parseFloat(burialInput.value);
+            if (!isNaN(b)) burialValues.push(b);
+        }
+    });
+    const totalDefects = defectNos.length;
+    let statsHtml = '';
+    if (maxDistance > 0) {
+        statsHtml += `实测长度 ${maxDistance}米`;
+    }
+    if (totalDefects > 0) {
+        statsHtml += `，共 ${totalDefects} 处破损点`;
+        const percent = (count) => ((count / totalDefects)*100).toFixed(2).replace(/\.?0+$/, '');
+        const parts = [];
+        if (grades.light > 0) parts.push(`轻 ${grades.light}处 占比 ${percent(grades.light)}%`);
+        if (grades.medium > 0) parts.push(`中 ${grades.medium}处 占比 ${percent(grades.medium)}%`);
+        if (grades.severe > 0) parts.push(`严重 ${grades.severe}处 占比 ${percent(grades.severe)}%`);
+        if (parts.length > 0) statsHtml += '，' + parts.join('，');
+    }
+    if (burialValues.length > 0) {
+        const minB = Math.min(...burialValues).toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+        const maxB = Math.max(...burialValues).toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+        statsHtml += `；管道埋深范围：${minB}-${maxB}m`;
+    }
+    if (!statsHtml) {
+        statsHtml = '暂无统计数据';
+    }
+    document.querySelector('.preview-tip').innerHTML = statsHtml;
+}
+
+//绑定表格事件委托，增加db值数字验证
+function bindTableEvents() {
+    const tbody = document.querySelector('#dataTable tbody');
+    if (!tbody) return;
+    if (tbody._inputHandler) {
+        tbody.removeEventListener('input', tbody._inputHandler);
+    }
+    tbody._inputHandler = function(e) {
+        if (isRestoring) return;
+        const target = e.target;
+        if (target.classList.contains('db-input')) {
+            const val = target.value.trim();
+            // 允许空或纯数字（含小数点）
+            if (val !== '' && !/^\d+\.?\d*$/.test(val)) {
+                showTip('db值只能输入数字', true);
+                target.value = target.dataset.oldValue || '';
+                return;
+            }
+            // 保存当前有效值作为旧值
+            target.dataset.oldValue = val;
+            updateGradeForRow(target.closest('tr'));
+            autoAssignDefectNumbers();
+        }
+        debounceSaveAndStats();
+    };
+    tbody.addEventListener('input', tbody._inputHandler);
+}
+
 // ==================== 页面启动 ====================
 window.onload = function () {
     preventDevTools();
@@ -660,11 +943,21 @@ window.onload = function () {
     if (loginState) {
         currentUsername = loginState.username;
         currentUserInfo = { expire: loginState.expire, type: loginState.type };
+        
+        if (!sessionStorage.getItem('pageOpened')) {
+            localStorage.removeItem('pcmSavedData');
+            sessionStorage.setItem('pageOpened', '1');
+        } else {
+            restoreTableData();
+        }
+        
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('systemMain').style.display = 'flex';
         updateUserInfoDisplay();
         initSystemEvents();
+        updateStatistics();
     } else {
+        sessionStorage.removeItem('pageOpened');
         document.getElementById('loginPage').style.display = 'flex';
         document.getElementById('systemMain').style.display = 'none';
     }
