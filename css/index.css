@@ -34,7 +34,7 @@ h4 {
 }
 
 p {
-	font-size: 1.12em;
+	font-size: 1.2em;
 	color: #999999;
 
 }
@@ -896,6 +896,12 @@ ul.social-list li a:focus {
 .copyright a:hover {
 	color: #000000;
 	text-decoration: none;
+}
+
+.copyright_beian {
+	width: 20px;
+	height: auto;
+	vertical-align: middle;
 }
 
 /* 每个图标容器设置为相对定位，方便大图绝对定位 */
