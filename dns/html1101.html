@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en-US"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en-US"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en-US"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN"> <!--<![endif]-->
+<head>
+<title>Worker threw exception | ${host} | Cloudflare</title>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<style>
+    :root {
+        --bg: #f8fafc;
+        --card-bg: rgba(255, 255, 255, 0.85);
+        --text: #0f172a;
+        --sub: #475569;
+        --accent: #f38020;
+        --danger: #dc2626;
+        --danger-soft: #fef2f2;
+        --border: rgba(255, 255, 255, 0.5);
+        --shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.08), 0 10px 15px -6px rgba(0, 0, 0, 0.02);
+        --radius: 32px;
+        --blur: blur(18px);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: radial-gradient(circle at 50% 0%, #fef2f2 0%, #fce7e7 40%, #f1f5f9 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        padding: 1.5rem;
+        margin: 0;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    body::after {
+        content: "";
+        position: fixed;
+        top: -20%;
+        right: -10%;
+        width: 60%;
+        height: 70%;
+        background: radial-gradient(circle at 70% 30%, rgba(220, 38, 38, 0.08) 0%, transparent 60%);
+        z-index: 0;
+        filter: blur(60px);
+        pointer-events: none;
+    }
+
+    #cf-wrapper {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        max-width: 780px;
+        margin: 0 auto;
+    }
+
+    /* cookie 提示条 */
+    .cf-alert {
+        background: rgba(254, 226, 226, 0.9);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #991b1b;
+        padding: 0.65rem 1.5rem;
+        border-radius: 60px;
+        margin-bottom: 1.2rem;
+        text-align: center;
+        font-weight: 500;
+        font-size: 0.9rem;
+        display: none; /* 默认隐藏，脚本会改为block */
+    }
+
+    /* 玻璃卡片主容器 */
+    .error-card {
+        background: var(--card-bg);
+        backdrop-filter: var(--blur);
+        -webkit-backdrop-filter: var(--blur);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow), 0 0 0 1px var(--border);
+        padding: 2.5rem 2.2rem;
+        text-align: center;
+        animation: floatIn 0.7s cubic-bezier(0.23, 1, 0.32, 1) both;
+    }
+
+    @keyframes floatIn {
+        0% {
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .error-icon {
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+        width: 80px;
+        height: 80px;
+        border-radius: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 12px 18px -10px rgba(220, 38, 38, 0.2), 0 0 0 1px rgba(220, 38, 38, 0.1);
+        font-size: 2.6rem;
+    }
+
+    .error-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(220, 38, 38, 0.08);
+        border: 1px solid rgba(220, 38, 38, 0.2);
+        padding: 0.35rem 1.2rem;
+        border-radius: 100px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #b91c1c;
+        margin-bottom: 0.8rem;
+        letter-spacing: 0.3px;
+    }
+
+    .error-code {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #b91c1c;
+        margin: 0 0.2rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.5px;
+        line-height: 1.3;
+    }
+
+    .ray-info {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 2rem;
+        background: rgba(241, 245, 249, 0.6);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        display: inline-block;
+        padding: 0.45rem 1.4rem;
+        border-radius: 100px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    /* 两列说明 */
+    .info-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.8rem;
+        text-align: left;
+        margin: 2rem 0 1.5rem;
+    }
+
+    .info-column h2 {
+        font-size: 1.1rem;
+        font-weight: 650;
+        color: #1e293b;
+        margin-bottom: 0.7rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .info-column p {
+        font-size: 0.9rem;
+        color: #475569;
+        line-height: 1.65;
+    }
+
+    .info-column a {
+        color: #b91c1c;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .info-column a:hover {
+        text-decoration: underline;
+    }
+
+    hr {
+        margin: 2rem 0 1.5rem;
+        border: none;
+        height: 1px;
+        background: linear-gradient(to right, transparent, #cbd5e1, transparent);
+    }
+
+    /* 底部信息条 */
+    .error-footer {
+        margin-top: 1.5rem;
+        font-size: 0.85rem;
+        color: #64748b;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem 0.8rem;
+        background: rgba(241, 245, 249, 0.5);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border-radius: 100px;
+        padding: 0.7rem 1.8rem;
+        border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .error-footer .cf-footer-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .cf-footer-separator {
+        color: #94a3b8;
+    }
+
+    .cf-footer-ip-reveal-btn {
+        background: none;
+        border: 1px solid #cbd5e1;
+        padding: 2px 12px;
+        border-radius: 100px;
+        font-size: 0.8rem;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+    .cf-footer-ip-reveal-btn:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .cf-orange {
+        color: #f38020;
+        font-weight: 600;
+    }
+
+    .font-semibold {
+        font-weight: 600;
+    }
+
+    @media (max-width: 600px) {
+        .error-card {
+            padding: 2rem 1.3rem;
+        }
+        .info-columns {
+            grid-template-columns: 1fr;
+            gap: 1.2rem;
+        }
+        h1 {
+            font-size: 1.7rem;
+        }
+    }
+</style>
+
+<!--[if gte IE 10]><!-->
+<script>
+  if (!navigator.cookieEnabled) {
+    window.addEventListener('DOMContentLoaded', function () {
+      var cookieEl = document.getElementById('cookie-alert');
+      cookieEl.style.display = 'block';
+    })
+  }
+</script>
+<!--<![endif]-->
+
+</head>
+<body>
+    <div id="cf-wrapper">
+        <div class="cf-alert cf-alert-error cf-cookie-error" id="cookie-alert" data-translate="enable_cookies">Please enable cookies.</div>
+        
+        <div id="cf-error-details" class="error-card">
+            <!-- 错误图标和代码 -->
+            <div class="error-icon">⚠️</div>
+            
+            <div class="error-badge">
+                <span data-translate="error">Error</span>
+                <span class="error-code">1101</span>
+            </div>
+            
+            <h1>Worker threw exception</h1>
+            
+            <div class="ray-info">
+                Ray ID: ${随机字符串} &bull; ${格式化时间戳} UTC
+            </div>
+
+            <!-- 两列说明 -->
+            <div class="info-columns">
+                <div class="info-column">
+                    <h2>📋 发生了什么？</h2>
+                    <p>您请求的网站 (${host}) 位于 <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=error_100x" target="_blank">Cloudflare</a> 网络中。处理请求时出现了内部异常，导致页面无法正常渲染。</p>
+                </div>
+                <div class="info-column">
+                    <h2>🛠️ 我可以做什么？</h2>
+                    <p><strong>如果您是网站所有者：</strong><br />请参考 <a href="https://developers.cloudflare.com/workers/observability/errors/" target="_blank">Workers - Errors and Exceptions</a> 并检查 ${host} 的 Workers 日志。</p>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- 底部信息 (保留所有原始ID和功能) -->
+            <div class="error-footer">
+                <span class="cf-footer-item">
+                    Cloudflare Ray ID: <strong class="font-semibold">${随机字符串}</strong>
+                </span>
+                <span class="cf-footer-separator">&bull;</span>
+                <span id="cf-footer-item-ip" class="cf-footer-item hidden">
+                    Your IP:
+                    <button type="button" id="cf-footer-ip-reveal" class="cf-footer-ip-reveal-btn">Click to reveal</button>
+                    <span class="hidden" id="cf-footer-ip">${访问IP}</span>
+                </span>
+                <span class="cf-footer-separator sm:hidden">&bull;</span>
+                <span class="cf-footer-item">
+                    <span>Performance &amp; security by</span> 
+                    <a rel="noopener noreferrer" href="https://www.cloudflare.com/5xx-error-landing" id="brand_link" target="_blank" class="cf-orange">Cloudflare</a>
+                </span>
+            </div>
+        </div><!-- /#cf-error-details -->
+    </div><!-- /#cf-wrapper -->
+
+    <script>
+        window._cf_translation = {};
+    </script>
+    <script>(function(){function d(){var b=a.getElementById("cf-footer-item-ip"),c=a.getElementById("cf-footer-ip-reveal");b&&"classList"in b&&(b.classList.remove("hidden"),c.addEventListener("click",function(){c.classList.add("hidden");a.getElementById("cf-footer-ip").classList.remove("hidden")}))}var a=document;document.addEventListener&&a.addEventListener("DOMContentLoaded",d)})();</script>
+</body>
+</html>
