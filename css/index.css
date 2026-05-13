@@ -899,8 +899,9 @@ ul.social-list li a:focus {
 }
 
 .copyright img {
-	width: 16px;
+	width: 14px;
 	height: auto;
+	vertical-align: middle;
 }
 
 /* 每个图标容器设置为相对定位，方便大图绝对定位 */
