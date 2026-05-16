@@ -12,18 +12,8 @@
             left: 0;
             background-size: cover;
         }
-		#bbhj2 {
-		  position: relative;
-		  z-index: 10;
-		  width: 100%;
-		  max-width: 680px;
-		  margin: 0 auto;
-		  display: flex;
-		  flex-direction: column;
-		  align-items: center;
-		  justify-content: center;
-		  height: 100vh;
-		  color: #e0e0e0;
+		#bg,#bbhj, #bbhj2 {
+		  display: none;
 		}
     </style>
     <link type="text/css" rel="stylesheet" href="//cdn.zhaolinlang.com/cdn.dnpw.org/project/404/0/common/404.new.css?v3" />
@@ -84,7 +74,7 @@
             <a href="javascript:history.go(-1);" target='_self' class="back"> 后退上页 </a>
         </div>
     </main>
-	<div id="bbhj2">
+	<main id="bbhj2">
 		<script src="https://qzonestyle.gtimg.cn/qzone_v6/lostchild/search_children.js"></script>
 		<p style="display:none">你访问的页面找不回来了，但是我们可以一起寻找失踪宝贝</p>
 		<p style="display:none">
@@ -92,9 +82,15 @@
 		<a href="https://e.t.qq.com/Tencent-Volunteers" title="腾讯志愿者">腾讯志愿者</a>、
 		<a href="https://bbs.baobeihuijia.com/" title="宝贝回家">宝贝回家</a>
 		</p>		
-	</div>
+	</main>
     <script>
         function changeBackground() {
+			// 随机选择要展示的内容
+			var randomIndex = Math.floor(Math.random() * 8); // 0~7
+			var bbhj = document.getElementById('bbhj');
+			var bbhj2 = document.getElementById('bbhj2');
+			var bgElement = document.getElementById('bg');
+			
             var info = navigator.userAgent;
             //通过正则表达式的test方法判断是否包含“Mobile”字符串
             var isPhone = /mobile/i.test(info);
@@ -116,13 +112,7 @@
                     'url("img/障碍人士.png")'
                 ];
             }
-            
-            // 随机选择要展示的内容
-            var randomIndex = Math.floor(Math.random() * 8); // 0~7
-            var bbhj = document.getElementById('bbhj');
-            var bbhj2 = document.getElementById('bbhj2');
-            var bgElement = document.getElementById('bg');
-            
+            			
             if (randomIndex < 4) { // 0,1,2,3 → 背景图（50%）
                 bbhj.style.display = 'none';
                 bbhj2.style.display = 'none';
@@ -131,16 +121,16 @@
                 var randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)];
                 bgElement.style.backgroundImage = randomBg;
             } else if (randomIndex < 6) { // 4,5 → 宝贝回家（25%）
-                bbhj.style.display = 'block';
                 bbhj2.style.display = 'none';
                 bgElement.style.display = 'none';
+				bbhj.style.display = 'block';
                 var script = document.createElement('script');
                 script.src = '//cdn.zhaolinlang.com/cdn.dnpw.org/project/404/0/common/404.new.js';
                 document.head.appendChild(script);
-            } else { // 6,7 → 腾讯失踪儿童（25%）
-                bbhj2.style.display = 'block';
+            } else { // 6,7 → 腾讯失踪儿童（25%）                
                 bbhj.style.display = 'none';
                 bgElement.style.display = 'none';
+				bbhj2.style.display = 'block';
             }
         }
         // 初始化页面加载时更换背景
