@@ -104,12 +104,11 @@
             }
             
             // 随机选择要展示的内容
-            var randomIndex = Math.floor(Math.random() * 6);
-			console.log(randomIndex);
+            var randomIndex = Math.floor(Math.random() * 3);
             var bbhj = document.getElementById('bbhj');
 			var bbhj2 = document.getElementById('bbhj2');
             var bgElement = document.getElementById('bg');
-            if (randomIndex <= 4) {
+            if (randomIndex == 0) {
                 bbhj.style.display = 'none';
 				bbhj2.style.display = 'none';
                 bgElement.style.display = 'block';
@@ -117,7 +116,7 @@
                 var randomBackground = backgrounds[randomIndex];
                 // 将选定的URL应用于指定的元素
                 bgElement.style.backgroundImage = randomBackground;
-            } else if(randomIndex == 5){
+            } else if(randomIndex == 1){
                 // 随机选择了加载并执行JS文件
 				bbhj.style.display = 'block';
 				bbhj2.style.display = 'none';                
