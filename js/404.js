@@ -240,9 +240,19 @@
       document.getElementById('lostchildSection').style.display = 'none';
       document.querySelector('.mod_404').style.display = 'block';
       document.querySelector('.collage-404').style.display = 'block';
+
+      // 按需加载外部 CSS
+      if (!document.querySelector('link[href*="404.new.css"]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '//cdn.zhaolinlang.com/cdn.dnpw.org/project/404/0/common/404.new.css?v3';
+        document.head.appendChild(link);
+      }
+      // 按需加载外部 JS
       if (!document.querySelector('script[src*="404.new.js"]')) {
         const s = document.createElement('script');
         s.src = '//cdn.zhaolinlang.com/cdn.dnpw.org/project/404/0/common/404.new.js';
+        s.async = true;
         document.head.appendChild(s);
       }
     },
@@ -253,9 +263,11 @@
       document.querySelector('.mod_404').style.display = 'none';
       document.querySelector('.collage-404').style.display = 'none';
       document.getElementById('lostchildSection').style.display = 'block';
+
       if (!document.querySelector('script[src*="search_children.js"]')) {
         const s = document.createElement('script');
         s.src = 'https://qzonestyle.gtimg.cn/qzone_v6/lostchild/search_children.js';
+        s.async = true;
         document.head.appendChild(s);
       }
     },
