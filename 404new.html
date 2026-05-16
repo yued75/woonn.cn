@@ -1,91 +1,142 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, touch-action=manipulation">
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
-  <meta name="description" content="可定博客的 404 错误页面，虽然你访问的页面找不回来了，但是我们可以一起寻找失踪宝贝！" />
-  <meta name="keywords" content="404,404 错误页面,可定博客,一起寻找失踪宝贝,404 公益计划" />
-  <title>蜗奶奶（中国）404 - 页面未找到 | 公益互动</title>
-  <link rel="stylesheet" href="css/404.css">
+    <meta charset="UTF-8">
+    <title>蜗奶奶科技-404公益</title>
+    <style>
+        #bg {
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-size: cover;
+        }
+    </style>
+    <link type="text/css" rel="stylesheet" href="//cdn.zhaolinlang.com/cdn.dnpw.org/project/404/0/common/404.new.css?v3" />
 </head>
 <body>
-  <!-- 全屏背景层（背景图模式） -->
-  <div id="bg"></div>
-
-  <!-- 主容器 -->
-  <main id="bbhj">
-    <!-- 宝贝回家信息卡片（模式1） -->
-    <section class="mod_404" style="display:none;">
-      <div class="child_box">
-        <span class="frt"><img src="../favicon.ico" width="32px" onerror="this.style='display:none'"></span>
-        <div class="child_avatar" id="photo"></div>
-        <div class="child_info">
-          <div class="info_item"><span class="info_lbl">姓名性别：</span><span class="item_inner" id="namesex">…</span></div>
-          <div class="info_item"><span class="info_lbl">走失大概：</span><span class="item_inner" id="ageheight">…</span></div>
-          <div class="info_item"><span class="info_lbl">出生日期：</span><span class="item_inner" id="born_date">…</span></div>
-          <div class="info_item"><span class="info_lbl">走失时间：</span><span class="item_inner" id="missingtime">…</span></div>
-          <div class="info_item"><span class="info_lbl">线索电话：</span><span class="item_inner" id="contact">…</span></div>
-          <div class="info_item"><span class="info_lbl">走失地点：</span><span class="item_inner" id="missingaddress"></span></div>
-          <div class="info_item"><span class="info_lbl">典型特征：</span><span class="item_inner" id="feature">…</span></div>
-          <span class="closeDetail">收起</span>
+    <!-- 网页内容 -->
+    <a href='/' target='_self'><div id="bg"></div></a>
+    <main id="bbhj">
+        <section class="mod_404">
+            <div class="child_box">
+                <span class="frt"><img src="../favicon.ico" width="32px" onerror="this.style='display:none'"></span>
+                <div class="child_avatar" id="photo"></div>
+                <div class="child_info">
+                    <div class="info_item info_birth">
+                        <span class="info_lbl">姓名性别：</span>
+                        <span class="item_inner" id="namesex">loading</span>
+                    </div>
+                    <div class="info_item info_birth">
+                        <span class="info_lbl">走失大概：</span>
+                        <span class="item_inner" id="ageheight">loading</span>
+                    </div>
+                    <div class="info_item info_birth">
+                        <span class="info_lbl">出生日期：</span>
+                        <span class="item_inner" id="born_date">loading</span>
+                    </div>
+                    <div class="info_item info_time">
+                        <span class="info_lbl">走失时间：</span>
+                        <span class="item_inner" id="missingtime">loading</span>
+                    </div>
+                    <div class="info_item info_address">
+                        <span class="info_lbl">线索电话：</span>
+                        <span class="item_inner" id="contact">loading</span>
+                    </div>
+                    <div class="info_item info_address">
+                        <span class="info_lbl">走失地点：</span>
+                        <span class="item_inner" id="missingaddress"></span>
+                    </div>
+                    <div class="info_item info_desc">
+                        <span class="info_lbl">典型特征：</span>
+                        <span class="item_inner" id="feature">loading</span>
+                    </div>
+                    <span class="closeDetail">收起</span>
+                </div>
+            </div>
+        </section>
+        <section class="collage-404">
+            <h1>404</h1>
+            <div class="collage-404-images">
+            </div>
+        </section>
+        <section class="message-404">
+            <h1>您访问的页面找不到了</h1>
+            <h2>但我们可以一起找回走失的他们</h2>
+            <p>Oops,the page can't be found</p>
+        </section>
+        <div class="explore-cta">
+            <a href='/' target='_self' class="back"> 继续浏览 </a>
+            <a href="javascript:history.go(-1);" target='_self' class="back"> 后退上页 </a>
         </div>
-      </div>
-    </section>
-
-    <!-- 拼图展示区 -->
-    <section class="collage-404" style="display:none;">
-      <h1>404</h1>
-      <div class="collage-404-images"></div>
-    </section>
-
-    <!-- 腾讯失踪儿童搜索容器（模式3） -->
-    <section class="lostchild-section" id="lostchildSection" style="display:none;"></section>
-
-    <!-- 统一的404说明 -->
-    <section class="message-404">
-      <div class="code-404">404</div>
-      <div class="subtitle-404" id="dynamicMessage">页面未找到，但善意永在</div>
-    </section>
-
-    <!-- 游戏区域（模式2） -->
-    <section class="game-section" id="gameSection">
-      <div class="game-wrapper">
-        <canvas id="gameCanvas"></canvas>
-        <div class="overlay" id="overlay">
-          <div class="overlay-card" id="introCard">
-            <h3 id="introTitle"></h3>
-            <p class="desc" id="introDesc"></p>
-            <p class="goal" id="introGoal"></p>
-            <button class="btn-primary" id="startBtn">开始挑战</button>
-          </div>
-          <div class="overlay-card hidden" id="endCard">
-            <h3>感谢参与</h3>
-            <p class="desc" id="endComment"></p>
-            <button class="btn-primary" id="replayBtn">再来一次</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 底部操作栏 -->
-    <div class="action-bar">
-      <button class="btn-outline" id="refreshBtn">🔄 刷新页面</button>
-      <a href="/" class="btn-outline">🏠 网站首页</a>
-      <a href="javascript:history.go(-1);" class="btn-outline">↩ 后退</a>
-      <button class="btn-donate" id="donateBtn">💛 公益捐赠</button>
-    </div>
-  </main>
-
-  <!-- 捐赠弹窗 -->
-  <div class="modal-overlay hidden" id="modalOverlay">
-    <div class="modal">
-      <h2>支持公益项目</h2>
-      <div id="projectListContainer"></div>
-      <button class="btn-outline close-modal" id="closeModalBtn">关闭</button>
-    </div>
-  </div>
-
-  <script src="js/404.js"></script>
+    </main>
+	<div id="bbhj2">
+		<p style="display:none">你访问的页面找不回来了，但是我们可以一起寻找失踪宝贝</p>
+		<p style="display:none">
+		相关组织：
+		<a href="https://e.t.qq.com/Tencent-Volunteers" title="腾讯志愿者">腾讯志愿者</a>、
+		<a href="https://bbs.baobeihuijia.com/" title="宝贝回家">宝贝回家</a>
+		</p>		
+	</div>
+    <script>
+        function changeBackground() {
+            var info = navigator.userAgent;
+            //通过正则表达式的test方法判断是否包含“Mobile”字符串
+            var isPhone = /mobile/i.test(info);
+            //如果包含“Mobile”（是手机设备）则返回true
+            if (isPhone) {
+                // 背景图像URL数组
+                var backgrounds = [
+                    'url("img/绿色找回1m.png")',
+                    'url("img/绿色找回2m.jpg")',
+                    'url("img/台风m.jpg")',
+                    'url("img/残障人士m.png")'
+                ];
+            } else {
+                // 背景图像URL数组
+                var backgrounds = [
+                    'url("img/绿色找回1.png")',
+                    'url("img/绿色找回2.jpg")',
+                    'url("img/台风.jpg")',
+                    'url("img/障碍人士.png")'
+                ];
+            }
+            
+            // 随机选择要展示的内容
+            var randomIndex = Math.floor(Math.random() * 6);
+			console.log(randomIndex);
+            var bbhj = document.getElementById('bbhj');
+			var bbhj2 = document.getElementById('bbhj2');
+            var bgElement = document.getElementById('bg');
+            if (randomIndex <= 4) {
+                bbhj.style.display = 'none';
+				bbhj2.style.display = 'none';
+                bgElement.style.display = 'block';
+                // 从背景图像数组中随机选择一个URL
+                var randomBackground = backgrounds[randomIndex];
+                // 将选定的URL应用于指定的元素
+                bgElement.style.backgroundImage = randomBackground;
+            } else if(randomIndex == 5){
+                // 随机选择了加载并执行JS文件
+				bbhj.style.display = 'block';
+				bbhj2.style.display = 'none';                
+                bgElement.style.display = 'none';
+                var script = document.createElement('script');
+                script.src = '//cdn.zhaolinlang.com/cdn.dnpw.org/project/404/0/common/404.new.js';
+                document.head.appendChild(script);
+            }else{
+				// 随机选择了加载并执行JS文件
+				bbhj2.style.display = 'block';
+				bbhj.style.display = 'none';
+				bgElement.style.display = 'none';
+				var script = document.createElement('script');
+				script.src = 'https://qzonestyle.gtimg.cn/qzone_v6/lostchild/search_children.js';
+				document.head.appendChild(script);
+			}
+        }
+        // 初始化页面加载时更换背景
+        changeBackground();
+    </script>
 </body>
 </html>
