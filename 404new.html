@@ -104,35 +104,33 @@
             }
             
             // 随机选择要展示的内容
-            var randomIndex = Math.floor(Math.random() * 3);
+            var randomIndex = Math.floor(Math.random() * 8); // 0~7
             var bbhj = document.getElementById('bbhj');
-			var bbhj2 = document.getElementById('bbhj2');
+            var bbhj2 = document.getElementById('bbhj2');
             var bgElement = document.getElementById('bg');
-            if (randomIndex == 0) {
+            
+            if (randomIndex < 4) { // 0,1,2,3 → 背景图（50%）
                 bbhj.style.display = 'none';
-				bbhj2.style.display = 'none';
+                bbhj2.style.display = 'none';
                 bgElement.style.display = 'block';
-                // 从背景图像数组中随机选择一个URL
-                var randomBackground = backgrounds[randomIndex];
-                // 将选定的URL应用于指定的元素
-                bgElement.style.backgroundImage = randomBackground;
-            } else if(randomIndex == 1){
-                // 随机选择了加载并执行JS文件
-				bbhj.style.display = 'block';
-				bbhj2.style.display = 'none';                
+                // 从背景图数组中随机选一张，避免固定索引
+                var randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+                bgElement.style.backgroundImage = randomBg;
+            } else if (randomIndex < 6) { // 4,5 → 宝贝回家（25%）
+                bbhj.style.display = 'block';
+                bbhj2.style.display = 'none';
                 bgElement.style.display = 'none';
                 var script = document.createElement('script');
                 script.src = '//cdn.zhaolinlang.com/cdn.dnpw.org/project/404/0/common/404.new.js';
                 document.head.appendChild(script);
-            }else{
-				// 随机选择了加载并执行JS文件
-				bbhj2.style.display = 'block';
-				bbhj.style.display = 'none';
-				bgElement.style.display = 'none';
-				var script = document.createElement('script');
-				script.src = 'https://qzonestyle.gtimg.cn/qzone_v6/lostchild/search_children.js';
-				document.head.appendChild(script);
-			}
+            } else { // 6,7 → 腾讯失踪儿童（25%）
+                bbhj2.style.display = 'block';
+                bbhj.style.display = 'none';
+                bgElement.style.display = 'none';
+                var script = document.createElement('script');
+                script.src = 'https://qzonestyle.gtimg.cn/qzone_v6/lostchild/search_children.js';
+                document.head.appendChild(script);
+            }
         }
         // 初始化页面加载时更换背景
         changeBackground();
