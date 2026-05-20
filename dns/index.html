@@ -7,18 +7,26 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-<div class="container">
+<div class="container" id="appContainer">
     <div class="header-row">
         <div class="title-box">
             <h1>ProxyGo</h1>
         </div>
-        <!-- 右上角设置按钮：纯图标设计 -->
-        <div class="settings-icon-btn" id="settingsIconBtn" title="节点管理">
-            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.07.07A10 10 0 0 0 12 17.66a10 10 0 0 0 6.18-2.24l.07-.07Z" />
-                <path d="M14.05 6.27A8.5 8.5 0 0 0 12 5.8a8.5 8.5 0 0 0-6.18 2.24l-.07.07A1.65 1.65 0 0 0 5.2 9.9" />
-            </svg>
+        <div class="header-actions">
+            <div class="settings-icon-btn logout-icon-btn" id="logoutBtn" style="display: none;" title="退出登录">
+                <svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+            </div>
+            <div class="settings-icon-btn" id="settingsIconBtn" title="节点管理">
+                <svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.07.07A10 10 0 0 0 12 17.66a10 10 0 0 0 6.18-2.24l.07-.07Z" />
+                    <path d="M14.05 6.27A8.5 8.5 0 0 0 12 5.8a8.5 8.5 0 0 0-6.18 2.24l-.07.07A1.65 1.65 0 0 0 5.2 9.9" />
+                </svg>
+            </div>
         </div>
     </div>
     <div class="sub">全球智能路由 · 无门槛加速任意站点，即输即用</div>
@@ -29,7 +37,45 @@
     <button class="btn-dns" id="dnsAccessBtn">访问网站</button>
 </div>
 
-<!-- 悬浮提示条容器 -->
+<div id="termsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card terms-card">
+        <h2>📜 法律声明与使用条款</h2>
+        <div class="terms-content">
+            <p><strong>1.</strong> 本工具为个人私有性质，仅限开发者本人在合法范围内用于技术学习、研究及访问公开的海外学术文献、开源社区等合法网站。</p>
+            <p><strong>2.</strong> 本工具已设置访问密码，仅本人知情并使用。任何第三方通过包括但不限于密码破解、社会工程、设备盗用等非法手段获取密码并访问本工具的行为，均属未经授权的侵权行为。</p>
+            <p><strong>3.</strong> 严禁任何未经授权的使用行为，包括但不限于：<br>
+            &nbsp;&nbsp;- 将本工具用于访问违法、暴力、色情、赌博、反政府等内容；<br>
+            &nbsp;&nbsp;- 利用本工具侵犯他人知识产权（如盗版影视、软件、游戏）；<br>
+            &nbsp;&nbsp;- 发起网络攻击、爬虫、自动化脚本等破坏性行为；<br>
+            &nbsp;&nbsp;- 违反中华人民共和国法律法规或使用者所在地法律的任何活动。</p>
+            <p><strong>4.</strong> 若发生密码被非法获取或他人冒用的情况，账户持有人（本人）将立即采取修改密码、停用服务等措施。对于他人利用本工具从事的任何违法或侵权活动，本人不承担任何直接或间接的法律责任，全部责任由实际行为人自行承担。</p>
+            <p><strong>5.</strong> 本工具不向任何第三方开放、出售或共享。任何声称获得本工具使用权限的第三方均为非法使用者，本人保留向司法机关举报并要求追究其法律责任的权利。</p>
+            <p><strong>6.</strong> 继续使用本工具即视为您已阅读、理解并同意以上全部条款。若非本人，请立即停止访问并退出。</p>
+            <p style="color: #dc2626; font-weight: 600;">警告：非法破解或使用本工具可能触犯《中华人民共和国刑法》第285条（非法获取计算机信息系统数据罪）、第286条之一（拒不履行信息网络安全管理义务罪）及《网络安全法》等相关法律，违法者将面临法律责任。</p>
+        </div>
+        <button id="acceptTermsBtn" class="btn-primary">我已知晓</button>
+    </div>
+</div>
+
+<div id="loginModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card login-card">
+        <div class="login-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+        </div>
+        <h2>登录 ProxyGo</h2>
+        <p class="login-subtitle">请输入访问密码</p>
+        <div class="input-group">
+            <input type="password" id="loginPassword" placeholder="主密码" autofocus>
+            <button id="loginBtn" class="btn-primary btn-block">登录</button>
+        </div>
+        <div id="loginError" class="error-msg"></div>
+    </div>
+</div>
+
 <div id="toastMessage" class="toast"></div>
 
 <script src="index.js"></script>
