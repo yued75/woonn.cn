@@ -2,55 +2,33 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
-    <title>连接中...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ProxyGo · 蜗奶奶（中国）</title>
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <!-- 初始加载指示器 - 极简低调 -->
-    <div class="status-container" id="statusContainer">
-        <div class="loader-dots">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
+<div class="container">
+    <div class="header-row">
+        <div class="title-box">
+            <h1>ProxyGo</h1>
         </div>
-        <p class="loader-text">正在为您连接</p>
-    </div>
-
-    <!-- 失败提示区域 - 默认隐藏 -->
-    <div class="fallback-container" id="fallbackContainer" style="display: none;">
-        <div class="fallback-card">
-            <div class="fallback-icon">
-                <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="32" cy="32" r="28" fill="none" stroke="#e0e0e0" stroke-width="3" />
-                    <path d="M32 20v20" stroke="#b0b0b0" stroke-width="4" stroke-linecap="round" />
-                    <circle cx="32" cy="46" r="2.5" fill="#b0b0b0" />
-                    <circle cx="32" cy="32" r="22" fill="none" stroke="#f0e6d3" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6" />
-                </svg>
-            </div>
-            <h2 class="fallback-title">暂时无法连接</h2>
-            <p class="fallback-message">
-                所有线路当前均不可达，请检查您的网络连接后重试。
-            </p>
-            <p class="fallback-submessage">
-                这可能是暂时的网络波动，稍等片刻再试试吧。
-            </p>
-            <button class="retry-btn" id="retryBtn" type="button">
-                <span class="retry-icon">↻</span>
-                重新检测
-            </button>
-            <p class="fallback-hint">
-                若持续无法连接，请联系管理员确认服务状态。
-            </p>
+        <!-- 右上角设置按钮：纯图标设计 -->
+        <div class="settings-icon-btn" id="settingsIconBtn" title="节点管理">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.07.07A10 10 0 0 0 12 17.66a10 10 0 0 0 6.18-2.24l.07-.07Z" />
+                <path d="M14.05 6.27A8.5 8.5 0 0 0 12 5.8a8.5 8.5 0 0 0-6.18 2.24l-.07.07A1.65 1.65 0 0 0 5.2 9.9" />
+            </svg>
         </div>
     </div>
+    <div class="sub">全球智能路由 · 无门槛加速任意站点，即输即用</div>
 
-    <!-- 检测超时提示 - 默认隐藏 -->
-    <div class="timeout-notice" id="timeoutNotice" style="display: none;">
-        <p>检测时间较长，正在努力连接中...</p>
-    </div>
+    <label>目标网址</label>
+    <input type="text" id="targetUrl" placeholder="直接输入网址，例如 https://openai.com 或 openai.com" autofocus>
 
-    <script src="index.js"></script>
+    <button class="btn-dns" id="dnsAccessBtn">访问网站</button>
+</div>
+
+<script src="index.js"></script>
 </body>
 </html>
