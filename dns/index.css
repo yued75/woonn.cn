@@ -12,6 +12,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 20px;
+    overflow: hidden; /* // [NEW] 禁止 body 滚动条 */
 }
 
 .container {
@@ -62,7 +63,14 @@ h1 {
     vertical-align: middle;
 }
 
-/* 设置图标按钮 ———— 纯图标设计 */
+/* 头部右侧：退出按钮 + 设置图标 */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* 设置按钮通用样式 */
 .settings-icon-btn {
     background: #f8fafc;
     border: 1px solid #e2edf2;
@@ -100,6 +108,46 @@ h1 {
 .settings-icon-btn:hover svg {
     stroke: #3b82f6;
 }
+
+/* // [NEW] 退出按钮单独样式：图标稍小 */
+.logout-icon-btn {
+    background: #f8fafc;
+    border: 1px solid #e2edf2;
+    border-radius: 44px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.logout-icon-btn:hover {
+    background: #ffffff;
+    border-color: #cbdff2;
+    transform: rotate(8deg) scale(1.02);
+    box-shadow: 0 8px 18px -8px rgba(59, 130, 246, 0.25);
+}
+
+.logout-icon-btn:active {
+    transform: scale(0.96);
+}
+
+.logout-icon-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: #334155;
+    stroke-width: 1.7;
+    fill: none;
+    transition: stroke 0.2s;
+}
+
+.logout-icon-btn:hover svg {
+    stroke: #dc2626;
+}
+/* // [NEW] END */
 
 .sub {
     font-size: 14px;
@@ -166,20 +214,146 @@ input:focus {
     transform: translateY(1px);
 }
 
-@media (max-width: 480px) {
-    .container {
-        padding: 20px 18px 28px;
-    }
-    .settings-icon-btn {
-        width: 40px;
-        height: 40px;
-    }
-    .btn-dns {
-        padding: 10px;
-    }
+/* ========= // [NEW] 模态框样式 ========= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    overflow: hidden; /* 禁止遮罩层滚动条 */
 }
 
-/* ========= 悬浮提示条样式 ========= */
+.modal-card {
+    background: white;
+    border-radius: 32px;
+    max-width: 420px; /* 第一版登录框宽度 */
+    width: 90%;
+    margin: 20px auto;
+    padding: 32px 28px;
+    box-shadow: 0 30px 45px -20px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: fadeInUp 0.2s ease;
+}
+
+/* 第一版登录样式 */
+.login-card {
+    background: #ffffff;
+    border-radius: 32px;
+    text-align: center;
+}
+.login-icon {
+    color: #4f6ef7;
+    margin-bottom: 16px;
+}
+.login-card h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #0f172a;
+}
+.login-subtitle {
+    color: #475569;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.input-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e1e8ef;
+    border-radius: 28px;
+    font-size: 15px;
+    outline: none;
+    font-family: monospace;
+}
+.input-group input:focus {
+    border-color: #4f6ef7;
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.15);
+}
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+.error-msg {
+    color: #e74c3c;
+    font-size: 13px;
+    margin-top: 16px;
+    min-height: 20px;
+}
+.modal-card .btn-primary {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.modal-card .btn-primary:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+}
+
+/* 声明弹窗专用（宽一些但无滚动条） */
+.terms-card {
+    max-width: 620px;
+    text-align: left;
+    padding: 28px 32px;
+    background: linear-gradient(145deg, #ffffff 0%, #fefefe 100%);
+    border: 1px solid rgba(79, 110, 247, 0.1);
+    box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(79, 110, 247, 0.05);
+}
+.terms-card h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 22px;
+    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    letter-spacing: -0.2px;
+}
+.terms-content {
+    margin: 16px 0 28px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #1e293b;
+}
+.terms-content p {
+    margin-bottom: 14px;
+}
+.terms-card .btn-primary {
+    width: 100%;
+    background: linear-gradient(95deg, #4f46e5 0%, #7c3aed 100%);
+    border: none;
+    padding: 12px;
+    border-radius: 44px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.25s;
+}
+.terms-card .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -8px #4f46e5;
+    background: linear-gradient(95deg, #4338ca 0%, #6d28d9 100%);
+}
+/* // [NEW] END */
+
+/* 提示Toast */
 .toast {
     position: fixed;
     top: 20px;
@@ -204,7 +378,49 @@ input:focus {
     opacity: 1;
 }
 
-@media (max-width: 640px) {
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 20px 18px 28px;
+    }
+    .settings-icon-btn,
+    .logout-icon-btn {
+        width: 40px;
+        height: 40px;
+    }
+    .settings-icon-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    .logout-icon-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    .btn-dns {
+        padding: 10px;
+    }
+    .modal-card {
+        padding: 24px 20px;
+        width: 92%;
+    }
+    .terms-card {
+        padding: 20px 18px;
+        max-width: 92%;
+    }
+    .terms-content {
+        font-size: 12px;
+        line-height: 1.45;
+    }
     .toast {
         white-space: normal;
         text-align: center;
