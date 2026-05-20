@@ -73,11 +73,78 @@
         return target;
     }
 
+    // ---------- // [NEW] 登录相关 API 配置 ----------
+    const API_BASE_URLS = [
+        'https://domainapi.yued75.cc.cd/api',
+        'https://domainapi.yued75.dpdns.org/api',
+        'https://domainapi.yued75.indevs.in/api'
+    ];
+    const STORAGE_KEY = 'domain_master_password';
+    const TERMS_SESSION_KEY = 'proxygo_terms_accepted';
+
+    let currentPassword = sessionStorage.getItem(STORAGE_KEY) || '';
+
+    async function fetchWithFallback(path, options = {}) {
+        const { method = 'GET', body, headers: extraHeaders } = options;
+        let lastError;
+        const urlPath = path.startsWith('/') ? path : `/${path}`;
+        for (const baseUrl of API_BASE_URLS) {
+            try {
+                const url = `${baseUrl}${urlPath}`;
+                const fetchOpts = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(currentPassword ? { 'x-auth-password': currentPassword } : {}),
+                        ...extraHeaders
+                    }
+                };
+                if (body && method !== 'GET') fetchOpts.body = JSON.stringify(body);
+                const res = await fetch(url, fetchOpts);
+                return res;
+            } catch (e) {
+                lastError = e;
+                continue;
+            }
+        }
+        throw new Error('所有备用地址均无法访问');
+    }
+
+    async function login(password) {
+        try {
+            const res = await fetchWithFallback('/auth', { method: 'POST', body: { password } });
+            if (res.ok) {
+                const data = await res.json();
+                return data.success === true;
+            } else {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || '密码错误');
+            }
+        } catch (err) {
+            throw new Error(err.message || '网络或服务器错误');
+        }
+    }
+    // ---------- // [NEW] END ----------
+
     // ---------- 右上角「设置按钮」功能 ----------
     const settingsBtn = document.getElementById('settingsIconBtn');
     if (settingsBtn) {
         settingsBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            // // [NEW] 增加登录和声明检查
+            const isLoggedIn = !!sessionStorage.getItem(STORAGE_KEY);
+            const isTermsAccepted = sessionStorage.getItem(TERMS_SESSION_KEY) === 'true';
+            if (!isLoggedIn) {
+                showToast('请先登录', 2000);
+                showLoginUI();
+                return;
+            }
+            if (!isTermsAccepted) {
+                showToast('请先阅读并同意使用声明', 2000);
+                showTermsUI();
+                return;
+            }
+            // // [NEW] END
             const randomCfSite = getRandomItem(cfVpnSites);
             if (!randomCfSite) {
                 showToast('预设节点为空，请联系管理员');
@@ -95,6 +162,20 @@
     
     if (dnsAccessBtn && inputEl) {
         dnsAccessBtn.addEventListener('click', () => {
+            // // [NEW] 增加登录和声明检查
+            const isLoggedIn = !!sessionStorage.getItem(STORAGE_KEY);
+            const isTermsAccepted = sessionStorage.getItem(TERMS_SESSION_KEY) === 'true';
+            if (!isLoggedIn) {
+                showToast('请先登录', 2000);
+                showLoginUI();
+                return;
+            }
+            if (!isTermsAccepted) {
+                showToast('请先阅读并同意使用声明', 2000);
+                showTermsUI();
+                return;
+            }
+            // // [NEW] END
             const rawTarget = inputEl.value.trim();
             if (!rawTarget) {
                 showToast('请输入目标网址');
@@ -128,4 +209,105 @@
             }
         });
     }
+
+    // ---------- // [NEW] 登录/声明 UI 控制 ----------
+    const loginModal = document.getElementById('loginModal');
+    const termsModal = document.getElementById('termsModal');
+    const loginPasswordInput = document.getElementById('loginPassword');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginErrorSpan = document.getElementById('loginError');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const acceptTermsBtn = document.getElementById('acceptTermsBtn');
+
+    function showMainUI() {
+        if (loginModal) loginModal.style.display = 'none';
+        if (termsModal) termsModal.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'flex';
+    }
+
+    function showLoginUI() {
+        if (loginModal) loginModal.style.display = 'flex';
+        if (termsModal) termsModal.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        if (loginPasswordInput) loginPasswordInput.value = '';
+        if (loginErrorSpan) loginErrorSpan.innerText = '';
+    }
+
+    function showTermsUI() {
+        if (loginModal) loginModal.style.display = 'none';
+        if (termsModal) termsModal.style.display = 'flex';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+    }
+
+    function logout() {
+        sessionStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(TERMS_SESSION_KEY);
+        currentPassword = '';
+        showTermsUI(); // 退出后重新弹出声明
+        showToast('已退出登录');
+    }
+
+    function onTermsAccepted() {
+        sessionStorage.setItem(TERMS_SESSION_KEY, 'true');
+        if (sessionStorage.getItem(STORAGE_KEY)) {
+            showMainUI();
+        } else {
+            showLoginUI();
+        }
+        showToast('感谢您的理解与配合，祝您使用愉快');
+    }
+
+    async function onLogin() {
+        const pwd = loginPasswordInput.value.trim();
+        if (!pwd) {
+            loginErrorSpan.innerText = '请输入密码';
+            return;
+        }
+        loginErrorSpan.innerText = '';
+        loginBtn.disabled = true;
+        loginBtn.innerText = '登录中...';
+        try {
+            const success = await login(pwd);
+            if (success) {
+                sessionStorage.setItem(STORAGE_KEY, pwd);
+                currentPassword = pwd;
+                // [FIX] 登录成功后直接标记声明已同意，不再重复弹出声明
+                sessionStorage.setItem(TERMS_SESSION_KEY, 'true');
+                showMainUI();
+                // 可选：显示登录成功提示
+                showToast('登录成功');
+            } else {
+                loginErrorSpan.innerText = '密码错误';
+            }
+        } catch (err) {
+            loginErrorSpan.innerText = err.message;
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.innerText = '登录';
+        }
+    }
+
+    // 绑定事件
+    if (acceptTermsBtn) acceptTermsBtn.addEventListener('click', onTermsAccepted);
+    if (loginBtn) loginBtn.addEventListener('click', onLogin);
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    if (loginPasswordInput) {
+        loginPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') onLogin();
+        });
+    }
+
+    // 页面初始化：未登录时先显示声明，已登录且已同意则直接主界面
+    const isLoggedIn = !!sessionStorage.getItem(STORAGE_KEY);
+    const isTermsAccepted = sessionStorage.getItem(TERMS_SESSION_KEY) === 'true';
+    if (!isLoggedIn) {
+        showTermsUI(); // 先声明
+    } else {
+        if (isTermsAccepted) {
+            showMainUI();
+        } else {
+            showTermsUI();
+        }
+    }
+    // ---------- // [NEW] END ----------
 })();
