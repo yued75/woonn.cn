@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI HTML 可视化修图工具</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { color-scheme: light; }
+  body {
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #172033;
+    background: #eef3f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  body::before { content: ""; position: fixed; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(238,243,248,.2)); pointer-events: none; }
+  .shell { position: relative; width: min(1120px, 100%); }
+  .workspace { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 18px; align-items: stretch; }
+  .header { display: flex; flex-direction: column; justify-content: space-between; min-height: 100%; padding: 30px; border: 1px solid #d9e2ec; border-radius: 14px; background: #ffffff; box-shadow: 0 18px 45px rgba(33, 50, 74, .08); }
+  .eyebrow { display: inline-flex; width: max-content; align-items: center; gap: 8px; margin-bottom: 18px; padding: 6px 11px; border: 1px solid #d8e2ef; border-radius: 999px; color: #526173; background: #f7fafc; font-size: 12px; }
+  .logo { max-width: 320px; font-size: clamp(32px, 4vw, 48px); line-height: 1.08; font-weight: 780; letter-spacing: 0; margin-bottom: 14px; color: #111827; }
+  .subtitle { max-width: 340px; color: #5e6b7a; font-size: 15px; line-height: 1.75; }
+  .meta-list { display: grid; gap: 10px; margin-top: 30px; color: #526173; font-size: 13px; }
+  .meta-list div { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 10px; border-top: 1px solid #edf1f5; }
+  .meta-list strong { color: #172033; font-size: 13px; }
+  .card { background: #ffffff; border: 1px solid #d9e2ec; border-radius: 14px; padding: 18px; box-shadow: 0 18px 45px rgba(33, 50, 74, .08); }
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; padding: 4px; border: 1px solid #d9e2ec; border-radius: 10px; background: #f5f8fb; }
+  .tab { flex: 1; padding: 10px 16px; font-size: 14px; font-weight: 650; color: #667386; cursor: pointer; border: none; border-radius: 8px; transition: all .2s; background: transparent; font-family: inherit; }
+  .tab:hover { color: #1f2937; }
+  .tab.active { color: #0f172a; background: #ffffff; box-shadow: 0 1px 2px rgba(15,23,42,.08), inset 0 0 0 1px #e2e8f0; }
+  .tab-content { display: none; min-height: 356px; }
+  .tab-content.active { display: block; }
+  textarea { display: block; width: 100%; height: 356px; min-height: 356px; background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; color: #dbeafe; font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 13px; line-height: 1.65; padding: 16px; resize: vertical; outline: none; transition: border-color .2s, box-shadow .2s; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+  textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .16), inset 0 1px 0 rgba(255,255,255,.04); }
+  textarea::placeholder { color: #64748b; }
+  .drop-zone { min-height: 356px; height: 356px; border: 1px dashed #b7c4d3; border-radius: 10px; padding: 20px; text-align: center; color: #64748b; cursor: pointer; transition: border-color .2s, background .2s, color .2s; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .drop-zone:hover, .drop-zone.dragover { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+  .drop-zone p { margin-bottom: 8px; font-size: 16px; color: #1f2937; font-weight: 650; }
+  .drop-zone small { font-size: 12px; color: #64748b; }
+  .file-input { display: none; }
+  .status { min-height: 20px; margin-top: 12px; color: #667386; font-size: 12px; }
+  .status.ready { color: #0369a1; }
+  .status.error { color: #b91c1c; }
+  .actions { margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end; align-items: center; }
+  .btn { min-height: 40px; padding: 0 20px; border-radius: 8px; font-size: 14px; font-weight: 650; cursor: pointer; border: none; font-family: inherit; transition: all .2s cubic-bezier(.4,0,.2,1); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: #2563eb; color: white; box-shadow: 0 10px 22px rgba(37,99,235,.22); }
+  .btn-primary:hover { background: #1d4ed8; box-shadow: 0 12px 26px rgba(37,99,235,.28); }
+  .btn-primary:disabled { background: #d8e0ea; color: #7b8794; cursor: not-allowed; box-shadow: none; transform: none; }
+  .btn-secondary { background: #ffffff; color: #263244; border: 1px solid #d6e0ea; }
+  .btn-secondary:hover { background: #f8fafc; border-color: #bfccd9; }
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+  .feature { padding: 13px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; color: #667386; font-size: 13px; line-height: 1.55; }
+  .feature strong { display: block; margin-bottom: 4px; color: #172033; font-size: 14px; }
+  .prompt-card { margin-top: 14px; padding: 14px; border: 1px solid #d8e2ef; border-radius: 10px; background: #f8fafc; }
+  .prompt-card h2 { margin-bottom: 6px; color: #172033; font-size: 15px; }
+  .prompt-card p { margin-bottom: 10px; color: #667386; font-size: 13px; line-height: 1.6; }
+  .prompt-text { max-height: 128px; overflow: auto; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; color: #334155; font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+  .prompt-actions { margin-top: 10px; display: flex; justify-content: flex-end; }
+  .btn-small { min-height: 34px; padding: 0 14px; font-size: 13px; }
+  .hint { margin-top: 14px; text-align: right; color: #7b8794; font-size: 12px; line-height: 1.7; }
+  .hint code { background: #e8eef5; color: #263244; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+  @media (max-width: 720px) {
+    body { align-items: flex-start; padding: 18px 12px; }
+    .workspace { grid-template-columns: 1fr; }
+    .header { padding: 22px; }
+    .meta-list { margin-top: 20px; }
+    .card { padding: 16px; }
+    .tab-content { min-height: 300px; }
+    textarea { height: 300px; min-height: 300px; }
+    .drop-zone { height: 300px; min-height: 300px; }
+    .actions { flex-direction: column-reverse; align-items: stretch; }
+    .btn { width: 100%; }
+    .features { grid-template-columns: 1fr; }
+    .hint { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<main class="shell">
+  <div class="workspace">
+  <header class="header">
+    <div>
+      <div class="eyebrow">AI 生成 HTML 的最后 10% 精修</div>
+      <h1 class="logo">AI HTML 可视化修图工具</h1>
+      <p class="subtitle">把 AI 生成的静态 HTML 放进来，像修图一样点选页面、微调文字和样式，最后导出一份干净文件。</p>
+    </div>
+    <div class="meta-list" aria-label="产品特性">
+      <div><span>定位</span><strong>HTML 精修</strong></div>
+      <div><span>运行方式</span><strong>本地纯前端</strong></div>
+      <div><span>导出结果</span><strong>干净 HTML</strong></div>
+    </div>
+  </header>
+
+  <section class="card" aria-label="编辑入口">
+    <div class="tabs" role="tablist">
+      <button class="tab" data-tab="paste" type="button" role="tab" aria-selected="false">粘贴代码</button>
+      <button class="tab active" data-tab="file" type="button" role="tab" aria-selected="true">上传文件</button>
+    </div>
+
+    <div class="tab-content" id="tab-paste" role="tabpanel">
+      <textarea id="html-input" spellcheck="false" placeholder="在这里粘贴 HTML 代码...&#10;&#10;支持完整 HTML 文档，也支持 HTML 片段。"></textarea>
+    </div>
+
+    <div class="tab-content active" id="tab-file" role="tabpanel">
+      <div class="drop-zone" id="drop-zone">
+        <p>拖拽 HTML 文件到这里</p>
+        <small>支持 .html / .htm，加载后自动进入编辑模式</small>
+      </div>
+      <input type="file" class="file-input" id="file-input" accept=".html,.htm,text/html">
+    </div>
+
+    <div class="status" id="status">上传或粘贴 AI 生成的 HTML 后，就可以开始做发布前的视觉微调。</div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" id="btn-demo" type="button">加载示例 HTML</button>
+      <button class="btn btn-primary" id="btn-start" type="button" disabled>开始精修</button>
+    </div>
+
+    <div class="features">
+      <div class="feature"><strong>像修图一样改 HTML</strong>点选页面元素，实时调整字号、颜色、间距和圆角。</div>
+      <div class="feature"><strong>服务 AI 生成结果</strong>适合改 Claude、ChatGPT、Gemini 生成的单页 HTML。</div>
+      <div class="feature"><strong>干净 HTML 导出</strong>复制或保存编辑后的 HTML，自动移除编辑器运行时痕迹。</div>
+    </div>
+
+    <section class="prompt-card" aria-label="AI 生成提示词">
+      <h2>生成适合编辑的 HTML</h2>
+      <p>把这段提示词发给 AI，让它生成更适合本工具精修的静态页面。</p>
+      <pre class="prompt-text" id="prompt-template">请生成一个完整的单文件 HTML 页面，用内联 CSS 和少量原生 JavaScript 实现，不要使用 Vue、React、构建工具或外部依赖。页面结构请使用语义化标签，例如 header、nav、main、section、footer；每个主要区块保持清晰层级，按钮使用 button 或 a，图片使用 img 并提供 alt。样式尽量写在 style 标签中，避免过度压缩，方便后续用可视化编辑器做文字、颜色、间距、图片和链接的微调。</pre>
+      <div class="prompt-actions">
+        <button class="btn btn-secondary btn-small" id="btn-copy-prompt" type="button">复制提示词</button>
+      </div>
+    </section>
+  </section>
+  </div>
+
+  <p class="hint">这个工具面向静态 HTML 精修；复杂前端工程请继续使用原有 IDE 和框架工具链。</p>
+</main>
+
+<script>
+(function() {
+  var textarea = document.getElementById('html-input')
+  var fileInput = document.getElementById('file-input')
+  var dropZone = document.getElementById('drop-zone')
+  var btnStart = document.getElementById('btn-start')
+  var btnDemo = document.getElementById('btn-demo')
+  var btnCopyPrompt = document.getElementById('btn-copy-prompt')
+  var promptTemplate = document.getElementById('prompt-template')
+  var status = document.getElementById('status')
+  var tabs = document.querySelectorAll('.tab')
+  var contents = document.querySelectorAll('.tab-content')
+  var fallbackDemo = '<!DOCTYPE html>\n<html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:40px;max-width:800px;margin:0 auto}h1{color:#333}p{line-height:1.8;color:#555}</style></head><body>\n<h1>示例页面</h1>\n<p>这是一个示例段落，你可以选中它来调整字号、颜色等属性。</p>\n<div style="background:#f0f7ff;padding:20px;border-radius:8px;margin:20px 0">\n<h2 style="color:#4a9eff">蓝色标题</h2>\n<p>试试修改这个区块的背景颜色和圆角。</p>\n</div>\n</body></html>'
+
+  function setStatus(text, type) {
+    status.textContent = text
+    status.className = 'status' + (type ? ' ' + type : '')
+  }
+
+  function activateTab(name) {
+    Array.prototype.forEach.call(tabs, function(t) {
+      var active = t.dataset.tab === name
+      t.classList.toggle('active', active)
+      t.setAttribute('aria-selected', active ? 'true' : 'false')
+    })
+    Array.prototype.forEach.call(contents, function(c) { c.classList.remove('active') })
+    document.getElementById('tab-' + name).classList.add('active')
+  }
+
+  Array.prototype.forEach.call(tabs, function(tab) {
+    tab.addEventListener('click', function() { activateTab(tab.dataset.tab) })
+  })
+
+  function checkReady() {
+    var ready = !!textarea.value.trim()
+    btnStart.disabled = !ready
+    if (ready) setStatus('已检测到 HTML 内容，可以开始精修。', 'ready')
+    else setStatus('上传或粘贴 AI 生成的 HTML 后，就可以开始做发布前的视觉微调。')
+  }
+  textarea.addEventListener('input', checkReady)
+
+  dropZone.addEventListener('click', function() { fileInput.click() })
+  dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover') })
+  dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover') })
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault()
+    dropZone.classList.remove('dragover')
+    if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0])
+  })
+  fileInput.addEventListener('change', function() {
+    if (fileInput.files[0]) readFile(fileInput.files[0])
+  })
+
+  function readFile(file) {
+    if (!/\.(html|htm)$/i.test(file.name)) {
+      setStatus('请选择 .html 或 .htm 文件。', 'error')
+      return
+    }
+    var reader = new FileReader()
+    reader.onload = function(e) {
+      textarea.value = e.target.result
+      activateTab('paste')
+      dropZone.innerHTML = '<p>已加载：' + escapeHTML(file.name) + '</p><small>可切回“上传文件”重新选择</small>'
+      checkReady()
+      startEditing()
+    }
+    reader.onerror = function() { setStatus('文件读取失败，请重新选择。', 'error') }
+    reader.readAsText(file)
+  }
+
+  function stripEditorArtifacts(html) {
+    var doc = new DOMParser().parseFromString(html, 'text/html')
+    Array.prototype.forEach.call(doc.querySelectorAll('#__ve-root, .__ve-toggle, style[data-ve], script[data-ve]'), function(el) {
+      if (el.parentNode) el.parentNode.removeChild(el)
+    })
+    Array.prototype.forEach.call(doc.querySelectorAll('script[src]'), function(el) {
+      var src = el.getAttribute('src') || ''
+      if (/(^|\/)editor\.js(?:[?#].*)?$/i.test(src) && el.parentNode) el.parentNode.removeChild(el)
+    })
+    Array.prototype.forEach.call(doc.querySelectorAll('[data-ve-editing], [data-ve-prev-contenteditable]'), function(el) {
+      var prev = el.getAttribute('data-ve-prev-contenteditable')
+      if (prev && prev !== '__ve_absent') el.setAttribute('contenteditable', prev)
+      else el.removeAttribute('contenteditable')
+      el.removeAttribute('data-ve-editing')
+      el.removeAttribute('data-ve-prev-contenteditable')
+    })
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML
+  }
+
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function(ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]
+    })
+  }
+
+  function editorBootstrapScript(src) {
+    return '<script data-ve="1">(function(){try{sessionStorage.setItem("__ve-auto-edit","1")}catch(e){}var s=document.createElement("script");s.src=' + JSON.stringify(src) + ';s.setAttribute("data-ve","1");document.head.appendChild(s)})();<\/script>'
+  }
+
+  function loadDemoHTML(html, message) {
+    textarea.value = html
+    activateTab('paste')
+    checkReady()
+    if (message) setStatus(message, 'ready')
+    startEditing()
+  }
+
+  btnDemo.addEventListener('click', function() {
+    if (!window.fetch) {
+      loadDemoHTML(fallbackDemo, '已加载内置演示页面。')
+      return
+    }
+    fetch('demo.html').then(function(r) {
+      if (!r.ok) throw new Error('demo load failed')
+      return r.text()
+    }).then(function(html) {
+      loadDemoHTML(html, '演示页面已载入，正在进入编辑模式。')
+    }).catch(function() {
+      // file:// 双击打开模式下，浏览器会拒绝 fetch 本地文件，走这条 fallback 是正常的。
+      loadDemoHTML(fallbackDemo, '已加载内置演示页面（双击打开模式下不支持读取外部 demo）。')
+    })
+  })
+
+  btnCopyPrompt.addEventListener('click', function() {
+    var text = promptTemplate.textContent
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function() {
+        setStatus('提示词已复制，可以发给 AI 生成 HTML。', 'ready')
+      }, function() {
+        fallbackCopyPrompt(text)
+      })
+    } else {
+      fallbackCopyPrompt(text)
+    }
+  })
+
+  function fallbackCopyPrompt(text) {
+    var ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0'
+    ta.setAttribute('readonly', '')
+    document.body.appendChild(ta)
+    ta.select()
+    try {
+      document.execCommand('copy')
+      setStatus('提示词已复制，可以发给 AI 生成 HTML。', 'ready')
+    } catch (e) {
+      setStatus('复制失败，请手动选中提示词。', 'error')
+    }
+    if (ta.parentNode) ta.parentNode.removeChild(ta)
+  }
+
+  function startEditing() {
+    var html = textarea.value.trim()
+    if (!html) return
+
+    if (!html.match(/<html[\s>]/i)) {
+      html = '<!DOCTYPE html>\n<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body>\n' + html + '\n</body></html>'
+    }
+
+    html = stripEditorArtifacts(html)
+
+    var editorURL = new URL('editor.js', window.location.href)
+    editorURL.searchParams.set('v', Date.now())
+    var editorSrc = editorURL.href
+    var script = editorBootstrapScript(editorSrc)
+
+    if (html.indexOf('</body>') !== -1) {
+      html = html.replace('</body>', script + '</body>')
+    } else if (html.indexOf('</html>') !== -1) {
+      html = html.replace('</html>', script + '</html>')
+    } else {
+      html += script
+    }
+
+    try {
+      sessionStorage.setItem('__ve-auto-edit', '1')
+    } catch (e) {}
+
+    document.open()
+    document.write(html)
+    document.close()
+
+    function ensureEditorMounted(tries) {
+      if (document.querySelector('.__ve-toolbar.visible')) return
+      var toggle = document.querySelector('.__ve-toggle')
+      if (document.getElementById('__ve-root')) {
+        if (toggle && !toggle.classList.contains('active')) toggle.click()
+        return
+      }
+      try {
+        sessionStorage.setItem('__ve-auto-edit', '1')
+      } catch (e) {}
+      if (!document.querySelector('script[data-ve][src], script[src*="editor.js"]')) {
+        var fallbackScript = document.createElement('script')
+        fallbackScript.src = editorSrc
+        fallbackScript.setAttribute('data-ve', '1')
+        ;(document.body || document.documentElement).appendChild(fallbackScript)
+      }
+      if (tries > 0) setTimeout(function() { ensureEditorMounted(tries - 1) }, 250)
+    }
+
+    setTimeout(function() { ensureEditorMounted(4) }, 250)
+  }
+
+  btnStart.addEventListener('click', startEditing)
+})()
+</script>
+</body>
+</html>
