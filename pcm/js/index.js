@@ -326,20 +326,20 @@ function parseSpecialPoints() {
     if (!input) return [];
     
     const points = [];
-    // 点之间的分隔符：空格、中英文逗号、中英文分号
-    const items = input.split(/[ ,，;；:：\s]+/).filter(item => item.trim() !== '');
+    // 统一分隔符：空格、中英文逗号、中英文分号、中英文冒号
+    const separator = /[ ,，;；:：\s]+/;
     
-    items.forEach(item => {
-        // 距离和标签之间的分隔符：中英文冒号、中英文分号、空格
-        const parts = item.split(/[ ,，;；:：\s]+/).filter(part => part.trim() !== '');
-        if (parts.length >= 1) {
-            const d = parseInt(parts[0]);
-            if (!isNaN(d) && d > 0) {
-                const label = parts.length > 1 ? parts.slice(1).join('') : "";
-                points.push({ d, l: label });
-            }
+    // 先按分隔符分割所有项
+    const items = input.split(separator).filter(item => item.trim() !== '');
+    
+    // 每两个一组：距离和标签（成对读取）
+    for (let i = 0; i < items.length; i += 2) {
+        const d = parseInt(items[i]);
+        if (!isNaN(d) && d > 0) {
+            const label = (i + 1 < items.length) ? items[i + 1] : "";
+            points.push({ d, l: label });
         }
-    });
+    }
     
     return points.sort((a, b) => a.d - b.d);
 }
