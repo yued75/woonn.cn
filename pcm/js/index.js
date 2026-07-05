@@ -318,18 +318,29 @@ function getFileNameTime() {
 function getExportFileName() {
     const ps = document.getElementById("pipeStart").value.trim();
     const pe = document.getElementById("pipeEnd").value.trim();
-    return (ps && pe) ? `${ps}至${pe}检测数据.xls` : `检测数据_${getFileNameTime()}.xls`;
+    return (ps && pe) ? `${ps}至${pe}检测数据.xlsx` : `检测数据_${getFileNameTime()}.xlsx`;
 }
 
 function parseSpecialPoints() {
     const input = document.getElementById("specialPoints").value.trim();
     if (!input) return [];
+    
     const points = [];
-    input.split(/[ ,，]+/).forEach(item => {
-        const [dStr, label] = item.split(/[:：]/);
-        const d = parseInt(dStr);
-        if (!isNaN(d) && d > 0) points.push({ d, l: label || "" });
-    });
+    // 统一分隔符：空格、中英文逗号、中英文分号、中英文冒号
+    const separator = /[ ,，;；:：\s]+/;
+    
+    // 先按分隔符分割所有项
+    const items = input.split(separator).filter(item => item.trim() !== '');
+    
+    // 每两个一组：距离和标签（成对读取）
+    for (let i = 0; i < items.length; i += 2) {
+        const d = parseInt(items[i]);
+        if (!isNaN(d) && d > 0) {
+            const label = (i + 1 < items.length) ? items[i + 1] : "";
+            points.push({ d, l: label });
+        }
+    }
+    
     return points.sort((a, b) => a.d - b.d);
 }
 
@@ -631,10 +642,31 @@ function deleteCurrentRow() {
 function copyToExcel() {
     const rows = document.querySelectorAll("#dataTable tbody tr");
     if (rows.length === 0 || (rows.length === 1 && !rows[0].querySelector('td:nth-child(2) input'))) {
-        showTip('没有可复制的数据，请先生成表格', true);
+        showTip('数据都没有，你复制个嘚儿，需要先生成！', true);
         return;
     }
+
+    // ===== 构建 HTML 表格（带字体样式，居中对齐） =====
+    let html = `<table style="font-family:'Times New Roman';font-size:10pt;text-align:center;border-collapse:collapse;width:auto;">`;
+    
+    rows.forEach(tr => {
+        html += '<tr>';
+        const cells = tr.querySelectorAll("td");
+        cells.forEach(cell => {
+            let v = "";
+            const inp = cell.querySelector("input,textarea");
+            if (inp) v = inp.value || "";
+            else v = cell.textContent || "";
+            v = v.replace(/\r?\n/g, "");
+            html += `<td style="border:1px solid black;padding:2px 6px;text-align:center;vertical-align:middle;">${v}</td>`;
+        });
+        html += '</tr>';
+    });
+    html += '</table>';
+
+    // ===== 纯文本版本（用换行符分隔行） =====
     let text = "";
+    const rowDataArray = [];
     rows.forEach(tr => {
         const cells = tr.querySelectorAll("td");
         const rowData = [];
@@ -645,22 +677,43 @@ function copyToExcel() {
             else v = cell.textContent || "";
             rowData.push(v.replace(/\r?\n/g, ""));
         });
-        text += rowData.join("\t") + "\r\n";
+        rowDataArray.push(rowData.join("\t"));
     });
-    const ta = document.createElement("textarea");
-    ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
-    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-    const pipeStart = document.getElementById("pipeStart").value.trim();
-    const pipeEnd = document.getElementById("pipeEnd").value.trim();
-    const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
-    logUserAction('copy', { pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '', pipeLength: totalDist });
-    showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）");
+    text = rowDataArray.join("\n");  // 使用 \n 而不是 \r\n
+
+    // ===== 使用 Clipboard API 同时写入 HTML 和纯文本 =====
+    const blobHtml = new Blob([html], { type: 'text/html' });
+    const blobText = new Blob([text], { type: 'text/plain' });
+    
+    navigator.clipboard.write([
+        new ClipboardItem({
+            'text/html': blobHtml,
+            'text/plain': blobText
+        })
+    ]).then(() => {
+        const pipeStart = document.getElementById("pipeStart").value.trim();
+        const pipeEnd = document.getElementById("pipeEnd").value.trim();
+        const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
+        logUserAction('copy', { pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '', pipeLength: totalDist });
+        showTip("已复制到剪贴板，可直接粘贴到Excel(不含表头)", false);
+    }).catch(() => {
+        // 如果 Clipboard API 失败（比如浏览器不支持），回退到纯文本
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        showTip("已复制到剪贴板，可直接粘贴到Excel(不含表头)", false);
+    });
 }
 
 function exportToExcel() {
     const rows = document.querySelectorAll("#dataTable tbody tr");
     if (rows.length === 0 || (rows.length === 1 && !rows[0].querySelector('td:nth-child(2) input'))) {
-        showTip('没有可导出的数据，请先生成表格', true);
+        showTip('数据都没有，你要导出啥？要先生成数据！', true);
         return;
     }
     // 带边框样式
