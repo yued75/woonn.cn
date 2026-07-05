@@ -675,7 +675,8 @@ function copyToExcel() {
             const inp = cell.querySelector("input,textarea");
             if (inp) v = inp.value || "";
             else v = cell.textContent || "";
-            rowData.push(v.replace(/\r?\n/g, ""));
+            //rowData.push(v.replace(/\r?\n/g, ""));
+            rowData.push(v);
         });
         text += rowData.join("\t") + "\r\n";
     });
