@@ -720,7 +720,7 @@ function exportToExcel() {
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
 <x:Name>检测数据</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
-</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>td,th{font-family:'Times New Roman';font-size:10pt;text-align:center;vertical-align:middle;border:1px solid black;}</style></head>
+</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>td,th{font-family:'Times New Roman';font-size:10pt;text-align:center;vertical-align:middle;border:1px solid black;white-space:pre-wrap;mso-wrap-text:yes;}</style></head>
 <body><table>`;
     html += '<tr><th>序号</th><th>距离(m)</th><th>数据1(mA)</th><th>地形地貌</th><th>埋深(m)</th><th>破损点编号</th><th>db值</th><th>破损分级</th><th>坐标</th><th>位置描述</th></tr>';
     rows.forEach(tr => {
