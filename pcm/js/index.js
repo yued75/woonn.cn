@@ -318,7 +318,7 @@ function getFileNameTime() {
 function getExportFileName() {
     const ps = document.getElementById("pipeStart").value.trim();
     const pe = document.getElementById("pipeEnd").value.trim();
-    return (ps && pe) ? `${ps}至${pe}检测数据.xls` : `检测数据_${getFileNameTime()}.xls`;
+    return (ps && pe) ? `${ps}至${pe}检测数据.xlsx` : `检测数据_${getFileNameTime()}.xlsx`;
 }
 
 function parseSpecialPoints() {
