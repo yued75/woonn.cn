@@ -642,12 +642,12 @@ function deleteCurrentRow() {
 function copyToExcel() {
     const rows = document.querySelectorAll("#dataTable tbody tr");
     if (rows.length === 0 || (rows.length === 1 && !rows[0].querySelector('td:nth-child(2) input'))) {
-        showTip('没有可复制的数据，请先生成表格', true);
+        showTip('数据都没有，你复制个嘚儿，需要先生成！', true);
         return;
     }
 
-    // ===== 构建 HTML 表格（不带表头，只含数据行） =====
-    let html = `<table style="font-family:'Times New Roman';font-size:10pt;text-align:center;border-collapse:collapse;">`;
+    // ===== 构建 HTML 表格（带字体样式，居中对齐） =====
+    let html = `<table style="font-family:'Times New Roman';font-size:10pt;text-align:center;border-collapse:collapse;width:auto;">`;
     
     // 只生成数据行，不加表头
     rows.forEach(tr => {
@@ -659,7 +659,7 @@ function copyToExcel() {
             if (inp) v = inp.value || "";
             else v = cell.textContent || "";
             v = v.replace(/\r?\n/g, "");
-            html += `<td style="border:1px solid black;padding:2px 6px;">${v}</td>`;
+            html += `<td style="border:1px solid black;padding:2px 6px;text-align:center;vertical-align:middle;">${v}</td>`;
         });
         html += '</tr>';
     });
@@ -694,7 +694,7 @@ function copyToExcel() {
         const pipeEnd = document.getElementById("pipeEnd").value.trim();
         const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
         logUserAction('copy', { pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '', pipeLength: totalDist });
-        showTip("已复制到剪贴板（含格式，不含表头），可直接粘贴到Excel", false);
+        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）", false);
     }).catch(() => {
         // 如果 Clipboard API 失败（比如浏览器不支持），回退到纯文本
         const ta = document.createElement("textarea");
@@ -705,7 +705,7 @@ function copyToExcel() {
         ta.select();
         document.execCommand("copy");
         document.body.removeChild(ta);
-        showTip("已复制到剪贴板（纯文本，不含表头），可直接粘贴到Excel", false);
+        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）, false);
     });
 }
 
