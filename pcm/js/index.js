@@ -646,10 +646,8 @@ function copyToExcel() {
         return;
     }
 
-    // ===== 构建 HTML 表格（带字体样式，居中对齐） =====
     let html = `<table style="font-family:'Times New Roman';font-size:10pt;text-align:center;border-collapse:collapse;width:auto;">`;
     
-    // 只生成数据行，不加表头
     rows.forEach(tr => {
         html += '<tr>';
         const cells = tr.querySelectorAll("td");
@@ -658,14 +656,15 @@ function copyToExcel() {
             const inp = cell.querySelector("input,textarea");
             if (inp) v = inp.value || "";
             else v = cell.textContent || "";
-            v = v.replace(/\r?\n/g, "");
-            html += `<td style="border:1px solid black;padding:2px 6px;text-align:center;vertical-align:middle;">${v}</td>`;
+            // 换行符转 &#10;（Excel HTML 换行）
+            v = v.replace(/\n/g, "&#10;").replace(/\r/g, "");
+            html += `<td style="border:1px solid black;padding:2px 6px;text-align:center;vertical-align:middle;white-space:pre-wrap;mso-wrap-text:yes;">${v}</td>`;
         });
         html += '</tr>';
     });
     html += '</table>';
 
-    // ===== 纯文本版本（作为 fallback，也不含表头） =====
+    // 纯文本 fallback
     let text = "";
     rows.forEach(tr => {
         const cells = tr.querySelectorAll("td");
@@ -675,12 +674,11 @@ function copyToExcel() {
             const inp = cell.querySelector("input,textarea");
             if (inp) v = inp.value || "";
             else v = cell.textContent || "";
-            rowData.push(v.replace(/\r?\n/g, ""));
+            rowData.push(v);
         });
         text += rowData.join("\t") + "\r\n";
     });
 
-    // ===== 使用 Clipboard API 同时写入 HTML 和纯文本 =====
     const blobHtml = new Blob([html], { type: 'text/html' });
     const blobText = new Blob([text], { type: 'text/plain' });
     
@@ -694,9 +692,8 @@ function copyToExcel() {
         const pipeEnd = document.getElementById("pipeEnd").value.trim();
         const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
         logUserAction('copy', { pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '', pipeLength: totalDist });
-        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）", false);
+        showTip("已复制到剪贴板，可直接在excel中粘贴", false);
     }).catch(() => {
-        // 如果 Clipboard API 失败（比如浏览器不支持），回退到纯文本
         const ta = document.createElement("textarea");
         ta.value = text;
         ta.style.position = "fixed";
@@ -705,7 +702,7 @@ function copyToExcel() {
         ta.select();
         document.execCommand("copy");
         document.body.removeChild(ta);
-        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）", false);
+        showTip("已复制到剪贴板", false);
     });
 }
 
@@ -719,7 +716,7 @@ function exportToExcel() {
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
 <x:Name>检测数据</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
-</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>td,th{font-family:'Times New Roman';font-size:10pt;text-align:center;vertical-align:middle;border:1px solid black;}</style></head>
+</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>td,th{font-family:'Times New Roman';font-size:10pt;text-align:center;vertical-align:middle;border:1px solid black;white-space:pre-wrap;mso-wrap-text:yes;}</style></head>
 <body><table>`;
     html += '<tr><th>序号</th><th>距离(m)</th><th>数据1(mA)</th><th>地形地貌</th><th>埋深(m)</th><th>破损点编号</th><th>db值</th><th>破损分级</th><th>坐标</th><th>位置描述</th></tr>';
     rows.forEach(tr => {
