@@ -658,7 +658,7 @@ function copyToExcel() {
             const inp = cell.querySelector("input,textarea");
             if (inp) v = inp.value || "";
             else v = cell.textContent || "";
-            v = v.replace(/\n/g, "&#10;").replace(/\r/g, "");
+            v = v.replace(/\r?\n/g, "");
             html += `<td style="border:1px solid black;padding:2px 6px;text-align:center;vertical-align:middle;">${v}</td>`;
         });
         html += '</tr>';
