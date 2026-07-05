@@ -646,102 +646,253 @@ function copyToExcel() {
         return;
     }
 
-    // ===== 构建 HTML 表格（带字体样式，居中对齐） =====
     let html = `<table style="font-family:'Times New Roman';font-size:10pt;text-align:center;border-collapse:collapse;width:auto;">`;
-    
-    // 只生成数据行，不加表头
+
     rows.forEach(tr => {
-        html += '<tr>';
-        const cells = tr.querySelectorAll("td");
-        cells.forEach(cell => {
+        html += "<tr>";
+
+        tr.querySelectorAll("td").forEach(cell => {
+
             let v = "";
             const inp = cell.querySelector("input,textarea");
-            if (inp) v = inp.value || "";
-            else v = cell.textContent || "";
-            v = v.replace(/\r?\n/g, "\r\n");
-            //html += `<td style="border:1px solid black;padding:2px 6px;text-align:center;vertical-align:middle;">${v}</td>`;
+
+            if (inp) {
+                v = inp.value || "";
+            } else {
+                v = cell.textContent || "";
+            }
+
+            // HTML转义，防止< >等字符影响HTML
+            v = v
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            // 保留换行
+            v = v.replace(/\r?\n/g, "<br>");
+
             html += `<td style="border:1px solid black;padding:2px 6px;text-align:center;vertical-align:middle;white-space:pre-wrap;">${v}</td>`;
         });
-        html += '</tr>';
-    });
-    html += '</table>';
 
-    // ===== 纯文本版本（作为 fallback，也不含表头） =====
+        html += "</tr>";
+    });
+
+    html += "</table>";
+
+    // 纯文本
     let text = "";
+
     rows.forEach(tr => {
-        const cells = tr.querySelectorAll("td");
+
         const rowData = [];
-        cells.forEach(cell => {
+
+        tr.querySelectorAll("td").forEach(cell => {
+
             let v = "";
             const inp = cell.querySelector("input,textarea");
-            if (inp) v = inp.value || "";
-            else v = cell.textContent || "";
-            rowData.push(v.replace(/\r?\n/g, ""));
+
+            if (inp) {
+                v = inp.value || "";
+            } else {
+                v = cell.textContent || "";
+            }
+
+            rowData.push(v);
         });
+
         text += rowData.join("\t") + "\r\n";
     });
 
-    // ===== 使用 Clipboard API 同时写入 HTML 和纯文本 =====
-    const blobHtml = new Blob([html], { type: 'text/html' });
-    const blobText = new Blob([text], { type: 'text/plain' });
-    
+    const blobHtml = new Blob([html], { type: "text/html" });
+    const blobText = new Blob([text], { type: "text/plain" });
+
     navigator.clipboard.write([
         new ClipboardItem({
-            'text/html': blobHtml,
-            'text/plain': blobText
+            "text/html": blobHtml,
+            "text/plain": blobText
         })
     ]).then(() => {
+
         const pipeStart = document.getElementById("pipeStart").value.trim();
         const pipeEnd = document.getElementById("pipeEnd").value.trim();
         const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
-        logUserAction('copy', { pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '', pipeLength: totalDist });
-        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）", false);
+
+        logUserAction("copy", {
+            pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : "",
+            pipeLength: totalDist
+        });
+
+        showTip("已复制到剪贴板，可直接粘贴到Excel");
+
     }).catch(() => {
-        // 如果 Clipboard API 失败（比如浏览器不支持），回退到纯文本
+
         const ta = document.createElement("textarea");
         ta.value = text;
+
         ta.style.position = "fixed";
         ta.style.left = "-9999px";
+
         document.body.appendChild(ta);
+
         ta.select();
+
         document.execCommand("copy");
+
         document.body.removeChild(ta);
-        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）", false);
+
+        showTip("已复制到剪贴板，可直接粘贴到Excel");
     });
 }
-
 function exportToExcel() {
+
     const rows = document.querySelectorAll("#dataTable tbody tr");
-    if (rows.length === 0 || (rows.length === 1 && !rows[0].querySelector('td:nth-child(2) input'))) {
-        showTip('没有可导出的数据，请先生成表格', true);
+
+    if (rows.length === 0 || (rows.length === 1 && !rows[0].querySelector("td:nth-child(2) input"))) {
+        showTip("没有可导出的数据，请先生成表格", true);
         return;
     }
-    // 带边框样式
-    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
-<x:Name>检测数据</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
-</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>td,th{font-family:'Times New Roman';font-size:10pt;text-align:center;vertical-align:middle;border:1px solid black;}</style></head>
-<body><table>`;
-    html += '<tr><th>序号</th><th>距离(m)</th><th>数据1(mA)</th><th>地形地貌</th><th>埋深(m)</th><th>破损点编号</th><th>db值</th><th>破损分级</th><th>坐标</th><th>位置描述</th></tr>';
+
+    let html = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:x="urn:schemas-microsoft-com:office:excel"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+
+<meta charset="UTF-8">
+
+<!--[if gte mso 9]>
+
+<xml>
+
+<x:ExcelWorkbook>
+
+<x:ExcelWorksheets>
+
+<x:ExcelWorksheet>
+
+<x:Name>检测数据</x:Name>
+
+<x:WorksheetOptions>
+
+<x:DisplayGridlines/>
+
+</x:WorksheetOptions>
+
+</x:ExcelWorksheet>
+
+</x:ExcelWorksheets>
+
+</x:ExcelWorkbook>
+
+</xml>
+
+<![endif]-->
+
+<style>
+
+td,th{
+
+font-family:'Times New Roman';
+
+font-size:10pt;
+
+text-align:center;
+
+vertical-align:middle;
+
+border:1px solid black;
+
+white-space:pre-wrap;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<table>
+
+<tr>
+
+<th>序号</th>
+
+<th>距离(m)</th>
+
+<th>数据1(mA)</th>
+
+<th>地形地貌</th>
+
+<th>埋深(m)</th>
+
+<th>破损点编号</th>
+
+<th>db值</th>
+
+<th>破损分级</th>
+
+<th>坐标</th>
+
+<th>位置描述</th>
+
+</tr>
+`;
+
     rows.forEach(tr => {
-        html += '<tr>';
-        const cells = tr.querySelectorAll('td');
-        cells.forEach(cell => {
-            let val = '';
-            const inp = cell.querySelector('input,textarea');
-            if (inp) val = inp.value || '';
-            else val = cell.textContent || '';
+
+        html += "<tr>";
+
+        tr.querySelectorAll("td").forEach(cell => {
+
+            let val = "";
+
+            const inp = cell.querySelector("input,textarea");
+
+            if (inp) {
+                val = inp.value || "";
+            } else {
+                val = cell.textContent || "";
+            }
+
+            // HTML转义
+            val = val
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            // Excel单元格内换行
+            val = val.replace(/\r?\n/g, '<br style="mso-data-placement:same-cell;" />');
+
             html += `<td>${val}</td>`;
+
         });
-        html += '</tr>';
+
+        html += "</tr>";
+
     });
-    html += '</table></body></html>';
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+
+    html += "</table></body></html>";
+
+    const blob = new Blob(
+        [html],
+        {
+            type: "application/vnd.ms-excel;charset=utf-8"
+        }
+    );
+
     saveAs(blob, getExportFileName());
+
     const pipeStart = document.getElementById("pipeStart").value.trim();
     const pipeEnd = document.getElementById("pipeEnd").value.trim();
     const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
-    logUserAction('export', { pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '', pipeLength: totalDist });
+
+    logUserAction("export", {
+        pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : "",
+        pipeLength: totalDist
+    });
+
     showTip("导出成功");
 }
 
