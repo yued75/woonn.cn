@@ -694,7 +694,7 @@ function copyToExcel() {
         const pipeEnd = document.getElementById("pipeEnd").value.trim();
         const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
         logUserAction('copy', { pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '', pipeLength: totalDist });
-        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）", false);
+        showTip("已复制到剪贴板，可直接粘贴到Excel(不含表头)", false);
     }).catch(() => {
         // 如果 Clipboard API 失败（比如浏览器不支持），回退到纯文本
         const ta = document.createElement("textarea");
@@ -705,7 +705,7 @@ function copyToExcel() {
         ta.select();
         document.execCommand("copy");
         document.body.removeChild(ta);
-        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）", false);
+        showTip("已复制到剪贴板，可直接粘贴到Excel(不含表头)", false);
     });
 }
 
