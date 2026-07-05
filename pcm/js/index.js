@@ -649,6 +649,7 @@ function copyToExcel() {
     // ===== 构建 HTML 表格（带字体样式，居中对齐） =====
     let html = `<table style="font-family:'Times New Roman';font-size:10pt;text-align:center;border-collapse:collapse;width:auto;">`;
     
+    // 只生成数据行，不加表头
     rows.forEach(tr => {
         html += '<tr>';
         const cells = tr.querySelectorAll("td");
@@ -657,16 +658,16 @@ function copyToExcel() {
             const inp = cell.querySelector("input,textarea");
             if (inp) v = inp.value || "";
             else v = cell.textContent || "";
-            v = v.replace(/\r?\n/g, "");
+            v = v.replace(/\r?\n/g, "
+");
             html += `<td style="border:1px solid black;padding:2px 6px;text-align:center;vertical-align:middle;">${v}</td>`;
         });
         html += '</tr>';
     });
     html += '</table>';
 
-    // ===== 纯文本版本（用换行符分隔行） =====
+    // ===== 纯文本版本（作为 fallback，也不含表头） =====
     let text = "";
-    const rowDataArray = [];
     rows.forEach(tr => {
         const cells = tr.querySelectorAll("td");
         const rowData = [];
@@ -675,11 +676,11 @@ function copyToExcel() {
             const inp = cell.querySelector("input,textarea");
             if (inp) v = inp.value || "";
             else v = cell.textContent || "";
-            rowData.push(v.replace(/\r?\n/g, ""));
+            rowData.push(v.replace(/\r?\n/g, "
+"));
         });
-        rowDataArray.push(rowData.join("\t"));
+        text += rowData.join("\t") + "\r\n";
     });
-    text = rowDataArray.join("\n");  // 使用 \n 而不是 \r\n
 
     // ===== 使用 Clipboard API 同时写入 HTML 和纯文本 =====
     const blobHtml = new Blob([html], { type: 'text/html' });
@@ -713,7 +714,7 @@ function copyToExcel() {
 function exportToExcel() {
     const rows = document.querySelectorAll("#dataTable tbody tr");
     if (rows.length === 0 || (rows.length === 1 && !rows[0].querySelector('td:nth-child(2) input'))) {
-        showTip('数据都没有，你要导出啥？要先生成数据！', true);
+        showTip('没有可导出的数据，请先生成表格', true);
         return;
     }
     // 带边框样式
