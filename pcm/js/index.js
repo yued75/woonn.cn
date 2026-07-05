@@ -705,7 +705,7 @@ function copyToExcel() {
         ta.select();
         document.execCommand("copy");
         document.body.removeChild(ta);
-        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）, false);
+        showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）", false);
     });
 }
 
