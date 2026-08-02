@@ -64,9 +64,45 @@ body {
     border-radius: var(--radius-lg);
     flex-shrink: 0;
     height: 100%;
-    overflow-y: hidden;
+	overflow-y: auto;           /* 改为 auto，内容超出时显示滚动条 */
+    overflow-x: hidden;         /* 隐藏水平滚动条 */
     display: flex;
     flex-direction: column;
+	scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+/* 隐藏滚动条 - Chrome/Safari/Edge */
+.input-area::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+}
+
+/* 左侧设置区滚动条样式 - 与右侧保持一致 */
+.input-area::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.input-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.input-area::-webkit-scrollbar-thumb {
+    background: #3a3f4d;
+    border-radius: 10px;
+}
+
+.input-area::-webkit-scrollbar-thumb:hover {
+    background: #4a5060;
+}
+
+/* Firefox */
+.input-area {
+    scrollbar-width: thin;
+    scrollbar-color: #3a3f4d transparent;
 }
 
 .input-group {
@@ -145,15 +181,22 @@ input[type="number"] {
     background: var(--bg-primary);
     border: 1px solid var(--border);
     padding: 5px 8px;
-    height: 48px;
+    height: 54px;
     min-width: 100%;
-    resize: none;
+	resize: vertical;           /* 允许垂直拖动 */
+    overflow: auto;             /* 或 overflow: visible; */
     font-size: 10px;
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     outline: none;
     transition: all var(--transition);
-    overflow: hidden;
+	/* 隐藏滚动条 */
+    scrollbar-width: none;           /* Firefox */
+    -ms-overflow-style: none;        /* IE/Edge */
+}
+
+.textareayangshi::-webkit-scrollbar {
+    display: none;                   /* Chrome/Safari/Opera */
 }
 
 .textareayangshi:focus {
@@ -174,7 +217,7 @@ input[type="number"] {
 
 .operate-btn {
     flex: 1;
-    padding: 6px 0;
+    padding: 2px 0;
     background: var(--bg-tertiary);
     color: var(--text-secondary);
     border: 1px solid var(--border);
@@ -266,7 +309,7 @@ input[type="number"] {
     justify-content: center;
     align-items: center;
     gap: 10px;
-    padding: 6px 0;
+    padding: 4px 0;
     margin-bottom: 10px;
     font-size: 12px;
     color: var(--text-muted);
