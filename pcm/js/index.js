@@ -318,29 +318,18 @@ function getFileNameTime() {
 function getExportFileName() {
     const ps = document.getElementById("pipeStart").value.trim();
     const pe = document.getElementById("pipeEnd").value.trim();
-    return (ps && pe) ? `${ps}至${pe}检测数据.xlsx` : `检测数据_${getFileNameTime()}.xlsx`;
+    return (ps && pe) ? `${ps}至${pe}检测数据.xls` : `检测数据_${getFileNameTime()}.xls`;
 }
 
 function parseSpecialPoints() {
     const input = document.getElementById("specialPoints").value.trim();
     if (!input) return [];
-    
     const points = [];
-    // 统一分隔符：空格、中英文逗号、中英文分号、中英文冒号
-    const separator = /[ ,，;；:：\s]+/;
-    
-    // 先按分隔符分割所有项
-    const items = input.split(separator).filter(item => item.trim() !== '');
-    
-    // 每两个一组：距离和标签（成对读取）
-    for (let i = 0; i < items.length; i += 2) {
-        const d = parseInt(items[i]);
-        if (!isNaN(d) && d > 0) {
-            const label = (i + 1 < items.length) ? items[i + 1] : "";
-            points.push({ d, l: label });
-        }
-    }
-    
+    input.split(/[ ,，]+/).forEach(item => {
+        const [dStr, label] = item.split(/[:：]/);
+        const d = parseInt(dStr);
+        if (!isNaN(d) && d > 0) points.push({ d, l: label || "" });
+    });
     return points.sort((a, b) => a.d - b.d);
 }
 
@@ -642,30 +631,9 @@ function deleteCurrentRow() {
 function copyToExcel() {
     const rows = document.querySelectorAll("#dataTable tbody tr");
     if (rows.length === 0 || (rows.length === 1 && !rows[0].querySelector('td:nth-child(2) input'))) {
-        showTip('数据都没有，你复制个嘚儿，需要先生成！', true);
+        showTip('没有可复制的数据，请先生成表格', true);
         return;
     }
-
-    // ===== 构建 HTML 表格（带字体样式，居中对齐） =====
-    let html = `<table style="font-family:'Times New Roman';font-size:10pt;text-align:center;border-collapse:collapse;width:auto;">`;
-    
-    // 只生成数据行，不加表头
-    rows.forEach(tr => {
-        html += '<tr>';
-        const cells = tr.querySelectorAll("td");
-        cells.forEach(cell => {
-            let v = "";
-            const inp = cell.querySelector("input,textarea");
-            if (inp) v = inp.value || "";
-            else v = cell.textContent || "";
-            v = v.replace(/\r?\n/g, " ");//和导出保持一致
-            html += `<td style="border:1px solid black;padding:2px 6px;text-align:center;vertical-align:middle;">${v}</td>`;
-        });
-        html += '</tr>';
-    });
-    html += '</table>';
-
-    // ===== 纯文本版本（作为 fallback，也不含表头） =====
     let text = "";
     rows.forEach(tr => {
         const cells = tr.querySelectorAll("td");
@@ -675,38 +643,18 @@ function copyToExcel() {
             const inp = cell.querySelector("input,textarea");
             if (inp) v = inp.value || "";
             else v = cell.textContent || "";
-            rowData.push(v.replace(/\r?\n/g, " "));//和导出保持一致
+            rowData.push(v.replace(/\r?\n/g, ""));
         });
         text += rowData.join("\t") + "\r\n";
     });
-
-    // ===== 使用 Clipboard API 同时写入 HTML 和纯文本 =====
-    const blobHtml = new Blob([html], { type: 'text/html' });
-    const blobText = new Blob([text], { type: 'text/plain' });
-    
-    navigator.clipboard.write([
-        new ClipboardItem({
-            'text/html': blobHtml,
-            'text/plain': blobText
-        })
-    ]).then(() => {
-        const pipeStart = document.getElementById("pipeStart").value.trim();
-        const pipeEnd = document.getElementById("pipeEnd").value.trim();
-        const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
-        logUserAction('copy', { pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '', pipeLength: totalDist });
-        showTip("已复制到剪贴板，可直接粘贴到Excel(不含表头)", false);
-    }).catch(() => {
-        // 如果 Clipboard API 失败（比如浏览器不支持），回退到纯文本
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.left = "-9999px";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        showTip("已复制到剪贴板，可直接粘贴到Excel(不含表头)", false);
-    });
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    const pipeStart = document.getElementById("pipeStart").value.trim();
+    const pipeEnd = document.getElementById("pipeEnd").value.trim();
+    const totalDist = parseInt(document.getElementById("totalDistance").value) || 0;
+    logUserAction('copy', { pipeName: pipeStart && pipeEnd ? `${pipeStart}至${pipeEnd}` : '', pipeLength: totalDist });
+    showTip("已复制到剪贴板，可直接在excel中粘贴（不含表头，直接匹配单元格）");
 }
 
 function exportToExcel() {
@@ -1009,4 +957,147 @@ window.onload = function () {
 
     bindLoginEvent();
     bindLogoutEvent();
+	initThemeToggle();
 };
+// ==================== 主题切换功能 ====================
+function initThemeToggle() {
+    const toggleBtn = document.getElementById('themeToggleBtn');
+    if (!toggleBtn) {
+        console.warn('主题切换按钮未找到');
+        return;
+    }
+
+    console.log('主题切换按钮已找到，初始化中...');
+
+    // 检查本地存储的主题偏好
+    let currentTheme = localStorage.getItem('pcmTheme') || 'dark';
+    
+    // 应用主题函数
+    function applyTheme(theme) {
+        const root = document.documentElement;
+        
+        // 更新按钮图标
+        const icon = toggleBtn.querySelector('i');
+        if (icon) {
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';      // 深色模式显示太阳
+            } else {
+                icon.className = 'fas fa-moon';     // 浅色模式显示月亮
+            }
+        }
+
+        // 更新data属性
+        root.setAttribute('data-theme', theme);
+        currentTheme = theme;
+        localStorage.setItem('pcmTheme', theme);
+
+        // 更新动态样式
+        updateDynamicStyles(theme);
+    }
+
+    // 更新动态样式
+    function updateDynamicStyles(theme) {
+        const styleId = 'theme-dynamic-style';
+        let styleEl = document.getElementById(styleId);
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = styleId;
+            document.head.appendChild(styleEl);
+        }
+
+        if (theme === 'light') {
+            // 浅色模式：覆盖CSS样式
+            styleEl.textContent = `
+                /* 浅色模式 - 覆盖深色CSS */
+                :root {
+                    --bg-primary: #f0f2f5 !important;
+                    --bg-secondary: #ffffff !important;
+                    --bg-tertiary: #f5f6fa !important;
+                    --bg-card: #ffffff !important;
+                    --border: #d0d5dd !important;
+                    --border-light: #e4e7ed !important;
+                    --text-primary: #1a1a2e !important;
+                    --text-secondary: #4a4a6a !important;
+                    --text-muted: #8a8aa8 !important;
+                    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+                    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+                }
+                
+                /* 登录卡片 */
+                .login-card:hover { box-shadow: 0 12px 30px rgba(79, 125, 243, 0.12) !important; }
+                
+                /* 输入框聚焦 */
+                .search-box input:focus, .filters input:focus, .filters select:focus,
+                #loginUsername:focus, .input-item input:focus, .textareayangshi:focus {
+                    border-color: var(--accent-blue-soft) !important;
+                    box-shadow: 0 0 0 3px rgba(79, 125, 243, 0.12) !important;
+                    background: #ffffff !important;
+                }
+                
+                /* 表格输入框 */
+                .data-table td input, .data-table td textarea {
+                    color-scheme: light !important;
+                }
+                
+                /* 日期选择器 */
+                .filters input[type="date"]::-webkit-calendar-picker-indicator {
+                    filter: none !important;
+                }
+                .filters input[type="date"] {
+                    color-scheme: light !important;
+                }
+                
+                /* 操作按钮悬停 - 浅色模式 */
+                .operate-btn:hover {
+                    background: #e8eaee !important;
+                    border-color: #b8bcc8 !important;
+                    color: #1a1a2e !important;
+                }
+                
+                /* 主题切换按钮 - 浅色模式 */
+                .theme-toggle-btn {
+                    background: rgba(0, 0, 0, 0.05) !important;
+                    border-color: #d0d5dd !important;
+                    color: #4a4a6a !important;
+                }
+                .theme-toggle-btn:hover {
+                    background: rgba(0, 0, 0, 0.08) !important;
+                    color: #1a1a2e !important;
+                }
+                
+                /* 左侧功能区选择框箭头 */
+                .input-item select {
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234a4a6a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+                }
+                .input-item select option {
+                    background: #ffffff !important;
+                    color: #1a1a2e !important;
+                }
+            `;
+        } else {
+            // 深色模式：清空所有覆盖，完全使用CSS中的样式
+            styleEl.textContent = '';
+        }
+    }
+
+    // 切换主题
+    function toggleTheme() {
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        console.log('切换主题到:', newTheme);
+        applyTheme(newTheme);
+        
+        // 显示提示
+        showTip(`已切换到${newTheme === 'light' ? '浅色' : '深色'}主题`, false);
+    }
+
+    // 绑定点击事件
+    toggleBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('主题切换按钮被点击');
+        toggleTheme();
+    });
+
+    // 初始应用主题
+    applyTheme(currentTheme);
+    console.log('主题初始化完成，当前主题:', currentTheme);
+}
