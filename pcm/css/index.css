@@ -115,7 +115,19 @@ body {
     color: var(--text-primary);
     outline: none;
     transition: all var(--transition);
-    color-scheme: dark;            /* 使数字微调箭头变为暗色 */
+    /* color-scheme: dark;            使数字微调箭头变为暗色 */
+}
+
+/* 隐藏所有数字输入框的箭头（全局） */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield !important; /* Firefox */
+    appearance: textfield !important;
 }
 
 .input-item input:focus {
