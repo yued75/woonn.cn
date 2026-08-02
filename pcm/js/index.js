@@ -277,6 +277,22 @@ function initSystemEvents() {
     document.querySelectorAll('.input-area input, .input-area textarea').forEach(el => {
         el.addEventListener('input', debounceSaveAndStats);
     });
+	// ===== 新增：监听 specialPoints textarea 的 resize 事件 =====
+    const specialPoints = document.getElementById('specialPoints');
+    if (specialPoints) {
+        // 使用 ResizeObserver 更可靠（支持拖动和自动调整）
+        if (window.ResizeObserver) {
+            const resizeObserver = new ResizeObserver(function() {
+                saveTableData();
+            });
+            resizeObserver.observe(specialPoints);
+        } else {
+            // 降级方案：监听 mouseup 事件（拖动结束后保存）
+            specialPoints.addEventListener('mouseup', function() {
+                saveTableData();
+            });
+        }
+    }
 }
 
 // ==================== 禁用右键和F12 ====================
@@ -792,7 +808,9 @@ function saveTableData() {
             pipeStart: document.getElementById('pipeStart').value,
             pipeEnd: document.getElementById('pipeEnd').value,
             defaultTerrain: document.getElementById('defaultTerrain').value,
-            specialPoints: document.getElementById('specialPoints').value
+            specialPoints: document.getElementById('specialPoints').value,
+			// 新增：保存 textarea 高度
+            specialPointsHeight: document.getElementById('specialPoints').style.height || ''
         },
         rows: []
     };
@@ -839,6 +857,10 @@ function restoreTableData() {
             document.getElementById('pipeEnd').value = p.pipeEnd || '';
             document.getElementById('defaultTerrain').value = p.defaultTerrain || '';
             document.getElementById('specialPoints').value = p.specialPoints || '';
+			// 新增：恢复 textarea 高度
+            if (p.specialPointsHeight) {
+                document.getElementById('specialPoints').style.height = p.specialPointsHeight;
+            }
         }
         const tbody = document.querySelector('#dataTable tbody');
         tbody.innerHTML = '';
