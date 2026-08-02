@@ -266,6 +266,7 @@ function initSystemEvents() {
     document.getElementById("generateBtn").onclick = generateBaseData;
     document.getElementById("copyToExcelBtn").onclick = copyToExcel;
     document.getElementById("exportExcelBtn").onclick = exportToExcel;
+	document.getElementById("clearBtn").onclick = clearAllData;  // ← 新增清空
     bindContextMenu();
     document.getElementById("insertBefore").onclick = () => { insertRow(currentRow, "before"); document.getElementById("contextMenu").style.display = "none"; };
     document.getElementById("insertAfter").onclick = () => { insertRow(currentRow, "after"); document.getElementById("contextMenu").style.display = "none"; };
@@ -750,6 +751,31 @@ function showTip(msg, isError = false) {
     b.style.display = "block";
     isError ? b.classList.add("error-tip") : b.classList.remove("error-tip");
     setTimeout(() => b.style.display = "none", isError ? 8000 : 5000);
+}
+
+// ==================== 清空所有数据 ====================
+function clearAllData() {
+        // 清空左侧所有输入框和文本域
+    document.querySelectorAll('#systemMain .input-area input, #systemMain .input-area textarea').forEach(el => {
+        el.value = '';
+    });
+    
+    // 清空右侧表格
+    const tbody = document.querySelector('#dataTable tbody');
+    if (tbody) tbody.innerHTML = '';
+    
+    // 重置统计提示
+    const tip = document.querySelector('.preview-tip');
+    if (tip) tip.innerHTML = '使用说明：序号不可编辑，其余均可编辑。更改电流列数据会导致后续电流同步更改。右键可插入/删除行。';
+    
+    // 清除保存的数据
+    localStorage.removeItem('pcmSavedData');
+    
+    // 重置变量
+    currentRow = null;
+    selectedRows = new Set();
+    
+    showTip('已清空所有数据', false);
 }
 
 // ==================== 保存/恢复/统计/编号 ====================
