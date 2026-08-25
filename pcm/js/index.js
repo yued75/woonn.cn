@@ -8,6 +8,7 @@ let currentUsername = null;
 const SESSION_TIMEOUT = 720 * 60 * 1000;
 let isRestoring = false;       // 恢复数据标志，防止保存/联动
 let saveTimeout;               // 防抖定时器
+let isLoggingOut = false;   // 退出登录标志，阻止清空时的保存
 
 // Supabase 初始化及日志记录辅助函数
 const SUPABASE_URL = 'https://khertrygeuybdfpurnjd.supabase.co';
@@ -236,8 +237,10 @@ function bindLogoutEvent() {
         logoutLink.onclick = async function () {
             logUserAction('logout');
             clearLoginState();
-            // 清除保存的数据和标记
-            localStorage.removeItem('pcmSavedData');
+            // 设置退出标志，防止清空操作触发保存
+            isLoggingOut = true;
+            // 清除清空标记，但不删除数据，以便恢复按钮可用
+            localStorage.removeItem('pcmDataCleared');
             sessionStorage.removeItem('pageOpened');
             
             // 清空表格 DOM
@@ -267,6 +270,15 @@ function initSystemEvents() {
     document.getElementById("copyToExcelBtn").onclick = copyToExcel;
     document.getElementById("exportExcelBtn").onclick = exportToExcel;
 	document.getElementById("clearBtn").onclick = clearAllData;  // ← 新增清空
+	// ⭐ 为恢复按钮绑定点击事件（若使用右侧预览区按钮 id="restoreBtn"）
+    document.getElementById("restoreBtn").onclick = function() {
+        const restored = restoreTableData();
+        if (restored) {
+            showTip('数据已恢复', false);
+        } else {
+            showTip('没有可恢复的数据', true);
+        }
+    };
     bindContextMenu();
     document.getElementById("insertBefore").onclick = () => { insertRow(currentRow, "before"); document.getElementById("contextMenu").style.display = "none"; };
     document.getElementById("insertAfter").onclick = () => { insertRow(currentRow, "after"); document.getElementById("contextMenu").style.display = "none"; };
@@ -771,32 +783,39 @@ function showTip(msg, isError = false) {
 
 // ==================== 清空所有数据 ====================
 function clearAllData() {
-        // 清空左侧所有输入框和文本域
+    // 清空左侧所有输入框和文本域
     document.querySelectorAll('#systemMain .input-area input, #systemMain .input-area textarea').forEach(el => {
         el.value = '';
     });
-    
+	
     // 清空右侧表格
     const tbody = document.querySelector('#dataTable tbody');
     if (tbody) tbody.innerHTML = '';
-    
+	
     // 重置统计提示
     const tip = document.querySelector('.preview-tip');
     if (tip) tip.innerHTML = '使用说明：序号不可编辑，其余均可编辑。更改电流列数据会导致后续电流同步更改。右键可插入/删除行。';
-    
-    // 清除保存的数据
-    localStorage.removeItem('pcmSavedData');
-    
+	
     // 重置变量
     currentRow = null;
     selectedRows = new Set();
-    
-    showTip('已清空所有数据', false);
+
+    // ⭐ 关键修改：仅标记清空，不删除本地存储的数据
+    localStorage.setItem('pcmDataCleared', 'true');
+
+    showTip('已清空界面，如误操作可点击“恢复”按钮还原。', false);
 }
 
 // ==================== 保存/恢复/统计/编号 ====================
 function saveTableData() {
     if (isRestoring) return;
+	if (isLoggingOut) return;
+	// ⭐ 新增：如果处于“清空”状态，禁止保存，防止覆盖数据
+    if (localStorage.getItem('pcmDataCleared') === 'true') return;
+	
+	// ⭐ 只要保存新数据，就清除“清空”标记，以便下次自动恢复
+    localStorage.removeItem('pcmDataCleared');
+	
     const data = {
         params: {
             totalDistance: document.getElementById('totalDistance').value,
@@ -889,8 +908,10 @@ function restoreTableData() {
             // 强制格式化埋深
             tbody.querySelectorAll('td:nth-child(5) input').forEach(inp => formatBurialInput(inp));
             // 恢复后直接使用存储的编号和分级，不重新自动分配，但需调用一次保存以同步状态
-            saveTableData();
+            //saveTableData();
             updateStatistics();
+			// ⭐ 新增：清除清空标记，使下次刷新自动恢复
+            localStorage.removeItem('pcmDataCleared');
         }
         return true;
     } catch(e) {
@@ -1031,19 +1052,21 @@ function bindTableEvents() {
 // ==================== 页面启动 ====================
 window.onload = function () {
     preventDevTools();
-
     const loginState = loadLoginState();
     if (loginState) {
         currentUsername = loginState.username;
         currentUserInfo = { expire: loginState.expire, type: loginState.type };
         
-        if (!sessionStorage.getItem('pageOpened')) {
-            localStorage.removeItem('pcmSavedData');
+        // ⭐ 根据清空标记决定是否自动恢复
+        if (localStorage.getItem('pcmDataCleared') === 'true') {
+            // 处于清空状态：不自动恢复，但数据仍在 localStorage
             sessionStorage.setItem('pageOpened', '1');
         } else {
+            // 正常状态：尝试恢复数据（如果存在）
             restoreTableData();
+            sessionStorage.setItem('pageOpened', '1');
         }
-        
+
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('systemMain').style.display = 'flex';
         updateUserInfoDisplay();
@@ -1054,12 +1077,12 @@ window.onload = function () {
         document.getElementById('loginPage').style.display = 'flex';
         document.getElementById('systemMain').style.display = 'none';
     }
-
     bindLoginEvent();
     bindLogoutEvent();
 	// ========== 初始化主题切换 ==========
     initThemeToggle();
 };
+
 // ==================== 主题切换功能 ====================
 function initThemeToggle() {
     const toggleBtn = document.getElementById('themeToggleBtn');
