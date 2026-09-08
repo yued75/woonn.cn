@@ -10,6 +10,191 @@ let isRestoring = false;       // 恢复数据标志，防止保存/联动
 let saveTimeout;               // 防抖定时器
 let isLoggingOut = false;   // 退出登录标志，阻止清空时的保存
 
+// ========== 撤销/重做系统 ==========
+const HISTORY_KEY = 'pcmUndoRedoHistory';
+const MAX_HISTORY = 100;
+let undoStack = [];
+let redoStack = [];
+let isUndoRedo = false;
+let historyTimer = null;
+
+// 保存历史栈到 localStorage
+function saveHistory() {
+    try {
+        const history = {
+            undoStack: undoStack,
+            redoStack: redoStack
+        };
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch (e) {
+        // 可能超过存储限制，静默忽略
+        console.warn('历史栈保存失败:', e);
+    }
+}
+
+// 从 localStorage 加载历史栈
+function loadHistory() {
+    try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        if (raw) {
+            const history = JSON.parse(raw);
+            if (history.undoStack && Array.isArray(history.undoStack)) {
+                undoStack = history.undoStack;
+            }
+            if (history.redoStack && Array.isArray(history.redoStack)) {
+                redoStack = history.redoStack;
+            }
+            return true;
+        }
+    } catch (e) {
+        console.warn('历史栈加载失败:', e);
+    }
+    return false;
+}
+
+// 获取当前完整状态快照（与 saveTableData 格式完全一致）
+function getCurrentSnapshot() {
+    const data = {
+        params: {
+            totalDistance: document.getElementById('totalDistance').value,
+            outputCurrent: document.getElementById('outputCurrent').value,
+            data1Max: document.getElementById('data1Max').value,
+            data1Min: document.getElementById('data1Min').value,
+            burialMax: document.getElementById('burialMax').value,
+            burialMin: document.getElementById('burialMin').value,
+            pipeStart: document.getElementById('pipeStart').value,
+            pipeEnd: document.getElementById('pipeEnd').value,
+            defaultTerrain: document.getElementById('defaultTerrain').value,
+            specialPoints: document.getElementById('specialPoints').value,
+            specialPointsHeight: document.getElementById('specialPoints').style.height || ''
+        },
+        rows: []
+    };
+    const tbody = document.querySelector('#dataTable tbody');
+    if (tbody) {
+        tbody.querySelectorAll('tr').forEach(tr => {
+            const cells = tr.querySelectorAll('td');
+            const rowData = {};
+            const distInput = cells[1]?.querySelector('input');
+            rowData.distance = distInput ? distInput.value : '';
+            const data1Input = cells[2]?.querySelector('input');
+            rowData.data1 = data1Input ? data1Input.value : '';
+            const terrainInput = cells[3]?.querySelector('input');
+            rowData.terrain = terrainInput ? terrainInput.value : '';
+            const burialInput = cells[4]?.querySelector('input');
+            rowData.burial = burialInput ? burialInput.value : '';
+            rowData.defectNo = cells[5]?.textContent.trim() || '';
+            const dbInput = cells[6]?.querySelector('input');
+            rowData.db = dbInput ? dbInput.value : '';
+            rowData.grade = cells[7]?.textContent.trim() || '';
+            const coordTextarea = cells[8]?.querySelector('textarea');
+            rowData.coord = coordTextarea ? coordTextarea.value : '';
+            const descInput = cells[9]?.querySelector('input');
+            rowData.description = descInput ? descInput.value : '';
+            data.rows.push(rowData);
+        });
+    }
+    return data;
+}
+
+// 从快照恢复界面
+function restoreFromSnapshot(snapshot) {
+    isUndoRedo = true;
+    // 恢复参数
+    const p = snapshot.params;
+    document.getElementById('totalDistance').value = p.totalDistance || '';
+    document.getElementById('outputCurrent').value = p.outputCurrent || '';
+    document.getElementById('data1Max').value = p.data1Max || '';
+    document.getElementById('data1Min').value = p.data1Min || '';
+    document.getElementById('burialMax').value = p.burialMax || '';
+    document.getElementById('burialMin').value = p.burialMin || '';
+    document.getElementById('pipeStart').value = p.pipeStart || '';
+    document.getElementById('pipeEnd').value = p.pipeEnd || '';
+    document.getElementById('defaultTerrain').value = p.defaultTerrain || '';
+    document.getElementById('specialPoints').value = p.specialPoints || '';
+    if (p.specialPointsHeight) {
+        document.getElementById('specialPoints').style.height = p.specialPointsHeight;
+    }
+
+    // 恢复表格
+    const tbody = document.querySelector('#dataTable tbody');
+    tbody.innerHTML = '';
+    if (snapshot.rows && Array.isArray(snapshot.rows)) {
+        const totalDist = parseFloat(p.totalDistance) || 0;
+        snapshot.rows.forEach((row, idx) => {
+            const tr = document.createElement('tr');
+            const is0 = row.distance == '0';
+            const isLast = parseFloat(row.distance) === totalDist;
+            tr.innerHTML = `<td>${idx+1}</td>
+                <td><input type="number" value="${row.distance || ''}"></td>
+                <td><input type="number" class="data1-input" data-distance="${row.distance || ''}" value="${row.data1 || ''}" onchange="onData1Change(this)"></td>
+                <td><input type="text" class="terrain-input" data-distance="${row.distance || ''}" value="${row.terrain || ''}" onchange="onTerrainChange(this)"></td>
+                <td><input type="number" step="0.01" value="${row.burial || ''}" onchange="onBurialChange(this)"></td>
+                <td class="defectno-cell">${row.defectNo || ''}</td>
+                <td><input type="text" class="db-input" value="${row.db || ''}" data-old-value="${row.db || ''}"></td>
+                <td class="grade-cell">${row.grade || ''}</td>
+                <td><textarea class="coord-input">${row.coord || ''}</textarea></td>
+                <td><input type="text" value="${row.description || ''}"></td>`;
+            if (is0) tr.classList.add('zero-data-row');
+            if (isLast) tr.classList.add('last-data-row');
+            tbody.appendChild(tr);
+        });
+        // 格式化埋深
+        tbody.querySelectorAll('td:nth-child(5) input').forEach(inp => formatBurialInput(inp));
+        autoAssignDefectNumbers();
+        updateStatistics();
+    }
+    isUndoRedo = false;
+    // 持久化保存最新状态
+    saveTableData();
+}
+
+// 将当前状态压入撤销栈
+function pushHistory() {
+    if (isUndoRedo) return;
+    const snapshot = getCurrentSnapshot();
+    undoStack.push(snapshot);
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack = []; // 新操作清空重做栈
+	saveHistory();
+}
+
+// 防抖压入历史（用于输入框连续修改）
+function pushHistoryDebounced() {
+    clearTimeout(historyTimer);
+    historyTimer = setTimeout(() => {
+        pushHistory();
+    }, 200);
+}
+
+// 撤销
+function undo() {
+    if (undoStack.length === 0) {
+        showTip('没有可撤销的操作', true);
+        return;
+    }
+    const current = getCurrentSnapshot();
+    redoStack.push(current);
+    const prev = undoStack.pop();
+    restoreFromSnapshot(prev);
+	saveHistory();
+    showTip('撤销成功', false);
+}
+
+// 重做
+function redo() {
+    if (redoStack.length === 0) {
+        showTip('没有可重做的操作', true);
+        return;
+    }
+    const current = getCurrentSnapshot();
+    undoStack.push(current);
+    const next = redoStack.pop();
+    restoreFromSnapshot(next);
+	saveHistory();
+    showTip('重做成功', false);
+}
+
 // Supabase 初始化及日志记录辅助函数
 const SUPABASE_URL = 'https://khertrygeuybdfpurnjd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoZXJ0cnlnZXV5YmRmcHVybmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNTU1NDQsImV4cCI6MjA5MjgzMTU0NH0.t480oRiCKjIQ6fAEj-tfSy3QW6M6DZJlsEym66xw4Yg';
@@ -158,6 +343,9 @@ function clearLoginState() {
     localStorage.removeItem('pcmLoginState');
     currentUserInfo = null;
     currentUsername = null;
+	localStorage.removeItem(HISTORY_KEY);
+	undoStack = [];
+	redoStack = [];
 }
 
 function loadLoginState() {
@@ -260,6 +448,9 @@ function bindLogoutEvent() {
             document.getElementById('systemMain').style.display = 'none';
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginTip').style.display = 'none';
+			localStorage.removeItem(HISTORY_KEY);
+			undoStack = [];
+			redoStack = [];
         };
     }
 }
@@ -270,21 +461,33 @@ function initSystemEvents() {
     document.getElementById("copyToExcelBtn").onclick = copyToExcel;
     document.getElementById("exportExcelBtn").onclick = exportToExcel;
 	document.getElementById("clearBtn").onclick = clearAllData;  // ← 新增清空
-	// ⭐ 为恢复按钮绑定点击事件（若使用右侧预览区按钮 id="restoreBtn"）
-    document.getElementById("restoreBtn").onclick = function() {
-        const restored = restoreTableData();
-        if (restored) {
-            showTip('数据已恢复', false);
-        } else {
-            showTip('没有可恢复的数据', true);
-        }
-    };
     bindContextMenu();
     document.getElementById("insertBefore").onclick = () => { insertRow(currentRow, "before"); document.getElementById("contextMenu").style.display = "none"; };
     document.getElementById("insertAfter").onclick = () => { insertRow(currentRow, "after"); document.getElementById("contextMenu").style.display = "none"; };
     document.getElementById("deleteRow").onclick = deleteCurrentRow;
 
     bindTableEvents();
+	
+	// 绑定撤销/重做按钮（需要在 HTML 中添加 id="undoBtn" 和 id="redoBtn" 的按钮）
+	const undoBtn = document.getElementById('undoBtn');
+	const redoBtn = document.getElementById('redoBtn');
+	if (undoBtn) undoBtn.onclick = undo;
+	if (redoBtn) redoBtn.onclick = redo;
+
+	// 键盘快捷键
+	document.addEventListener('keydown', function(e) {
+		if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+			if (e.shiftKey) {
+				redo();
+			} else {
+				undo();
+			}
+			e.preventDefault();
+		} else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+			redo();
+			e.preventDefault();
+		}
+	});
 
     document.querySelectorAll('.input-area input, .input-area textarea').forEach(el => {
         el.addEventListener('input', debounceSaveAndStats);
@@ -396,6 +599,7 @@ function getRandomInt(min, max) {
 
 // ==================== 核心：生成表格数据 ====================
 function generateBaseData() {
+	pushHistory();
     const outCur = parseInt(document.getElementById("outputCurrent").value) || 300;
     const totalDist = parseInt(document.getElementById("totalDistance").value);
     let maxVal = parseInt(document.getElementById("data1Max").value) || null;
@@ -628,6 +832,7 @@ function generateBaseData() {
 
 // ==================== 编辑电流后同步更新后续行 ====================
 function onData1Change(input) {
+	pushHistory();
     const modDist = parseInt(input.dataset.distance);
     const modVal = parseInt(input.value);
     const totalDist = parseInt(document.getElementById("totalDistance").value);
@@ -681,6 +886,7 @@ function onTerrainChange(input) {
 }*/
 //地形地貌不联动修改-如需联动取消上面同名函数注释并给本函数注释掉
 function onTerrainChange(input) {
+	pushHistory(); 
     // 只保存当前修改，并更新统计信息，不做任何自动同步
     saveTableData();
     updateStatistics();
@@ -703,6 +909,7 @@ function formatBurialInput(input) {
 
 //埋深手动修改时自动补齐两位小数，并确保末位非0
 function onBurialChange(input) {
+	pushHistory();
     let val = input.value.trim();
     if (val === '') return;
     let num = parseFloat(val);
@@ -738,6 +945,7 @@ function bindContextMenu() {
 }
 
 function insertRow(target, pos) {
+	pushHistory();
     const newRow = document.createElement("tr");
     const dis = getAutoDistance(target, pos);
     newRow.innerHTML = `<td>0</td>
@@ -772,6 +980,7 @@ function reorderSerialNumbers() {
 }
 
 function deleteCurrentRow() {
+	pushHistory();
     currentRow.remove();
     reorderSerialNumbers();
     autoAssignDefectNumbers();
@@ -896,6 +1105,7 @@ function showTip(msg, isError = false) {
 
 // ==================== 清空所有数据 ====================
 function clearAllData() {
+	pushHistory();
     // 清空左侧所有输入框和文本域
     document.querySelectorAll('#systemMain .input-area input, #systemMain .input-area textarea').forEach(el => {
         el.value = '';
@@ -915,20 +1125,17 @@ function clearAllData() {
 
     // ⭐ 关键修改：仅标记清空，不删除本地存储的数据
     localStorage.setItem('pcmDataCleared', 'true');
-
+	saveHistory();
     showTip('已清空界面，如误操作可点击“恢复”按钮还原。', false);
 }
 
 // ==================== 保存/恢复/统计/编号 ====================
 function saveTableData() {
     if (isRestoring) return;
-	if (isLoggingOut) return;
-	// ⭐ 新增：如果处于“清空”状态，禁止保存，防止覆盖数据
-    if (localStorage.getItem('pcmDataCleared') === 'true') return;
-	
-	// ⭐ 只要保存新数据，就清除“清空”标记，以便下次自动恢复
+    if (isLoggingOut) return;
+    // 移除清空标记，允许保存
     localStorage.removeItem('pcmDataCleared');
-	
+
     const data = {
         params: {
             totalDistance: document.getElementById('totalDistance').value,
@@ -941,7 +1148,6 @@ function saveTableData() {
             pipeEnd: document.getElementById('pipeEnd').value,
             defaultTerrain: document.getElementById('defaultTerrain').value,
             specialPoints: document.getElementById('specialPoints').value,
-			// 新增：保存 textarea 高度
             specialPointsHeight: document.getElementById('specialPoints').style.height || ''
         },
         rows: []
@@ -1035,6 +1241,7 @@ function restoreTableData() {
 
 function debounceSaveAndStats() {
     clearTimeout(saveTimeout);
+    pushHistoryDebounced(); // 每次输入都记录历史（防抖）
     saveTimeout = setTimeout(() => {
         saveTableData();
         updateStatistics();
@@ -1177,6 +1384,7 @@ window.onload = function () {
         } else {
             // 正常状态：尝试恢复数据（如果存在）
             restoreTableData();
+			loadHistory();
             sessionStorage.setItem('pageOpened', '1');
         }
 
