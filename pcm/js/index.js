@@ -558,8 +558,8 @@ function parseSpecialPoints() {
     if (!input) return [];
     
     const points = [];
-    // 统一分隔符：空格、中英文分号、中英文冒号
-    const separator = /[ ;；:：\s]+/;
+    // 统一分隔符：空格、中英文分号、中英文冒号、顿号
+    const separator = /[ ;；:：、]+/;
     
     // 先按分隔符分割所有项
     const items = input.split(separator).filter(item => item.trim() !== '');
