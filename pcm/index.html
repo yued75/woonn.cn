@@ -37,7 +37,7 @@
             <div id="userInfoBar" class="user-info-bar">
                 <span id="displayUsername"></span>
                 <span id="displayExpire"></span>
-                <button id="adminLink" href="admin.html" target="_blank" class="operate-btn" style="display:none;"><i class="fas fa-cog"></i> 后台</button>	
+                <button id="adminLink" class="operate-btn" style="display:none;"><a class="info-link" href="admin.html" target="_blank"><i class="fas fa-cog"></i> 后台</a></button>	
 				<button id="themeToggleBtn" class="operate-btn" title="切换主题"><i class="fas fa-sun"></i> 主题</button>
                 <button id="logoutLink" href="javascript:void(0)" class="operate-btn"><i class="fas fa-sign-out-alt"></i> 退出</button>
 				<button class="operate-btn" id="restoreBtn"><i class="fas fa-undo"></i> 恢复</button>
@@ -64,8 +64,8 @@
             </div>
             <div class="input-group">
                 <h3>特殊点标记</h3>
-                <div class="special-point-group"><textarea class="textareayangshi" id="specialPoints" placeholder="例：11:左弯,42:三通,108:阀井
-如需多个请用逗号或空格隔开"></textarea></div>
+                <div class="special-point-group"><textarea class="textareayangshi" id="specialPoints" placeholder="例：11:左弯；42:三通 108:阀井
+如需多个请用空格或分号隔开"></textarea></div>
             </div>
             <div class="operate-area">
                 <button class="operate-btn" id="generateBtn"><i class="fas fa-magic"></i> 生成</button>
