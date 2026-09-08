@@ -355,8 +355,8 @@ function parseSpecialPoints() {
     if (!input) return [];
     
     const points = [];
-    // 统一分隔符：空格、中英文逗号、中英文分号、中英文冒号
-    const separator = /[ ,，;；:：\s]+/;
+    // 统一分隔符：空格、中英文分号、中英文冒号
+    const separator = /[ ;；:：\s]+/;
     
     // 先按分隔符分割所有项
     const items = input.split(separator).filter(item => item.trim() !== '');
@@ -406,6 +406,7 @@ function generateBaseData() {
     const pipeEnd = document.getElementById("pipeEnd").value.trim();
     const terrain = document.getElementById("defaultTerrain").value.trim() || "绿化带";
 
+    // 错误校验
     const errs = [];
     if (!totalDist || totalDist <= 0) errs.push("不填管段长度我怎么帮你生成？");
     if (maxVal !== null && minVal !== null && maxVal < minVal) errs.push("最大电流还比最小电流小？");
@@ -424,26 +425,105 @@ function generateBaseData() {
     else if (bMax !== null && bMin === null) bMin = parseFloat((bMax * 0.8).toFixed(2));
     else if (bMax === null && bMin !== null) bMax = parseFloat((bMin * 1.2).toFixed(2));
 
+    // 1. 解析特殊点
     const specials = parseSpecialPoints();
+
+    // 2. 分别提取穿越点和跨越点
+    const crossPoints = specials.filter(sp => sp.l.includes('穿越')).sort((a,b) => a.d - b.d);
+    const spanPoints = specials.filter(sp => sp.l.includes('跨越')).sort((a,b) => a.d - b.d);
+
+    // 生成穿越区间（带地形）
+    const crossPairs = [];
+    for (let i = 0; i < crossPoints.length - 1; i += 2) {
+        const startSp = crossPoints[i];
+        let terrainVal = terrain; // 默认
+        if (startSp.l.includes('河流')) {
+            terrainVal = '河流';
+        } else if (startSp.l.includes('水沟')) {
+            terrainVal = '水沟';
+        } else {
+            terrainVal = '车行道';
+        }
+        crossPairs.push({
+            start: startSp.d,
+            end: crossPoints[i+1].d,
+            terrain: terrainVal
+        });
+    }
+
+    // 生成跨越区间（仅用于跳过）
+    const spanPairs = [];
+    for (let i = 0; i < spanPoints.length - 1; i += 2) {
+        spanPairs.push({ start: spanPoints[i].d, end: spanPoints[i+1].d });
+    }
+
+    // 合并所有区间用于跳过（穿越+跨越）
+    const allPairs = [...crossPairs, ...spanPairs];
+
+    // 3. 构建所有可能的距离（0，终点，所有特殊点，20m倍数）
     let distSet = new Set([0, totalDist]);
     for (let d = 20; d < totalDist; d += 20) distSet.add(d);
     specials.forEach(sp => distSet.add(sp.d));
-    const distances = Array.from(distSet).sort((a, b) => a - b);
-    const valid20Distances = distances.filter(d => d > 0 && d < totalDist && d % 20 === 0);
 
+    // 4. 过滤最终行及数据点集合
+    const finalDistances = [];
+    const dataPointsSet = new Set(); // 需要生成电流/地形/埋深的点
+
+    distSet.forEach(d => {
+        // 起点终点始终保留
+        if (d === 0 || d === totalDist) {
+            finalDistances.push(d);
+            return;
+        }
+
+        // 特殊点（有用户标签）始终保留行
+        const sp = specials.find(x => x.d === d);
+        if (sp) {
+            finalDistances.push(d);
+            // 判断是否为需要数据的点：穿越 或 破损
+            if (sp.l.includes('穿越') || sp.l.includes('破损')) {
+                dataPointsSet.add(d);
+            }
+            // 跨越点不加入数据点集合
+            return;
+        }
+
+        // 非特殊点（即无标签的20m整数倍点）
+        // 检查是否落在任意一对区间内（穿越或跨越）
+        let inside = false;
+        for (let pair of allPairs) {
+            if (d > pair.start && d < pair.end) {
+                inside = true;
+                break;
+            }
+        }
+        if (!inside) {
+            finalDistances.push(d);
+            dataPointsSet.add(d);
+        }
+        // 否则跳过
+    });
+
+    finalDistances.sort((a, b) => a - b);
+
+    // 数据点列表（用于插值，排除0和终点）
+    const dataPoints = Array.from(dataPointsSet)
+        .filter(d => d > 0 && d < totalDist)
+        .sort((a, b) => a - b);
+
+    // ----- 电流插值（基于 dataPoints） -----
     let data1Map = {};
     let prevEffective = maxVal;
-
-    valid20Distances.forEach((d, idx) => {
+    dataPoints.forEach((d, idx) => {
         let newVal;
         if (idx === 0) {
             newVal = maxVal;
         } else {
-            const remaining = valid20Distances.length - idx;
+            const remaining = dataPoints.length - idx;
             const step = (prevEffective - minVal) / remaining;
             newVal = prevEffective - step;
             newVal += newVal * (Math.random() * 0.04 - 0.02);
-            if (idx === valid20Distances.length - 1) newVal = minVal;
+            if (idx === dataPoints.length - 1) newVal = minVal;
             else newVal = Math.max(newVal, minVal);
         }
         newVal = Math.round(newVal);
@@ -451,8 +531,9 @@ function generateBaseData() {
         prevEffective = newVal;
     });
 
+    // ----- 埋深生成（基于 dataPoints） -----
     let depthValues = [];
-    const validCount = valid20Distances.length;
+    const validCount = dataPoints.length;
     if (validCount > 0) {
         const maxIndex = Math.floor(Math.random() * validCount);
         let minIndex = Math.floor(Math.random() * validCount);
@@ -470,38 +551,74 @@ function generateBaseData() {
         }
     }
 
+    // ----- 辅助：判断距离是否落在穿越区间内，并返回地形（仅当该点为数据点时才应用） -----
+    function getCrossTerrain(d) {
+        for (let pair of crossPairs) {
+            if (d >= pair.start && d <= pair.end) {
+                return pair.terrain;
+            }
+        }
+        return null; // 不在穿越区间内
+    }
+
+    // ----- 生成表格行 -----
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
-    distances.forEach((d, idx) => {
+    finalDistances.forEach((d, idx) => {
         const tr = document.createElement("tr");
         const is0 = d === 0, isLast = d === totalDist;
-        const isValid20 = d > 0 && d < totalDist && d % 20 === 0;
+        const isDataPoint = dataPointsSet.has(d) && d > 0 && d < totalDist;
+
         const sp = specials.find(x => x.d === d);
         let desc = sp ? sp.l : "";
         if (is0) desc = `检测起点-${pipeStart || desc}`;
         if (isLast) desc = `检测终点-${pipeEnd || desc}`;
 
+        // ===== 修正地形逻辑 =====
+        let terrainValue = '';
+        if (isDataPoint) {
+            // 只有数据点才需要地形
+            const crossTerrain = getCrossTerrain(d);
+            if (crossTerrain !== null) {
+                // 该数据点落在穿越区间内，使用区间统一地形
+                terrainValue = crossTerrain;
+            } else {
+                // 不在穿越区间内，使用默认地形
+                terrainValue = terrain;
+            }
+        }
+        // 非数据点，地形留空（无论是否在穿越区间内）
+
+        // 坐标内容
+        let coordValue = '';
+		if (desc && desc !== '左弯' && desc !== '右弯') {
+			coordValue = ' N: \n E: ';
+		}
+
+        // 构建行
         const td1 = document.createElement("td"); td1.textContent = idx + 1; tr.appendChild(td1);
         const td2 = document.createElement("td"); td2.innerHTML = `<input type="number" value="${d}">`; tr.appendChild(td2);
         const td3 = document.createElement("td");
-        const data1Val = isValid20 ? data1Map[d] : "";
+        const data1Val = isDataPoint ? data1Map[d] : "";
         td3.innerHTML = `<input type="number" class="data1-input" data-distance="${d}" value="${data1Val}" onchange="onData1Change(this)">`;
         tr.appendChild(td3);
         const td4 = document.createElement("td");
-        td4.innerHTML = `<input type="text" class="terrain-input" data-distance="${d}" value="${isValid20 ? terrain : ''}" onchange="onTerrainChange(this)">`;
+        td4.innerHTML = `<input type="text" class="terrain-input" data-distance="${d}" value="${terrainValue}" onchange="onTerrainChange(this)">`;
         tr.appendChild(td4);
+        const td5 = document.createElement("td");
         let depthVal = '';
-        if (isValid20) {
-            const depthIdx = valid20Distances.indexOf(d);
+        if (isDataPoint) {
+            const depthIdx = dataPoints.indexOf(d);
             depthVal = depthValues[depthIdx] || '';
         }
-        const td5 = document.createElement("td");
         td5.innerHTML = `<input type="number" step="0.01" value="${depthVal}" onchange="onBurialChange(this)">`;
         tr.appendChild(td5);
         const td6 = document.createElement("td"); td6.className = "defectno-cell"; td6.textContent = ""; tr.appendChild(td6);
         const td7 = document.createElement("td"); td7.innerHTML = `<input type="text" class="db-input" value="" data-old-value="">`; tr.appendChild(td7);
         const td8 = document.createElement("td"); td8.className = "grade-cell"; td8.textContent = ""; tr.appendChild(td8);
-        const td9 = document.createElement("td"); td9.innerHTML = `<textarea class="coord-input"></textarea>`; tr.appendChild(td9);
+        const td9 = document.createElement("td");
+        td9.innerHTML = `<textarea class="coord-input">${coordValue}</textarea>`;
+        tr.appendChild(td9);
         const td10 = document.createElement("td"); td10.innerHTML = `<input type="text" value="${desc}">`; tr.appendChild(td10);
 
         if (is0) tr.classList.add("zero-data-row");
@@ -553,7 +670,7 @@ function onData1Change(input) {
     showTip("后续电流已基于新值同步更新", false);
 }
 
-//地形联动修改函数
+/*/地形联动修改函数
 function onTerrainChange(input) {
     const modDist = parseInt(input.dataset.distance);
     const newTerrain = input.value.trim();
@@ -569,6 +686,12 @@ function onTerrainChange(input) {
             }
         }
     });
+    saveTableData();
+    updateStatistics();
+}*/
+//地形地貌不联动修改-如需联动取消上面同名函数注释并给本函数注释掉
+function onTerrainChange(input) {
+    // 只保存当前修改，并更新统计信息，不做任何自动同步
     saveTableData();
     updateStatistics();
 }
