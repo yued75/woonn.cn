@@ -37,10 +37,11 @@
             <div id="userInfoBar" class="user-info-bar">
                 <span id="displayUsername"></span>
                 <span id="displayExpire"></span>
-                <button id="adminLink" class="operate-btn" style="display:none;"><a class="info-link" href="admin.html" target="_blank"><i class="fas fa-cog"></i> 后台</a></button>	
-				<button id="themeToggleBtn" class="operate-btn" title="切换主题"><i class="fas fa-sun"></i> 主题</button>
-                <button id="logoutLink" href="javascript:void(0)" class="operate-btn"><i class="fas fa-sign-out-alt"></i> 退出</button>
-				<button class="operate-btn" id="restoreBtn"><i class="fas fa-undo"></i> 恢复</button>
+				<button id="themeToggleBtn" class="operate-btn" title="切换主题"><i class="fas fa-sun"></i></button>
+                <button id="adminLink" class="operate-btn" title="后台管理" style="display:none;"><a class="info-link" href="admin.html" target="_blank"><i class="fas fa-cog"></i> 后台</a></button>
+				<button class="operate-btn" id="undoBtn" title="撤销 (Ctrl+Z)"><i class="fas fa-undo-alt"></i> 撤销</button>
+				<button class="operate-btn" id="redoBtn" title="重做 (Ctrl+Y)"><i class="fas fa-redo-alt"></i> 重做</button>
+				<button id="logoutLink"  title="退出登录" href="javascript:void(0)" class="operate-btn"><i class="fas fa-sign-out-alt"></i> 登出</button>
             </div>
 
             <!-- 参数输入区 -->
