@@ -429,8 +429,11 @@ function generateBaseData() {
     // 优先级判断
     function getPriority(desc) {
         const levels = [
+			//要生成坐标、电流、埋深、地形
             { priority: 'high', keywords: ['地铁','轻轨','高压线','变电器','穿越','浅埋','破损','占压','泄漏'] },
+			//只生成坐标，不生成电流。埋深。地形
             { priority: 'mid', keywords: ['阀井','阀室','测试桩','警示牌','露管','明管','跨越'] },
+			//什么都不生成
             { priority: 'low', keywords: ['左弯','右弯','三通'] }
         ];
         for (let level of levels) {
