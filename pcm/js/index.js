@@ -406,7 +406,6 @@ function generateBaseData() {
     const pipeEnd = document.getElementById("pipeEnd").value.trim();
     const terrain = document.getElementById("defaultTerrain").value.trim() || "绿化带";
 
-    // 错误校验
     const errs = [];
     if (!totalDist || totalDist <= 0) errs.push("不填管段长度我怎么帮你生成？");
     if (maxVal !== null && minVal !== null && maxVal < minVal) errs.push("最大电流还比最小电流小？");
@@ -425,18 +424,33 @@ function generateBaseData() {
     else if (bMax !== null && bMin === null) bMin = parseFloat((bMax * 0.8).toFixed(2));
     else if (bMax === null && bMin !== null) bMax = parseFloat((bMin * 1.2).toFixed(2));
 
-    // 1. 解析特殊点
     const specials = parseSpecialPoints();
 
-    // 2. 分别提取穿越点和跨越点
+    // 优先级判断
+    function getPriority(desc) {
+        const levels = [
+            { priority: 'high', keywords: ['地铁','轻轨','高压线','变电器','穿越','浅埋','破损','占压','泄漏'] },
+            { priority: 'mid', keywords: ['阀井','阀室','测试桩','警示牌','露管','明管','跨越'] },
+            { priority: 'low', keywords: ['左弯','右弯','三通'] }
+        ];
+        for (let level of levels) {
+            for (let kw of level.keywords) {
+                if (desc.includes(kw)) {
+                    return level.priority;
+                }
+            }
+        }
+        return 'high';
+    }
+
+    // 穿越和跨越成对
     const crossPoints = specials.filter(sp => sp.l.includes('穿越')).sort((a,b) => a.d - b.d);
     const spanPoints = specials.filter(sp => sp.l.includes('跨越')).sort((a,b) => a.d - b.d);
 
-    // 生成穿越区间（带地形）
     const crossPairs = [];
     for (let i = 0; i < crossPoints.length - 1; i += 2) {
         const startSp = crossPoints[i];
-        let terrainVal = terrain; // 默认
+        let terrainVal = terrain;
         if (startSp.l.includes('河流')) {
             terrainVal = '河流';
         } else if (startSp.l.includes('水沟')) {
@@ -444,52 +458,37 @@ function generateBaseData() {
         } else {
             terrainVal = '车行道';
         }
-        crossPairs.push({
-            start: startSp.d,
-            end: crossPoints[i+1].d,
-            terrain: terrainVal
-        });
+        crossPairs.push({ start: startSp.d, end: crossPoints[i+1].d, terrain: terrainVal });
     }
 
-    // 生成跨越区间（仅用于跳过）
     const spanPairs = [];
     for (let i = 0; i < spanPoints.length - 1; i += 2) {
         spanPairs.push({ start: spanPoints[i].d, end: spanPoints[i+1].d });
     }
 
-    // 合并所有区间用于跳过（穿越+跨越）
     const allPairs = [...crossPairs, ...spanPairs];
 
-    // 3. 构建所有可能的距离（0，终点，所有特殊点，20m倍数）
     let distSet = new Set([0, totalDist]);
     for (let d = 20; d < totalDist; d += 20) distSet.add(d);
     specials.forEach(sp => distSet.add(sp.d));
 
-    // 4. 过滤最终行及数据点集合
     const finalDistances = [];
-    const dataPointsSet = new Set(); // 需要生成电流/地形/埋深的点
+    const dataPointsSet = new Set();
 
     distSet.forEach(d => {
-        // 起点终点始终保留
         if (d === 0 || d === totalDist) {
             finalDistances.push(d);
             return;
         }
-
-        // 特殊点（有用户标签）始终保留行
         const sp = specials.find(x => x.d === d);
         if (sp) {
             finalDistances.push(d);
-            // 判断是否为需要数据的点：穿越 或 破损
-            if (sp.l.includes('穿越') || sp.l.includes('破损')) {
+            const pri = getPriority(sp.l);
+            if (pri === 'high') {
                 dataPointsSet.add(d);
             }
-            // 跨越点不加入数据点集合
             return;
         }
-
-        // 非特殊点（即无标签的20m整数倍点）
-        // 检查是否落在任意一对区间内（穿越或跨越）
         let inside = false;
         for (let pair of allPairs) {
             if (d > pair.start && d < pair.end) {
@@ -501,17 +500,11 @@ function generateBaseData() {
             finalDistances.push(d);
             dataPointsSet.add(d);
         }
-        // 否则跳过
     });
 
     finalDistances.sort((a, b) => a - b);
+    const dataPoints = Array.from(dataPointsSet).filter(d => d > 0 && d < totalDist).sort((a, b) => a - b);
 
-    // 数据点列表（用于插值，排除0和终点）
-    const dataPoints = Array.from(dataPointsSet)
-        .filter(d => d > 0 && d < totalDist)
-        .sort((a, b) => a - b);
-
-    // ----- 电流插值（基于 dataPoints） -----
     let data1Map = {};
     let prevEffective = maxVal;
     dataPoints.forEach((d, idx) => {
@@ -531,7 +524,6 @@ function generateBaseData() {
         prevEffective = newVal;
     });
 
-    // ----- 埋深生成（基于 dataPoints） -----
     let depthValues = [];
     const validCount = dataPoints.length;
     if (validCount > 0) {
@@ -551,17 +543,15 @@ function generateBaseData() {
         }
     }
 
-    // ----- 辅助：判断距离是否落在穿越区间内，并返回地形（仅当该点为数据点时才应用） -----
     function getCrossTerrain(d) {
         for (let pair of crossPairs) {
             if (d >= pair.start && d <= pair.end) {
                 return pair.terrain;
             }
         }
-        return null; // 不在穿越区间内
+        return null;
     }
 
-    // ----- 生成表格行 -----
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
     finalDistances.forEach((d, idx) => {
@@ -574,26 +564,23 @@ function generateBaseData() {
         if (is0) desc = `检测起点-${pipeStart || desc}`;
         if (isLast) desc = `检测终点-${pipeEnd || desc}`;
 
-        // ===== 修正地形逻辑 =====
+        // 地形
         let terrainValue = '';
         if (isDataPoint) {
-            // 只有数据点才需要地形
             const crossTerrain = getCrossTerrain(d);
             if (crossTerrain !== null) {
-                // 该数据点落在穿越区间内，使用区间统一地形
                 terrainValue = crossTerrain;
             } else {
-                // 不在穿越区间内，使用默认地形
                 terrainValue = terrain;
             }
         }
-        // 非数据点，地形留空（无论是否在穿越区间内）
 
-        // 坐标内容
+        // 坐标（基于最高优先级）
         let coordValue = '';
-		if (desc && desc !== '左弯' && desc !== '右弯') {
-			coordValue = ' N: \n E: ';
-		}
+        const pri = desc ? getPriority(desc) : 'high';
+        if (desc && pri !== 'low') {
+            coordValue = ' N: \n E: ';
+        }
 
         // 构建行
         const td1 = document.createElement("td"); td1.textContent = idx + 1; tr.appendChild(td1);
